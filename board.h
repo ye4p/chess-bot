@@ -1,10 +1,13 @@
+#include "piece.h"
+#include <array>
 class Board
 {
-private:
-    // 8*8 board representation
+    std::array<Piece, 64> board;
+
 public:
-    // Constructor
-    // Init
-    // Print
-    // ove_piece method
+    Board();
+    void assignDefaultRow(int row, Color color);
+    void assignPawns(int row, Color color);
+    void startingPosition();
+    void displayBoard();
 };

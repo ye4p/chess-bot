@@ -1,3 +1,5 @@
+#pragma once // If "piece.h" included in multiple files, can cause error, and this line prevents that
+#include <iostream>
 enum class PieceType
 {
     None,
@@ -9,12 +11,17 @@ enum class PieceType
     King
 };
 
+std::ostream &operator<<(std::ostream &os, PieceType type);
+
 enum class Color
 {
     None,
     White,
     Black
 };
+
+std::ostream &operator<<(std::ostream &os, Color color);
+
 struct Piece
 {
     Color color;
@@ -25,3 +32,5 @@ struct Piece
     {
     }
 };
+
+std::ostream &operator<<(std::ostream &os, const Piece &obj);
