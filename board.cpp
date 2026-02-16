@@ -1,11 +1,11 @@
 #include "board.h"
 #include "piece.h"
 #include <iostream>
-
+#include <vector>
 Board::Board()
 {
     Piece empty;
-    for (int i = 0; i < board.size(); i++)
+    for (int i = 0; i < 8; i++)
         board[i] = empty;
 }
 
@@ -48,3 +48,139 @@ void Board::displayBoard()
         std::cout << "\n";
     }
 }
+Color Board::checkSpace(int square)
+// Returns 0 if empty, 1 if white piece, 2 if black piece.
+{
+    Piece p = board[square];
+    if (p.type == PieceType::None && p.color == Color::None)
+    {
+        return Color::None;
+    }
+    else
+    {
+        return p.color;
+    }
+}
+bool Board::isEndOfTheBoard(int square, Piece p)
+{
+    if (p.color == Color::White)
+    {
+        return square > 55;
+    }
+    else
+    {
+        return square < 8;
+    }
+}
+bool Board::crossesBorder(int from, int to)
+{
+    return (from % 7 == 0 && to % 8 == 0) || (to % 7 == 0 && from % 8 == 0);
+}
+void Board::handlePawnCapture(int from, int to, Piece p, std::vector<Move> &moves)
+{
+    if ((checkSpace(to) != p.color) && (checkSpace(to) != Color::None) && !crossesBorder(from, to))
+    {
+        if (isEndOfTheBoard(to, p))
+        {
+            moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Queen, p.color), MoveFlag::Promotion));
+        }
+        else
+        {
+            moves.push_back(Move(from, to, p, board[to], Piece(), MoveFlag::Capture));
+        }
+    }
+}
+void Board::FakeMove(Piece p, int to)
+{
+    board[to] = p;
+}
+void Board::makeMove(const Move &m)
+{
+    board[m.from] = Piece();
+    if (m.promoted.type != PieceType::None && m.promoted.color != Color::None)
+    {
+        board[m.to] = m.promoted;
+    }
+    else
+    {
+        board[m.to] = m.piece;
+    }
+}
+void Board::undoMove(const Move &m)
+{
+    // TODO
+}
+void Board::generateMoves(std::vector<Move> &moves) {};
+
+void Board::generatePawnMoves(int square, std::vector<Move> &moves)
+{
+    // check if a move goes off the board
+    // Can't move into a place of the same color
+    Piece p = board[square];
+    int forward;
+    int left;
+    int right;
+    int forward2;
+
+    // Normalizes moving for pawn of both colors
+    if (p.color == Color::White)
+    {
+        forward = square + 8;
+        left = square + 9;
+        right = square + 7;
+        forward2 = square + 16;
+        ;
+    }
+    else
+    {
+        forward = square - 8;
+        left = square - 9;
+        right = square - 7;
+        forward2 = square - 16;
+    }
+
+    // Handles double step
+    bool startingPosition;
+    if ((square > 7 && square < 16 && p.color == Color::White) || (square > 47 && square < 56 && p.color == Color::Black))
+    {
+        startingPosition = true;
+    }
+    else
+    {
+        startingPosition = false;
+    }
+    // Handles moving forward
+    if (checkSpace(forward) == Color::None)
+    {
+        if (isEndOfTheBoard(forward, p))
+        {
+            moves.push_back(Move(square, forward, p, Piece(), Piece(PieceType::Queen, p.color), MoveFlag::Promotion)); // Make default promotion to Queen but later need to change
+        }
+        else
+        {
+            moves.push_back(Move(square, forward, p, Piece(), Piece()));
+        }
+    }
+
+    // Handles double step if pawn is in the starting position
+    if (startingPosition && checkSpace(forward2) == Color::None && checkSpace(forward) == Color::None)
+    {
+        moves.push_back(Move(square, forward2, p, Piece(), Piece()));
+    }
+
+    // Handles pawn capturing from the left side
+    handlePawnCapture(square, left, p, moves);
+    // Handles pawn capturing from the right pawn
+    handlePawnCapture(square, right, p, moves);
+    // Check for border
+}
+void Board::generateKnightMoves(int square, std::vector<Move> &moves)
+{
+}
+void Board::generateBishopMoves(int square, std::vector<Move> &moves)
+{
+    // Stop sliding when hit any piece. Capture if enemy
+}
+void Board::generateRookMoves(int square, std::vector<Move> &moves) {}
+void Board::generateQueenMoves(int square, std::vector<Move> &moves) {}
+void Board::generateKingMoves(int square, std::vector<Move> &moves) {}
