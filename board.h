@@ -16,6 +16,9 @@ public:
     Color checkSpace(int square);
     bool isEndOfTheBoard(int square, Piece p);
     bool crossesBorder(int from, int to);
+    bool crossesBorderKnight(int from, int to);
+    bool isAlly(Piece p, int to);
+    bool isCapture(Piece p, int to);
     void handlePawnCapture(int from, int to, Piece p, std::vector<Move> &moves);
     void FakeMove(Piece p, int to);
     void makeMove(const Move &m);

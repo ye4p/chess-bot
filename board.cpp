@@ -2,6 +2,7 @@
 #include "piece.h"
 #include <iostream>
 #include <vector>
+#include <array>
 Board::Board()
 {
     Piece empty;
@@ -76,6 +77,33 @@ bool Board::crossesBorder(int from, int to)
 {
     return (from % 7 == 0 && to % 8 == 0) || (to % 7 == 0 && from % 8 == 0);
 }
+bool Board::crossesBorderKnight(int from, int to)
+{
+    if (to > 63 || to < 0)
+    {
+        return true;
+    }
+    return (                                                //.
+        (                                                   //.
+            ((from + 1) % 8 == 0 || (from + 2) % 8 == 0) && //.
+            (to % 8 == 0 || (to + 1) % 8 == 0)              //.
+            )                                               //.
+        ||                                                  //.
+        (                                                   //.
+            ((to + 1) % 8 == 0 || (to + 2) % 8 == 0) &&     //.
+            (from % 8 == 0 || (from - 1) % 8 == 0)          // the initial square of 1 evaluates as true
+            )                                               //.
+    );                                                      //.
+}
+bool Board::isAlly(Piece p, int to)
+{
+    return p.color == board[to].color;
+}
+bool Board::isCapture(Piece p, int to)
+{
+    // Does NOT handle ally capturing
+    return ((p.color != board[to].color) && (board[to].color != Color::None));
+}
 void Board::handlePawnCapture(int from, int to, Piece p, std::vector<Move> &moves)
 {
     if ((checkSpace(to) != p.color) && (checkSpace(to) != Color::None) && !crossesBorder(from, to))
@@ -114,8 +142,6 @@ void Board::generateMoves(std::vector<Move> &moves) {};
 
 void Board::generatePawnMoves(int square, std::vector<Move> &moves)
 {
-    // check if a move goes off the board
-    // Can't move into a place of the same color
     Piece p = board[square];
     int forward;
     int left;
@@ -176,9 +202,33 @@ void Board::generatePawnMoves(int square, std::vector<Move> &moves)
 }
 void Board::generateKnightMoves(int square, std::vector<Move> &moves)
 {
+    Piece p = board[square];
+    // -17, -15,-10, -6, 6, 10, 15, 17
+    int nums[8] = {-17, -15, -10, -6, 6, 10, 15, 17};
+    for (int n : nums)
+    {
+        // std::cout << n << "Crosses border: " << crossesBorderKnight(square, square + n) << "\n";
+        // if (!crossesBorderKnight(square, square + n))
+        // {
+        //     std::cout << n << " crosses border: " << crossesBorderKnight(square, square + n) << " ally: " << isAlly(p, square + n) << "\n";
+        // }
+        if ((!crossesBorderKnight(square, square + n)) && (!isAlly(p, square + n)))
+        {
+            if (isCapture(p, square + n))
+            {
+                moves.push_back(Move(square, square + n, p, board[square + n], Piece(), MoveFlag::Capture));
+            }
+            else
+            {
+                moves.push_back(Move(square, square + n, p, board[square + n], Piece()));
+            }
+        }
+    }
 }
 void Board::generateBishopMoves(int square, std::vector<Move> &moves)
 {
+    Piece p = board[square];
+    // +-  7, 9
     // Stop sliding when hit any piece. Capture if enemy
 }
 void Board::generateRookMoves(int square, std::vector<Move> &moves) {}

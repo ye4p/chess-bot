@@ -11,9 +11,9 @@ int main()
     // board.displayBoard();
     Piece wRook = Piece(PieceType::Rook, Color::White);
     Piece bRook = Piece(PieceType::Rook, Color::Black);
-    board.FakeMove(wRook, 16);
-    board.FakeMove(bRook, 18);
-    board.generatePawnMoves(9, moves);
+    // board.FakeMove(wRook, 16);
+    //  board.FakeMove(bRook, 18);
+    board.generateKnightMoves(1, moves);
     for (Move i : moves)
     {
         std::cout << i << "\n";
