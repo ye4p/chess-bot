@@ -20,6 +20,7 @@ public:
     bool isAlly(Piece p, int to);
     bool isCapture(Piece p, int to);
     void handlePawnCapture(int from, int to, Piece p, std::vector<Move> &moves);
+    bool isOutOfBounds(int to);
     void FakeMove(Piece p, int to);
     void makeMove(const Move &m);
     void undoMove(const Move &m);

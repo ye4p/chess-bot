@@ -118,6 +118,9 @@ void Board::handlePawnCapture(int from, int to, Piece p, std::vector<Move> &move
         }
     }
 }
+bool Board::isOutOfBounds(int to) {
+    return (to>63 || to <0);
+}
 void Board::FakeMove(Piece p, int to)
 {
     board[to] = p;
@@ -207,11 +210,6 @@ void Board::generateKnightMoves(int square, std::vector<Move> &moves)
     int nums[8] = {-17, -15, -10, -6, 6, 10, 15, 17};
     for (int n : nums)
     {
-        // std::cout << n << "Crosses border: " << crossesBorderKnight(square, square + n) << "\n";
-        // if (!crossesBorderKnight(square, square + n))
-        // {
-        //     std::cout << n << " crosses border: " << crossesBorderKnight(square, square + n) << " ally: " << isAlly(p, square + n) << "\n";
-        // }
         if ((!crossesBorderKnight(square, square + n)) && (!isAlly(p, square + n)))
         {
             if (isCapture(p, square + n))
@@ -228,9 +226,30 @@ void Board::generateKnightMoves(int square, std::vector<Move> &moves)
 void Board::generateBishopMoves(int square, std::vector<Move> &moves)
 {
     Piece p = board[square];
-    // +-  7, 9
+    int nums[4]= {-9, -7, 7, 9};
+    // +-  7, 9 and its multiples
     // Stop sliding when hit any piece. Capture if enemy
+    int multiplier=1;
+    int countOOB=0;
+    bool isEnd=false;
+    while (!isEnd) {
+        if (countOOB>=4) {
+            break;
+        }
+        countOOB=0;
+        for ( int n : nums) {
+            int final = square+n*multiplier;
+            if (isOutOfBounds(square+n*multiplier)) {
+                countOOB++;
+                continue;
+            }
+            if (isAlly(p, final)) {
+                
+            }
+        }
+        multiplier++;
+    }
 }
 void Board::generateRookMoves(int square, std::vector<Move> &moves) {}
 void Board::generateQueenMoves(int square, std::vector<Move> &moves) {}
-void Board::generateKingMoves(int square, std::vector<Move> &moves) {}
+void Board::generateKingMoves(int square, std::vector<Move> &moves) {
