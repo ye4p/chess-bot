@@ -13,7 +13,7 @@ int main()
     Piece bRook = Piece(PieceType::Rook, Color::Black);
     // board.FakeMove(wRook, 16);
     //  board.FakeMove(bRook, 18);
-    board.generateKnightMoves(1, moves);
+    board.generateBishopMoves(2, moves);
     for (Move i : moves)
     {
         std::cout << i << "\n";

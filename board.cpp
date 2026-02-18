@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <array>
+#include <algorithm>
 Board::Board()
 {
     Piece empty;
@@ -118,8 +119,12 @@ void Board::handlePawnCapture(int from, int to, Piece p, std::vector<Move> &move
         }
     }
 }
-bool Board::isOutOfBounds(int to) {
-    return (to>63 || to <0);
+bool Board::isOutOfBounds(int to)
+{
+    return (to > 63 || to < 0);
+}
+bool Board::crossesBorderBishop(int from, int to, int n, int multiplier)
+{
 }
 void Board::FakeMove(Piece p, int to)
 {
@@ -226,25 +231,39 @@ void Board::generateKnightMoves(int square, std::vector<Move> &moves)
 void Board::generateBishopMoves(int square, std::vector<Move> &moves)
 {
     Piece p = board[square];
-    int nums[4]= {-9, -7, 7, 9};
+    std::vector<int> nums = {-9, -7, 7, 9};
     // +-  7, 9 and its multiples
     // Stop sliding when hit any piece. Capture if enemy
-    int multiplier=1;
-    int countOOB=0;
-    bool isEnd=false;
-    while (!isEnd) {
-        if (countOOB>=4) {
-            break;
-        }
-        countOOB=0;
-        for ( int n : nums) {
-            int final = square+n*multiplier;
-            if (isOutOfBounds(square+n*multiplier)) {
-                countOOB++;
-                continue;
+    int multiplier = 1;
+    while (!nums.empty())
+    {
+
+        for (int n : nums)
+        {
+            int final = square + n * multiplier;
+            if (final % 8 == 0 || (final + 1) % 8 == 0 || (final < 8) || (final > 55))
+            {
+                // Can't use this method as loop is going to behave unpredictably.
+                auto it = std::find(nums.begin(), nums.end(), n);
+                if (it != nums.end())
+                {
+                    nums.erase(it);
+                }
             }
-            if (isAlly(p, final)) {
-                
+            std::cout << "Final: " << final << " square: " << square << " n: " << n << " multiplier: " << multiplier << "\n";
+            if (!isOutOfBounds(final) && !isAlly(p, final))
+            {
+                if (final % 8 == 0 || (final + 1) % 8 == 0 || (final < 8) || (final > 55))
+                {
+                    if (isCapture(p, final))
+                    {
+                        moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Capture));
+                    }
+                    else
+                    {
+                        moves.push_back(Move(square, final, p, board[final], Piece()));
+                    }
+                }
             }
         }
         multiplier++;
@@ -252,4 +271,4 @@ void Board::generateBishopMoves(int square, std::vector<Move> &moves)
 }
 void Board::generateRookMoves(int square, std::vector<Move> &moves) {}
 void Board::generateQueenMoves(int square, std::vector<Move> &moves) {}
-void Board::generateKingMoves(int square, std::vector<Move> &moves) {
+void Board::generateKingMoves(int square, std::vector<Move> &moves) {}
