@@ -234,39 +234,11 @@ void Board::generateBishopMoves(int square, std::vector<Move> &moves)
     std::vector<int> nums = {-9, -7, 7, 9};
     // +-  7, 9 and its multiples
     // Stop sliding when hit any piece. Capture if enemy
-    int multiplier = 1;
-    while (!nums.empty())
+    for (int n : nums)
     {
-
-        for (int n : nums)
-        {
-            int final = square + n * multiplier;
-            if (final % 8 == 0 || (final + 1) % 8 == 0 || (final < 8) || (final > 55))
-            {
-                // Can't use this method as loop is going to behave unpredictably.
-                auto it = std::find(nums.begin(), nums.end(), n);
-                if (it != nums.end())
-                {
-                    nums.erase(it);
-                }
-            }
-            std::cout << "Final: " << final << " square: " << square << " n: " << n << " multiplier: " << multiplier << "\n";
-            if (!isOutOfBounds(final) && !isAlly(p, final))
-            {
-                if (final % 8 == 0 || (final + 1) % 8 == 0 || (final < 8) || (final > 55))
-                {
-                    if (isCapture(p, final))
-                    {
-                        moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Capture));
-                    }
-                    else
-                    {
-                        moves.push_back(Move(square, final, p, board[final], Piece()));
-                    }
-                }
-            }
-        }
-        multiplier++;
+        while (true)
+        // Do all the checks(if fails, break the loop)
+        // add the element in the loop
     }
 }
 void Board::generateRookMoves(int square, std::vector<Move> &moves) {}
