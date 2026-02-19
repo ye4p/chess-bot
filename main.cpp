@@ -11,12 +11,16 @@ int main()
     // board.displayBoard();
     Piece wRook = Piece(PieceType::Rook, Color::White);
     Piece bRook = Piece(PieceType::Rook, Color::Black);
-    // board.FakeMove(wRook, 16);
+    Piece wBishop = Piece(PieceType::Bishop, Color::White);
+    board.FakeMove(wBishop, 17);
     //  board.FakeMove(bRook, 18);
-    board.generateBishopMoves(2, moves);
+    board.generateBishopMoves(17, moves);
     for (Move i : moves)
     {
         std::cout << i << "\n";
     }
+    std::cout << "output over";
     return 0;
+    //For the actual move generation: minimax algorithm
+    // Alpha beta prunning
 };

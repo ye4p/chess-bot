@@ -125,6 +125,7 @@ bool Board::isOutOfBounds(int to)
 }
 bool Board::crossesBorderBishop(int from, int to, int n, int multiplier)
 {
+   return ((from%8==0 && to % 8==7) || (from%8==7 && to % 8==0));
 }
 void Board::FakeMove(Piece p, int to)
 {
@@ -231,14 +232,32 @@ void Board::generateKnightMoves(int square, std::vector<Move> &moves)
 void Board::generateBishopMoves(int square, std::vector<Move> &moves)
 {
     Piece p = board[square];
-    std::vector<int> nums = {-9, -7, 7, 9};
+    std::array<int, 4> nums = {-9, -7, 7, 9};
     // +-  7, 9 and its multiples
     // Stop sliding when hit any piece. Capture if enemy
     for (int n : nums)
     {
-        while (true)
+        int mult=1;
+        while (true) {
+        int final=square+n*mult;
         // Do all the checks(if fails, break the loop)
         // add the element in the loop
+        if (isOutOfBounds(final)) {
+            break;
+        }
+        if (isAlly(p, final)) {
+            break;
+        }
+        if (crossesBorderBishop(square, final, n, mult)) {
+            break;
+        }
+        if (isCapture(p, final)) {
+            moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Normal));
+        } else {
+            moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Capture));
+        }
+        mult++;
+    }
     }
 }
 void Board::generateRookMoves(int square, std::vector<Move> &moves) {}
