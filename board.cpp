@@ -125,7 +125,7 @@ bool Board::isOutOfBounds(int to)
 }
 bool Board::crossesBorderBishop(int from, int to, int n, int multiplier)
 {
-   return ((from%8==0 && to % 8==7) || (from%8==7 && to % 8==0));
+   return (((from+(n-1)*multiplier)%8==0 && to % 8==7) || ((from+(n-1)*multiplier)%8==7 && to % 8==0));
 }
 void Board::FakeMove(Piece p, int to)
 {
