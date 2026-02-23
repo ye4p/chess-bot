@@ -28,6 +28,7 @@ public:
     void generateMoves(std::vector<Move> &moves);
     void generatePawnMoves(int square, std::vector<Move> &moves);
     void generateKnightMoves(int square, std::vector<Move> &moves);
+    void generateGeometryMoves(int square, std::vector<Move> &moves, std::vector<int> nums);
     void generateBishopMoves(int square, std::vector<Move> &moves);
     void generateRookMoves(int square, std::vector<Move> &moves);
     void generateQueenMoves(int square, std::vector<Move> &moves);

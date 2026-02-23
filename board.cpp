@@ -235,48 +235,9 @@ void Board::generateKnightMoves(int square, std::vector<Move> &moves)
         }
     }
 }
-void Board::generateBishopMoves(int square, std::vector<Move> &moves)
+void Board::generateGeometryMoves(int square, std::vector<Move> &moves, std::vector<int> nums)
 {
     Piece p = board[square];
-    std::array<int, 4> nums = {-9, -7, 7, 9};
-    // +-  7, 9 and its multiples
-    // Stop sliding when hit any piece. Capture if enemy
-    for (int n : nums)
-    {
-        int mult = 1;
-        while (true)
-        {
-            int final = square + n * mult;
-            // Do all the checks(if fails, break the loop)
-            // add the element in the loop
-            if (isOutOfBounds(final))
-            {
-                break;
-            }
-            if (isAlly(p, final))
-            {
-                break;
-            }
-            if (crossesBorderBishop(square, final, n, mult)) //(int from, int to, int n, int multiplier)
-            {
-                break;
-            }
-            if (isCapture(p, final))
-            {
-                moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Normal));
-            }
-            else
-            {
-                moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Capture));
-            }
-            mult++;
-        }
-    }
-}
-void Board::generateRookMoves(int square, std::vector<Move> &moves)
-{
-    Piece p = board[square];
-    std::array<int, 4> nums = {-8, -1, 1, 8};
     for (int n : nums)
     {
         int mult = 1;
@@ -303,9 +264,30 @@ void Board::generateRookMoves(int square, std::vector<Move> &moves)
             {
                 moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Capture));
             }
+            if (p.type==PieceType::King) {
+                break;
+            }
             mult++;
         }
+
     }
 }
-void Board::generateQueenMoves(int square, std::vector<Move> &moves) {}
-void Board::generateKingMoves(int square, std::vector<Move> &moves) {}
+void Board::generateBishopMoves(int square, std::vector<Move> &moves)
+{
+    std::vector<int> nums = {-9, -7, 7, 9};
+    generateGeometryMoves(square, moves, nums);
+}
+void Board::generateRookMoves(int square, std::vector<Move> &moves)
+{
+    std::vector<int> nums = {-8, -1, 1, 8};
+    generateGeometryMoves(square, moves, nums);
+}
+
+void Board::generateQueenMoves(int square, std::vector<Move> &moves) {
+    std::vector<int> nums = {-9, -8, -7, -1, 1, 7, 8, 9};
+    generateGeometryMoves(square, moves, nums);
+}
+void Board::generateKingMoves(int square, std::vector<Move> &moves) {
+    std::vector<int> nums = {-9, -8, -7, -1, 1, 7, 8, 9};
+    generateGeometryMoves(square, moves, nums);
+}
