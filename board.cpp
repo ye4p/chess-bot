@@ -143,6 +143,14 @@ bool Board::crossesBorderBishop(int from, int to, int n, int multiplier)
     );                                               //
 }
 
+bool Board::crossesBorderPawn(int from, int to) {
+    return (
+      ((from%8==0) && (to%8==7)) || (
+        (to%8==0) && (from%8==7)
+      )
+    );
+}
+
 bool Board::isEnemy(Piece p, int where)
 {
     return (p.color != board[where].color && board[where].color != Color::None);
@@ -227,9 +235,13 @@ void Board::generatePawnMoves(int square, std::vector<Move> &moves)
     }
 
     // Handles pawn capturing from the left side
+    if (!crossesBorderPawn(square, left)) {
     handlePawnCapture(square, left, p, moves);
+    }
     // Handles pawn capturing from the right pawn
+    if (!crossesBorderPawn(square, right)) {
     handlePawnCapture(square, right, p, moves);
+    }
     // Check for border
 }
 
@@ -333,10 +345,66 @@ bool Board::isSquareAttacked(int square)
     for (int n : numsBishop)
     {
         int mult = 1;
-        int check = square + n * mult;
         while (true)
         {
-            //
+            int check = square + n * mult;
+            if (crossesBorderBishop(check, square, -n, mult)) { // If doesn't work can just change to when its on the borders (?)
+                break;
+            }
+            if (board[check].color==p.color) {
+                break; //Breaks if there is an ally on this square
+            }
+            if (board[check].type == PieceType::Bishop || board[check].type == PieceType::Queen) {
+                return true;
+            }
+            mult++;
         }
     }
+    std::array<int, 4> numsRook = {-8, -1, 1, 8};
+    for (int n : numsRook) {
+        int mult=1;
+        while (true)
+        {
+            int check=square + n*mult;
+            if (crossesBorderBishop(check, square, -n, mult)) { // If doesn't work can just change to when its on the borders (?)
+                break;
+            }
+            if (board[check].color==p.color) {
+                break; //Breaks if there is an ally on this square
+            }
+            if (board[check].type == PieceType::Rook || board[check].type == PieceType::Queen) {
+                return true;
+            }
+            mult++;
+        }
+    }
+
+    // Add checking for enemy pawn
+    // Normalizes moving for pawn of both colors
+    int left, right;
+    if (p.color == Color::White)
+    {
+        left = square - 9;
+        right = square - 7;
+    }
+    else
+    {
+        left = square + 9;
+        right = square + 7;
+    }
+    std::array<int, 2> numsPawn={left, right};
+    for (int n: numsPawn) {
+        if (board[n].color==p.color || board[n].color==Color::None) {
+            break;
+        }
+        if (crossesBorderPawn(n, square)) {
+            break;
+        }
+        if (board[n].type==PieceType::Pawn) {
+            return true;
+        }
+    }
+    // Add checking for enpassant ONLY if p is pawn itself
+
+    return false;
 }

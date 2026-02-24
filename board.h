@@ -22,6 +22,7 @@ public:
     void handlePawnCapture(int from, int to, Piece p, std::vector<Move> &moves);
     bool isOutOfBounds(int to);
     bool crossesBorderBishop(int from, int to, int n, int multiplier);
+    bool crossesBorderPawn(int from, int to);
     bool isEnemy(Piece p, int where);
     void FakeMove(Piece p, int to);
     void makeMove(const Move &m);
