@@ -50,6 +50,7 @@ void Board::displayBoard()
         std::cout << "\n";
     }
 }
+
 Color Board::checkSpace(int square)
 // Returns 0 if empty, 1 if white piece, 2 if black piece.
 {
@@ -63,6 +64,7 @@ Color Board::checkSpace(int square)
         return p.color;
     }
 }
+
 bool Board::isEndOfTheBoard(int square, Piece p)
 {
     if (p.color == Color::White)
@@ -74,10 +76,12 @@ bool Board::isEndOfTheBoard(int square, Piece p)
         return square < 8;
     }
 }
+
 bool Board::crossesBorder(int from, int to)
 {
     return (from % 7 == 0 && to % 8 == 0) || (to % 7 == 0 && from % 8 == 0);
 }
+
 bool Board::crossesBorderKnight(int from, int to)
 {
     if (to > 63 || to < 0)
@@ -96,15 +100,18 @@ bool Board::crossesBorderKnight(int from, int to)
             )                                               //.
     );                                                      //.
 }
+
 bool Board::isAlly(Piece p, int to)
 {
     return p.color == board[to].color;
 }
+
 bool Board::isCapture(Piece p, int to)
 {
     // Does NOT handle ally capturing
     return ((p.color != board[to].color) && (board[to].color != Color::None));
 }
+
 void Board::handlePawnCapture(int from, int to, Piece p, std::vector<Move> &moves)
 {
     if ((checkSpace(to) != p.color) && (checkSpace(to) != Color::None) && !crossesBorder(from, to))
@@ -119,10 +126,12 @@ void Board::handlePawnCapture(int from, int to, Piece p, std::vector<Move> &move
         }
     }
 }
+
 bool Board::isOutOfBounds(int to)
 {
     return (to > 63 || to < 0);
 }
+
 bool Board::crossesBorderBishop(int from, int to, int n, int multiplier)
 {
     return (                                         //
@@ -133,10 +142,17 @@ bool Board::crossesBorderBishop(int from, int to, int n, int multiplier)
          (to % 8 == 0))                              //
     );                                               //
 }
+
+bool Board::isEnemy(Piece p, int where)
+{
+    return (p.color != board[where].color && board[where].color != Color::None);
+}
+
 void Board::FakeMove(Piece p, int to)
 {
     board[to] = p;
 }
+
 void Board::makeMove(const Move &m)
 {
     board[m.from] = Piece();
@@ -149,6 +165,7 @@ void Board::makeMove(const Move &m)
         board[m.to] = m.piece;
     }
 }
+
 void Board::undoMove(const Move &m)
 {
     // TODO
@@ -215,6 +232,7 @@ void Board::generatePawnMoves(int square, std::vector<Move> &moves)
     handlePawnCapture(square, right, p, moves);
     // Check for border
 }
+
 void Board::generateKnightMoves(int square, std::vector<Move> &moves)
 {
     Piece p = board[square];
@@ -235,6 +253,7 @@ void Board::generateKnightMoves(int square, std::vector<Move> &moves)
         }
     }
 }
+
 void Board::generateGeometryMoves(int square, std::vector<Move> &moves, std::vector<int> nums)
 {
     Piece p = board[square];
@@ -264,30 +283,60 @@ void Board::generateGeometryMoves(int square, std::vector<Move> &moves, std::vec
             {
                 moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Capture));
             }
-            if (p.type==PieceType::King) {
+            if (p.type == PieceType::King)
+            {
                 break;
             }
             mult++;
         }
-
     }
 }
+
 void Board::generateBishopMoves(int square, std::vector<Move> &moves)
 {
     std::vector<int> nums = {-9, -7, 7, 9};
     generateGeometryMoves(square, moves, nums);
 }
+
 void Board::generateRookMoves(int square, std::vector<Move> &moves)
 {
     std::vector<int> nums = {-8, -1, 1, 8};
     generateGeometryMoves(square, moves, nums);
 }
 
-void Board::generateQueenMoves(int square, std::vector<Move> &moves) {
+void Board::generateQueenMoves(int square, std::vector<Move> &moves)
+{
     std::vector<int> nums = {-9, -8, -7, -1, 1, 7, 8, 9};
     generateGeometryMoves(square, moves, nums);
 }
-void Board::generateKingMoves(int square, std::vector<Move> &moves) {
+
+void Board::generateKingMoves(int square, std::vector<Move> &moves)
+{
     std::vector<int> nums = {-9, -8, -7, -1, 1, 7, 8, 9};
     generateGeometryMoves(square, moves, nums);
+}
+
+bool Board::isSquareAttacked(int square)
+{
+    Piece p = board[square];
+    std::array<int, 8> numsKnight = {-17, -15, -10, -6, 6, 10, 15, 17};
+    for (int n : numsKnight)
+    {
+        int check = square + n;
+        if (!crossesBorderKnight(check, square) && isEnemy(p, check))
+        {
+            if (board[check].type == PieceType::Knight)
+                return true;
+        }
+    }
+    std::array<int, 4> numsBishop = {-9, -7, 7, 9};
+    for (int n : numsBishop)
+    {
+        int mult = 1;
+        int check = square + n * mult;
+        while (true)
+        {
+            //
+        }
+    }
 }

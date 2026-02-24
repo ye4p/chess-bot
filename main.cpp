@@ -6,6 +6,7 @@
 int main()
 {
     std::vector<Move> moves;
+    Color sideToMove = Color::White;
     Board board;
     board.startingPosition();
     // board.displayBoard();
@@ -20,6 +21,6 @@ int main()
         std::cout << i << "\n";
     }
     return 0;
-    //For the actual move generation: minimax algorithm
-    // Alpha beta prunning
+    // For the actual move generation: minimax algorithm
+    //  Alpha beta prunning
 };

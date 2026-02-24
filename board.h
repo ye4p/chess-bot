@@ -22,6 +22,7 @@ public:
     void handlePawnCapture(int from, int to, Piece p, std::vector<Move> &moves);
     bool isOutOfBounds(int to);
     bool crossesBorderBishop(int from, int to, int n, int multiplier);
+    bool isEnemy(Piece p, int where);
     void FakeMove(Piece p, int to);
     void makeMove(const Move &m);
     void undoMove(const Move &m);
@@ -33,4 +34,5 @@ public:
     void generateRookMoves(int square, std::vector<Move> &moves);
     void generateQueenMoves(int square, std::vector<Move> &moves);
     void generateKingMoves(int square, std::vector<Move> &moves);
+    bool isSquareAttacked(int square);
 };
