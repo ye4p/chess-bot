@@ -10,8 +10,8 @@ void TestUnderAttackMethod(Board &board)
     // Piece bRook = Piece(PieceType::Rook, Color::Black);
     // board.FakeMove(bRook, 18);
     board.FakeMove(wKing, 17);
-    // board.FakeMove(bKnight, 35);
-    // board.FakeMove(bKnight, 7);
+    board.FakeMove(bKnight, 35);
+    board.FakeMove(bKnight, 7);
     // board.FakeMove(bKnight, 23);
     std::cout << "Is under attack: " << board.isSquareAttacked(17);
 }

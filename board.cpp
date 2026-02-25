@@ -88,17 +88,13 @@ bool Board::crossesBorderKnight(int from, int to)
     {
         return true;
     }
-    return (                                                //.
-        (                                                   //.
-            ((from + 1) % 8 == 0 || (from + 2) % 8 == 0) && //.
-            (to % 8 == 0 || (to + 1) % 8 == 0)              //.
-            )                                               //.
-        ||                                                  //.
-        (                                                   //.
-            ((to + 1) % 8 == 0 || (to + 2) % 8 == 0) &&     //.
-            (from % 8 == 0 || (from - 1) % 8 == 0)          // the initial square of 1 evaluates as true
-            )                                               //.
-    );                                                      //.
+    return (                                               //
+        (from % 8 == 6 && to % 8 == 0) ||                  //
+        (from % 8 == 7 && (to % 8 == 0 || to % 8 == 1)) || //
+        (from % 8 == 1 && to % 8 == 7) ||                  //
+        (from % 8 == 0 && (to % 8 == 6 || to % 8 == 7))    //
+                                                           //
+    );                                                     //
 }
 
 bool Board::isAlly(Piece p, int to)
@@ -340,7 +336,10 @@ bool Board::isSquareAttacked(int square)
             if (!crossesBorderKnight(check, square) && isEnemy(p, check))
             {
                 if (board[check].type == PieceType::Knight)
+                {
+                    std::cout << "Crosses border knight:" << crossesBorderKnight(check, square) << "\n";
                     return true;
+                }
             }
         }
     }
