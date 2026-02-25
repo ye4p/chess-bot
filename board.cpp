@@ -337,7 +337,7 @@ bool Board::isSquareAttacked(int square)
             {
                 if (board[check].type == PieceType::Knight)
                 {
-                    std::cout << "Crosses border knight:" << crossesBorderKnight(check, square) << "\n";
+                    //std::cout << "Crosses border knight:" << crossesBorderKnight(check, square) << "\n";
                     return true;
                 }
             }
@@ -354,7 +354,7 @@ bool Board::isSquareAttacked(int square)
             {
                 break;
             }
-            if (crossesBorderBishop(check, square, -n, mult))
+            if (crossesBorderBishop(square, check, n, mult))
             { // If doesn't work can just change to when its on the borders (?)
                 break;
             }
@@ -380,7 +380,7 @@ bool Board::isSquareAttacked(int square)
             {
                 break;
             }
-            if (crossesBorderBishop(check, square, -n, mult))
+            if (crossesBorderBishop(square, check, n, mult))
             { // If doesn't work can just change to when its on the borders (?)
                 break;
             }
@@ -433,9 +433,10 @@ bool Board::isSquareAttacked(int square)
             return true;
         }
     }
-    // Add checking for enpassant ONLY if p is pawn itself
-    //
-    // TODO
-    //
+
+    if (p.type==PieceType::Pawn) {
+        // Add checking for en passant ONLY if p is pawn itself
+        
+    }
     return false;
 }

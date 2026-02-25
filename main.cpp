@@ -7,13 +7,51 @@ void TestUnderAttackMethod(Board &board)
 {
     Piece wKing = Piece(PieceType::King, Color::White);
     Piece bKnight = Piece(PieceType::Knight, Color::Black);
+    Piece bBishop = Piece(PieceType::Bishop, Color::Black);
+    Piece bQueen=Piece(PieceType::Queen, Color::Black);
+    Piece bRook=Piece(PieceType::Rook, Color::Black);
+    Piece bPawn=Piece(PieceType::Pawn, Color::Black);
     // Piece bRook = Piece(PieceType::Rook, Color::Black);
     // board.FakeMove(bRook, 18);
     board.FakeMove(wKing, 17);
-    board.FakeMove(bKnight, 35);
-    board.FakeMove(bKnight, 7);
-    // board.FakeMove(bKnight, 23);
+    //
+    // Check for knight attacks
+    //
+    // board.FakeMove(bKnight, 35); //false
+    // board.FakeMove(bKnight, 7); //false
+    // board.FakeMove(bKnight, 23); //false
+    // board.FakeMove(bKnight, 34); //true
+    //
+
+    //
+    // DIAGONAL MOVES
+    //
+    // board.FakeMove(bQueen, 25);
+    // board.FakeMove(bQueen, 27);
+    // board.FakeMove(bQueen, 31);
+    // board.FakeMove(bBishop, 27);
+    // board.FakeMove(bBishop, 31);
+    // board.FakeMove(bBishop, 25);
+    //
+
+    //
+    // HORIZONTAL MOVES
+    //
+    // board.FakeMove(bRook, 14);
+    // board.FakeMove(bRook, 24);
+    // board.FakeMove(bRook, 35);
+
+    //
+    // PAWN MOVES
+    //
+    board.FakeMove(bPawn, 9);
+    board.FakeMove(bPawn, 25);
+    board.FakeMove(bPawn, 16);
+    board.FakeMove(bPawn, 18);
+
+    //
     std::cout << "Is under attack: " << board.isSquareAttacked(17);
+    
 }
 int main()
 {
