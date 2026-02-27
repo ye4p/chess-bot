@@ -4,11 +4,14 @@
 #include <vector>
 #include <array>
 #include <algorithm>
+
 Board::Board()
 {
     Piece empty;
+
     for (int i = 0; i < 8; i++)
         board[i] = empty;
+    GameState state = GameState();
 }
 
 void Board::assignDefaultRow(int row, Color color)
@@ -110,6 +113,7 @@ bool Board::isCapture(Piece p, int to)
 
 void Board::handlePawnCapture(int from, int to, Piece p, std::vector<Move> &moves)
 {
+    // TODO: add en passant logic
     if ((checkSpace(to) != p.color) && (checkSpace(to) != Color::None) && !crossesBorder(from, to))
     {
         if (isEndOfTheBoard(to, p))
@@ -150,6 +154,24 @@ bool Board::isEnemy(Piece p, int where)
     return (p.color != board[where].color && board[where].color != Color::None);
 }
 
+bool Board::canEnPassant(int square)
+{
+    Piece p = board[square];
+    if (state.enPassantSquare == -1)
+    {
+        return false;
+    }
+    if ((square - 1) % 8 != 7 && board[square - 1].type == PieceType::Pawn && isEnemy(p, square - 1))
+    {
+        return true;
+    }
+    if ((square + 1) % 8 != 0 && board[square + 1].type == PieceType::Pawn && isEnemy(p, square + 1))
+    {
+        return true;
+    }
+    return false;
+}
+
 void Board::FakeMove(Piece p, int to)
 {
     board[to] = p;
@@ -165,6 +187,14 @@ void Board::makeMove(const Move &m)
     else
     {
         board[m.to] = m.piece;
+    }
+    if (m.piece.type == PieceType::Pawn && (std::abs(m.to - m.from) == 16))
+    {
+        state.enPassantSquare = m.to;
+    }
+    else
+    {
+        state.enPassantSquare = -1;
     }
 }
 
@@ -324,7 +354,7 @@ void Board::generateKingMoves(int square, std::vector<Move> &moves)
     generateGeometryMoves(square, moves, nums);
 }
 
-bool Board::isSquareAttacked(int square)
+bool Board::isSquareAttacked(int square, Color byColor)
 {
     Piece p = board[square];
     std::array<int, 8> numsKnight = {-17, -15, -10, -6, 6, 10, 15, 17};
@@ -337,7 +367,7 @@ bool Board::isSquareAttacked(int square)
             {
                 if (board[check].type == PieceType::Knight)
                 {
-                    //std::cout << "Crosses border knight:" << crossesBorderKnight(check, square) << "\n";
+                    // std::cout << "Crosses border knight:" << crossesBorderKnight(check, square) << "\n";
                     return true;
                 }
             }
@@ -434,9 +464,13 @@ bool Board::isSquareAttacked(int square)
         }
     }
 
-    if (p.type==PieceType::Pawn) {
-        // Add checking for en passant ONLY if p is pawn itself
-        
+    // Add checking for en passant ONLY if p is pawn itself
+    if (p.type == PieceType::Pawn && state.enPassantSquare != -1)
+    {
+        if (canEnPassant(square))
+        {
+            return true;
+        }
     }
     return false;
 }

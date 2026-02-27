@@ -3,9 +3,11 @@
 #include "move.h"
 #include <array>
 #include <vector>
+#include "gamestate.h"
 class Board
 {
     std::array<Piece, 64> board;
+    GameState state;
 
 public:
     Board();
@@ -24,6 +26,7 @@ public:
     bool crossesBorderBishop(int from, int to, int n, int multiplier);
     bool crossesBorderPawn(int from, int to);
     bool isEnemy(Piece p, int where);
+    bool canEnPassant(int square);
     void FakeMove(Piece p, int to);
     void makeMove(const Move &m);
     void undoMove(const Move &m);
@@ -35,5 +38,5 @@ public:
     void generateRookMoves(int square, std::vector<Move> &moves);
     void generateQueenMoves(int square, std::vector<Move> &moves);
     void generateKingMoves(int square, std::vector<Move> &moves);
-    bool isSquareAttacked(int square);
+    bool isSquareAttacked(int square, Color byColor);
 };
