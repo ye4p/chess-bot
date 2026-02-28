@@ -57,17 +57,15 @@ void TestUnderAttackMethod(Board &board)
     board.FakeMove(wPawn, 16);
     board.FakeMove(bPawn, 25);
     // Double move:
-    Move m=Move(16, 24, wPawn, board.getPiece(24), Piece());
-    board.makeMove(m);
-    std::cout << board.getEnPassantSquare() <<"\n";
+    Move m = Move(16, 24, wPawn, board.getPiece(24), Piece());
+    // board.makeMove(m);
+    std::cout << board.getEnPassantSquare() << "\n";
     std::cout << "Is under attack: " << board.isSquareAttacked(24);
 }
 int main()
 {
     std::vector<Move> moves;
-    Color sideToMove = Color::White;
     Board board;
-    TestUnderAttackMethod(board);
     // For the actual move generation: minimax algorithm
     //  Alpha beta prunning
 };

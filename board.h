@@ -18,6 +18,7 @@ public:
     void startingPosition();
     void displayBoard();
     Color checkSpace(int square);
+    Color flipSideToMove();
     bool isEndOfTheBoard(int square, Piece p);
     bool crossesBorder(int from, int to);
     bool crossesBorderKnight(int from, int to);

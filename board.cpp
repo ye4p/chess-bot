@@ -3,20 +3,21 @@
 #include <iostream>
 #include <vector>
 #include <array>
-#include <algorithm>
-
+#include <movehistory.h>
 Board::Board()
 {
     Piece empty;
-
     for (int i = 0; i < 8; i++)
         board[i] = empty;
     GameState state = GameState();
+    std::vector<MoveHistory> history;
 }
-Piece Board::getPiece(int square) {
+Piece Board::getPiece(int square)
+{
     return board[square];
 }
-int Board::getEnPassantSquare() {
+int Board::getEnPassantSquare()
+{
     return state.enPassantSquare;
 }
 void Board::assignDefaultRow(int row, Color color)
@@ -72,7 +73,17 @@ Color Board::checkSpace(int square)
         return p.color;
     }
 }
-
+Color Board::flipSideToMove()
+{
+    if (state.sideToMove == Color::White)
+    {
+        state.sideToMove = Color::Black;
+    }
+    else
+    {
+        state.sideToMove = Color::White;
+    }
+}
 bool Board::isEndOfTheBoard(int square, Piece p)
 {
     if (p.color == Color::White)
@@ -184,7 +195,13 @@ void Board::FakeMove(Piece p, int to)
 
 void Board::makeMove(const Move &m)
 {
+
+    //
+    //          1) BOARD MANIPULATION
+    //
+
     board[m.from] = Piece();
+    // Handles promotion
     if (m.promoted.type != PieceType::None && m.promoted.color != Color::None)
     {
         board[m.to] = m.promoted;
@@ -193,6 +210,21 @@ void Board::makeMove(const Move &m)
     {
         board[m.to] = m.piece;
     }
+    // Handles eating pawn with en passant
+    if (state.enPassantSquare != -1)
+    {
+        int back;
+        if (m.piece.color == Color::White)
+        {
+            back = m.to - 8;
+        }
+        else
+        {
+            back = m.to + 8;
+        }
+        board[back] = Piece();
+    }
+    // If the move is pawn double step, it sets en passant square as the piece's square
     if (m.piece.type == PieceType::Pawn && (std::abs(m.to - m.from) == 16))
     {
         state.enPassantSquare = m.to;
@@ -201,11 +233,113 @@ void Board::makeMove(const Move &m)
     {
         state.enPassantSquare = -1;
     }
+
+    // Handle castle
+    if (m.piece.type == PieceType::King)
+    {
+        int finalRook;
+        int normalizer;
+        if ((m.to - m.from) == -2)
+        {
+            normalizer = m.piece.color == Color::White ? 0 : 56;
+            finalRook = 3 + normalizer;
+            board[normalizer] = Piece();
+            board[finalRook] = Piece(PieceType::Rook, m.piece.color);
+        }
+        else if ((m.to - m.from) == 2)
+        {
+            normalizer = m.piece.color == Color::White ? 0 : 56 + 7;
+            finalRook = -2 + normalizer;
+            board[normalizer] = Piece();
+            board[finalRook] = Piece(PieceType::Rook, m.piece.color);
+        }
+    }
+
+    //
+    //          2) MANAGE STATES
+    //
+
+    // 2.1 Manipulating castling rights if rook/king are moved
+    if (m.piece.type == PieceType::Rook)
+    {
+        if (m.piece.color == Color::White)
+        {
+            if (m.from == 0)
+            {
+                state.whiteCastleQueenSide = false;
+            }
+            else if (m.from == 7)
+            {
+                state.whiteCastleKingSide = false;
+            }
+        }
+        else
+        {
+            if (m.from == 56)
+            {
+                state.blackCastleQueenSide = false;
+            }
+            else if (m.from == 63)
+            {
+                state.blackCastleKingSide = false;
+            }
+        }
+    }
+    if (m.captured.type == PieceType::Rook)
+    {
+        if (m.to == 0)
+            state.whiteCastleQueenSide = false;
+        if (m.to == 7)
+            state.whiteCastleKingSide = false;
+        if (m.to == 56)
+            state.blackCastleQueenSide = false;
+        if (m.to == 63)
+            state.blackCastleKingSide = false;
+    }
+
+    if (m.piece.type == PieceType::King)
+    {
+        if (m.piece.color == Color::White)
+        {
+            state.whiteCastleKingSide = false;
+            state.whiteCastleQueenSide = false;
+        }
+        else
+        {
+            state.blackCastleKingSide = false;
+            state.blackCastleQueenSide = false;
+        }
+    }
+
+    // 2.2 Manages other state properties
+    if (m.piece.type == PieceType::Pawn || m.flag == MoveFlag::Capture)
+    {
+        state.halfMoveCount = 0;
+    }
+    else
+    {
+        state.halfMoveCount++;
+    }
+    if (m.piece.color == Color::Black)
+    {
+        state.fullMoveCount++;
+    }
+    flipSideToMove();
 }
 
 void Board::undoMove(const Move &m)
 {
-    // TODO
+    board[m.to] = m.captured;
+    board[m.from] = m.piece;
+    if (m.flag == MoveFlag::Promotion)
+    {
+        board[m.from] = Piece(PieceType::Pawn, m.piece.color);
+    }
+    if (m.piece.type == PieceType::Pawn && (std::abs(m.to - m.from) == 16))
+    {
+        state.enPassantSquare = -1;
+    }
+    flipSideToMove();
 }
 void Board::generateMoves(std::vector<Move> &moves) {};
 
