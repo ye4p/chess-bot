@@ -13,7 +13,12 @@ Board::Board()
         board[i] = empty;
     GameState state = GameState();
 }
-
+Piece Board::getPiece(int square) {
+    return board[square];
+}
+int Board::getEnPassantSquare() {
+    return state.enPassantSquare;
+}
 void Board::assignDefaultRow(int row, Color color)
 {
     int start = (row - 1) * 8;
@@ -354,7 +359,7 @@ void Board::generateKingMoves(int square, std::vector<Move> &moves)
     generateGeometryMoves(square, moves, nums);
 }
 
-bool Board::isSquareAttacked(int square, Color byColor)
+bool Board::isSquareAttacked(int square)
 {
     Piece p = board[square];
     std::array<int, 8> numsKnight = {-17, -15, -10, -6, 6, 10, 15, 17};

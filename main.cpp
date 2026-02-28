@@ -11,6 +11,7 @@ void TestUnderAttackMethod(Board &board)
     Piece bQueen = Piece(PieceType::Queen, Color::Black);
     Piece bRook = Piece(PieceType::Rook, Color::Black);
     Piece bPawn = Piece(PieceType::Pawn, Color::Black);
+    Piece wPawn = Piece(PieceType::Pawn, Color::White);
     // Piece bRook = Piece(PieceType::Rook, Color::Black);
     // board.FakeMove(bRook, 18);
     board.FakeMove(wKing, 17);
@@ -48,9 +49,18 @@ void TestUnderAttackMethod(Board &board)
     // board.FakeMove(bPawn, 25);
     // board.FakeMove(bPawn, 16);
     // board.FakeMove(bPawn, 18);
+    //
 
     //
-    std::cout << "Is under attack: " << board.isSquareAttacked(17);
+    // En Passant
+    //
+    board.FakeMove(wPawn, 16);
+    board.FakeMove(bPawn, 25);
+    // Double move:
+    Move m=Move(16, 24, wPawn, board.getPiece(24), Piece());
+    board.makeMove(m);
+    std::cout << board.getEnPassantSquare() <<"\n";
+    std::cout << "Is under attack: " << board.isSquareAttacked(24);
 }
 int main()
 {

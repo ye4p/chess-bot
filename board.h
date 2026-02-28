@@ -11,6 +11,8 @@ class Board
 
 public:
     Board();
+    Piece getPiece(int square);
+    int getEnPassantSquare();
     void assignDefaultRow(int row, Color color);
     void assignPawns(int row, Color color);
     void startingPosition();
@@ -38,5 +40,5 @@ public:
     void generateRookMoves(int square, std::vector<Move> &moves);
     void generateQueenMoves(int square, std::vector<Move> &moves);
     void generateKingMoves(int square, std::vector<Move> &moves);
-    bool isSquareAttacked(int square, Color byColor);
+    bool isSquareAttacked(int square);
 };
