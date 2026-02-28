@@ -8,6 +8,7 @@ class Board
 {
     std::array<Piece, 64> board;
     GameState state;
+    std::vector<MoveHistory> history;
 
 public:
     Board();

@@ -196,6 +196,9 @@ void Board::FakeMove(Piece p, int to)
 void Board::makeMove(const Move &m)
 {
 
+    // Saving move into memory stack:
+    MoveHistory h = MoveHistory(m.from, m.to, m.piece, m.captured, m.promoted, m.flag, state.enPassantSquare, state.whiteCastleKingSide, state.whiteCastleQueenSide, state.blackCastleKingSide, state.blackCastleQueenSide, state.halfMoveCount);
+    history.push_back(h);
     //
     //          1) BOARD MANIPULATION
     //
@@ -329,6 +332,11 @@ void Board::makeMove(const Move &m)
 
 void Board::undoMove(const Move &m)
 {
+    flipSideToMove();
+    if (history.empty())
+    {
+        throw std::invalid_argument("undoMove() requires history vector to NOT be empty");
+    }
     board[m.to] = m.captured;
     board[m.from] = m.piece;
     if (m.flag == MoveFlag::Promotion)
