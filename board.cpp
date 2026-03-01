@@ -332,24 +332,83 @@ void Board::makeMove(const Move &m)
 
 void Board::undoMove(const Move &m)
 {
+    MoveHistory h = history.back(); // Get the last element of the vector
+    // Clear the final square by default
+    board[h.to] = Piece();
     flipSideToMove();
     if (history.empty())
     {
         throw std::invalid_argument("undoMove() requires history vector to NOT be empty");
     }
-    board[m.to] = m.captured;
-    board[m.from] = m.piece;
-    if (m.flag == MoveFlag::Promotion)
+
+    if (h.moved.color == Color::Black)
     {
-        board[m.from] = Piece(PieceType::Pawn, m.piece.color);
+        state.fullMoveCount--;
     }
-    if (m.piece.type == PieceType::Pawn && (std::abs(m.to - m.from) == 16))
+    state.halfMoveCount = h.prevHalfMoveCount;
+    state.whiteCastleKingSide = h.prevWhiteCastleKingSide;
+    state.whiteCastleQueenSide = h.prevWhiteCastleQueenSide;
+    state.blackCastleKingSide = h.prevBlackCastleKingSide;
+    state.blackCastleQueenSide = h.prevBlackCastleQueenSide;
+    state.enPassantSquare = h.prevEnPassantSquare;
+    // Handle promotion
+    if (h.promoted.type != PieceType::None && h.promoted.color != Color::None)
     {
-        state.enPassantSquare = -1;
+        board[h.to] = Piece();
     }
-    flipSideToMove();
+    // Handle capture
+    if (h.flag == MoveFlag::Capture)
+    {
+        board[h.to] = h.captured;
+    }
+    // Handle en passant
+    else if (h.flag == MoveFlag::EnPassant)
+    {
+        int dir;
+        if (h.moved.color == Color::White)
+        {
+            dir = h.to - 8;
+        }
+        else
+        {
+            dir = h.to + 8;
+        }
+        board[dir] = h.captured;
+    }
+    // Handle castling
+    if (h.moved.type == PieceType::King && std::abs(h.to - h.from) == 2)
+    {
+        // int rookPos=h.to + ((h.to - h.from) == 2 ? -1 : 1);
+        int rookPos;
+        int rookInit;
+        if ((h.to - h.from) == 2)
+        {
+            rookPos = h.to - 1;
+            rookInit = h.to + 2;
+        }
+        else
+        {
+            rookPos = h.to + 1;
+            rookInit = h.to - 2;
+        }
+        board[rookPos] = Piece();
+        board[rookInit] = Piece(PieceType::Rook, h.moved.color);
+    }
+    // Move piece back
+    board[h.from] = h.moved;
+
+    // Pop the history entry
+    history.pop_back();
 }
-void Board::generateMoves(std::vector<Move> &moves) {};
+void Board::generateMoves(std::vector<Move> &moves)
+{
+    // Check side to move:
+    Color c = state.sideToMove;
+    for (Piece p : board)
+    {
+        switch (p)
+    }
+};
 
 void Board::generatePawnMoves(int square, std::vector<Move> &moves)
 {
