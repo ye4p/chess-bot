@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <array>
+#include <cstdint>
 Board::Board()
 {
     Piece empty;
@@ -343,6 +344,7 @@ void Board::undoMove(const Move &m)
     flipSideToMove();
     if (history.empty())
     {
+        std::cout << "ERROR: EMPTY VECTOR OF MOVES\n";
         throw std::invalid_argument("undoMove() requires history vector to NOT be empty");
     }
 
@@ -737,4 +739,27 @@ void Board::filterLegalMoves(const std::vector<Move> &pseudo, std::vector<Move> 
         }
         undoMove(m);
     }
+}
+uint64_t Board::perft(int depth) {
+   // std::cout << "Got to perft on depth " << depth << "\n";
+    if (depth==0) {
+        return 1;
+    }
+   // std::cout << "(2) Perf testing on depth " << depth << "\n";
+    uint64_t nodes=0;
+    std::vector<Move> pseudo;
+    generateMoves(pseudo);
+    for (const  Move &move: pseudo) {
+        makeMove(move);
+        //std::cout << "Iterative move: " << move << "\n";
+        if (!isKingInCheck(state.sideToMove == Color::White ? Color::Black : Color::White))
+        {
+            nodes += perft(depth - 1);
+            std::cout << "nodes var changed to: " << nodes;
+            std::cout << " Move: " << move << "\n";
+        }
+        undoMove(move);
+        //std::cout << "Undoing move: " << move << "\n";
+    }
+    return nodes;
 }

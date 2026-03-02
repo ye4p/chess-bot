@@ -5,6 +5,7 @@
 #include "movehistory.h"
 #include <array>
 #include <vector>
+#include <cstdint>
 
 class Board
 {
@@ -48,4 +49,5 @@ public:
     bool isSquareAttacked(int square);
     bool isKingInCheck(Color c);
     void filterLegalMoves(const std::vector<Move> &pseudo, std::vector<Move> &legal);
+    uint64_t perft(int depth);
 };

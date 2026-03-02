@@ -90,13 +90,17 @@ void testMoveFilter(Board &board)
         std::cout << m << "\n";
     }
 }
+
 int main()
 {
     std::vector<Move> moves;
     Board board;
     // For the actual move generation: minimax algorithm
     //  Alpha beta prunning
-
-    testMoveFilter(board);
+    board.startingPosition();
+    uint64_t result=board.perft(2);
+    std::cout << result;
+   // std::cout << "Over";
+    //testMoveFilter(board);
     return 0;
 };
