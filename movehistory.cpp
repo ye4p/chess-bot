@@ -1,5 +1,4 @@
-#include <board.h>
-#include <movehistory.h>
+#include "movehistory.h"
 MoveHistory::MoveHistory()
 {
     int from;

@@ -1,9 +1,11 @@
 #pragma once
 #include "piece.h"
 #include "move.h"
+#include "gamestate.h"
+#include "movehistory.h"
 #include <array>
 #include <vector>
-#include "gamestate.h"
+
 class Board
 {
     std::array<Piece, 64> board;
@@ -14,12 +16,13 @@ public:
     Board();
     Piece getPiece(int square);
     int getEnPassantSquare();
+    void setSideToMove(Color c);
     void assignDefaultRow(int row, Color color);
     void assignPawns(int row, Color color);
     void startingPosition();
     void displayBoard();
     Color checkSpace(int square);
-    Color flipSideToMove();
+    void flipSideToMove();
     bool isEndOfTheBoard(int square, Piece p);
     bool crossesBorder(int from, int to);
     bool crossesBorderKnight(int from, int to);
@@ -43,4 +46,6 @@ public:
     void generateQueenMoves(int square, std::vector<Move> &moves);
     void generateKingMoves(int square, std::vector<Move> &moves);
     bool isSquareAttacked(int square);
+    bool isKingInCheck(Color c);
+    void filterLegalMoves(const std::vector<Move> &pseudo, std::vector<Move> &legal);
 };

@@ -1,5 +1,6 @@
 #pragma once
-#include <board.h>
+#include "piece.h"
+#include "move.h"
 struct MoveHistory
 {
     int from;

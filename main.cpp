@@ -3,18 +3,18 @@
 #include <vector>
 #include "move.h"
 #include "iostream"
-void TestUnderAttackMethod(Board &board)
+void testUnderAttackMethod(Board &board)
 {
-    Piece wKing = Piece(PieceType::King, Color::White);
-    Piece bKnight = Piece(PieceType::Knight, Color::Black);
-    Piece bBishop = Piece(PieceType::Bishop, Color::Black);
-    Piece bQueen = Piece(PieceType::Queen, Color::Black);
-    Piece bRook = Piece(PieceType::Rook, Color::Black);
-    Piece bPawn = Piece(PieceType::Pawn, Color::Black);
-    Piece wPawn = Piece(PieceType::Pawn, Color::White);
+    // Piece wKing = Piece(PieceType::King, Color::White);
+    // Piece bKnight = Piece(PieceType::Knight, Color::Black);
+    // Piece bBishop = Piece(PieceType::Bishop, Color::Black);
+    // Piece bQueen = Piece(PieceType::Queen, Color::Black);
+    // Piece bRook = Piece(PieceType::Rook, Color::Black);
+    // Piece bPawn = Piece(PieceType::Pawn, Color::Black);
+    // Piece wPawn = Piece(PieceType::Pawn, Color::White);
     // Piece bRook = Piece(PieceType::Rook, Color::Black);
     // board.FakeMove(bRook, 18);
-    board.FakeMove(wKing, 17);
+    // board.FakeMove(wKing, 17);
     //
     // Check for knight attacks
     //
@@ -54,13 +54,41 @@ void TestUnderAttackMethod(Board &board)
     //
     // En Passant
     //
-    board.FakeMove(wPawn, 16);
-    board.FakeMove(bPawn, 25);
+    // board.FakeMove(wPawn, 16);
+    // board.FakeMove(bPawn, 25);
     // Double move:
-    Move m = Move(16, 24, wPawn, board.getPiece(24), Piece());
+    // Move m = Move(16, 24, wPawn, board.getPiece(24), Piece());
     // board.makeMove(m);
-    std::cout << board.getEnPassantSquare() << "\n";
-    std::cout << "Is under attack: " << board.isSquareAttacked(24);
+    // std::cout << board.getEnPassantSquare() << "\n";
+    // std::cout << "Is under attack: " << board.isSquareAttacked(24);
+}
+void testMoveFilter(Board &board)
+{
+    std::vector<Move> pseudo;
+    std::vector<Move> legal;
+
+    //
+    // board.startingPosition(); WORKED with starting position correctly
+    //
+
+    Piece wKing = Piece(PieceType::King, Color::White);
+    Piece bKnight = Piece(PieceType::Knight, Color::Black);
+    Piece bBishop = Piece(PieceType::Bishop, Color::Black);
+    Piece bQueen = Piece(PieceType::Queen, Color::Black);
+    Piece bRook = Piece(PieceType::Rook, Color::Black);
+    Piece bPawn = Piece(PieceType::Pawn, Color::Black);
+    Piece wPawn = Piece(PieceType::Pawn, Color::White);
+    board.setSideToMove(Color::White);
+    board.FakeMove(wPawn, 32);
+    board.FakeMove(bPawn, 49);
+    board.FakeMove(wPawn, 7);
+
+    board.generateMoves(pseudo);
+    board.filterLegalMoves(pseudo, legal);
+    for (Move &m : legal)
+    {
+        std::cout << m << "\n";
+    }
 }
 int main()
 {
@@ -68,4 +96,7 @@ int main()
     Board board;
     // For the actual move generation: minimax algorithm
     //  Alpha beta prunning
+
+    testMoveFilter(board);
+    return 0;
 };

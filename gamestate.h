@@ -1,4 +1,5 @@
 #pragma once
+#include "piece.h"
 struct GameState
 {
     int enPassantSquare;
@@ -6,9 +7,9 @@ struct GameState
     bool whiteCastleQueenSide;
     bool blackCastleKingSide;
     bool blackCastleQueenSide;
-    int halfMoveCount = 0;
-    int fullMoveCount = 0;
-    Color sideToMove = Color::White;
+    int halfMoveCount;
+    int fullMoveCount;
+    Color sideToMove;
     GameState();
-    GameState(int enPassantSquare, bool whiteCastleKingSide, bool whiteCastleQueenSide, bool blackCastleKingSide, bool blackCastleQueenSide);
+    GameState(int enPassantSquare, bool whiteCastleKingSide, bool whiteCastleQueenSide, bool blackCastleKingSide, bool blackCastleQueenSide, int halfMoveCount, int fullMoveCount, Color sideToMove);
 };

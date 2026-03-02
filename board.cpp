@@ -1,15 +1,16 @@
 #include "board.h"
 #include "piece.h"
+#include "gamestate.h"
+#include "movehistory.h"
 #include <iostream>
 #include <vector>
 #include <array>
-#include <movehistory.h>
 Board::Board()
 {
     Piece empty;
     for (int i = 0; i < 8; i++)
         board[i] = empty;
-    GameState state = GameState();
+    GameState state;
     std::vector<MoveHistory> history;
 }
 Piece Board::getPiece(int square)
@@ -19,6 +20,10 @@ Piece Board::getPiece(int square)
 int Board::getEnPassantSquare()
 {
     return state.enPassantSquare;
+}
+void Board::setSideToMove(Color c)
+{
+    state.sideToMove == c;
 }
 void Board::assignDefaultRow(int row, Color color)
 {
@@ -73,7 +78,7 @@ Color Board::checkSpace(int square)
         return p.color;
     }
 }
-Color Board::flipSideToMove()
+void Board::flipSideToMove()
 {
     if (state.sideToMove == Color::White)
     {
@@ -404,9 +409,36 @@ void Board::generateMoves(std::vector<Move> &moves)
 {
     // Check side to move:
     Color c = state.sideToMove;
-    for (Piece p : board)
+    for (int i = 0; i < 64; i++)
     {
-        switch (p)
+        Piece p = board[i];
+        if (p.color == c)
+        {
+            if (board[i].type == PieceType::Pawn)
+            {
+                generatePawnMoves(i, moves);
+            }
+            else if (p.type == PieceType::Knight)
+            {
+                generateKnightMoves(i, moves);
+            }
+            else if (p.type == PieceType::Bishop)
+            {
+                generateBishopMoves(i, moves);
+            }
+            else if (p.type == PieceType::Rook)
+            {
+                generateRookMoves(i, moves);
+            }
+            else if (p.type == PieceType::King)
+            {
+                generateKingMoves(i, moves);
+            }
+            else if (p.type == PieceType::Queen)
+            {
+                generateQueenMoves(i, moves);
+            }
+        }
     }
 };
 
@@ -679,4 +711,30 @@ bool Board::isSquareAttacked(int square)
         }
     }
     return false;
+}
+bool Board::isKingInCheck(Color c)
+{
+    for (int i = 0; i < 64; i++)
+    {
+        if (board[i].type == PieceType::King && board[i].color == c)
+        {
+            if (isSquareAttacked(i))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+void Board::filterLegalMoves(const std::vector<Move> &pseudo, std::vector<Move> &legal)
+{
+    for (const Move &m : pseudo)
+    {
+        makeMove(m);
+        if (!isKingInCheck(state.sideToMove == Color::White ? Color::Black : Color::White))
+        {
+            legal.push_back(m);
+        }
+        undoMove(m);
+    }
 }
