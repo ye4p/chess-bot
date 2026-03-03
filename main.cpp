@@ -98,7 +98,7 @@ int main()
     // For the actual move generation: minimax algorithm
     //  Alpha beta prunning
     board.startingPosition();
-    uint64_t result=board.perft(2);
+    uint64_t result=board.perft(3);
     std::cout << result;
    // std::cout << "Over";
     //testMoveFilter(board);

@@ -21,6 +21,9 @@ public:
     void assignDefaultRow(int row, Color color);
     void assignPawns(int row, Color color);
     void startingPosition();
+    std::vector<std::string> splitString(std::string str, char delimiter);
+    std::string getFEN();
+    void setFEN(std::string s);
     void displayBoard();
     Color checkSpace(int square);
     void flipSideToMove();

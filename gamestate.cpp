@@ -11,6 +11,17 @@ GameState::GameState()
     fullMoveCount = 0;
     sideToMove = Color::White;
 }
+GameState::GameState(bool b)
+{
+    enPassantSquare = -1; // If pawn moved double step, then the enPassanSquare should be the final square from the pawn's double step
+    whiteCastleKingSide = b;
+    whiteCastleQueenSide = b;
+    blackCastleKingSide = b;
+    blackCastleQueenSide = b;
+    halfMoveCount = 0;
+    fullMoveCount = 0;
+    sideToMove = Color::White;
+}
 GameState::GameState(int enPassantSquare, bool whiteCastleKingSide, bool whiteCastleQueenSide, bool blackCastleKingSide, bool blackCastleQueenSide, int halfMoveCount, int fullMoveCount, Color sideToMove)
 {
     this->enPassantSquare = enPassantSquare;

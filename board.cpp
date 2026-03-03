@@ -6,6 +6,9 @@
 #include <vector>
 #include <array>
 #include <cstdint>
+#include <sstream>
+#include <cctype>
+
 Board::Board()
 {
     Piece empty;
@@ -52,6 +55,78 @@ void Board::startingPosition()
     assignPawns(2, Color::White);
     assignPawns(7, Color::Black);
     assignDefaultRow(8, Color::Black);
+}
+std::vector<std::string> Board::splitString(std::string str, char delimiter) {
+    std::vector <std::string> tokens;
+    std::string token;
+    std::stringstream ss(str);
+    while (std::getline(ss, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+std::string Board::getFEN() {
+
+}
+
+void Board::setFEN(std::string s) {
+    std::vector <std::string> vec=splitString(s, ' ');
+    std::vector <std::string> rows =splitString(vec[0], '/');
+    int i =63;
+    for (std::string row : rows) {
+        for (char let : row) {
+            
+            // Handle letters
+            if (std::isalpha(let)) {
+                Color color= (std::isupper(let) ? Color::White : Color::Black);
+                PieceType piece;
+                if (std::tolower(static_cast<unsigned char>(let))=='p') {
+                    piece=PieceType::Pawn;
+                } else if (std::tolower(static_cast<unsigned char>(let))=='n') {
+                    piece=PieceType::Knight;
+                } else if (std::tolower(static_cast<unsigned char>(let))=='b')  {
+                    piece=PieceType::Bishop;
+                } else if (std::tolower(static_cast<unsigned char>(let))=='r') {
+                    piece=PieceType::Rook;
+                } else if (std::tolower(static_cast<unsigned char>(let))=='k') {
+                    piece=PieceType::King;
+                } else {
+                    piece = PieceType::Queen;
+                }
+                board[i]=Piece(piece, color);
+                i--;
+            }
+            // Handle numbers
+            if (std::isdigit(let)) {
+                i-=let;
+            }
+        }
+    }
+    
+    // Check which color needs to move
+    if (vec[1]=="w") {
+        state.sideToMove=Color::White;
+    } else {
+        state.sideToMove=Color::Black;
+    }
+
+    //Handle castling rights
+    state=GameState(false);
+    for (char let : vec[2]) {
+        if (static_cast<unsigned char>(let)=='K') {
+            state.whiteCastleKingSide=  true;  
+        } else if (static_cast<unsigned char>(let)=='k') {
+            state.blackCastleKingSide=true;
+        } else if ((static_cast<unsigned char>(let)=='Q')) {
+            state.whiteCastleQueenSide=true;
+        } else if ((static_cast<unsigned char>(let)=='q')) {
+            state.blackCastleQueenSide=true;
+        }
+    }
+
+    // Handle en passant square
+    char let=vec[3][0];
+    char num=vec[3][1];
 }
 
 void Board::displayBoard()
@@ -741,9 +816,9 @@ void Board::filterLegalMoves(const std::vector<Move> &pseudo, std::vector<Move> 
 {
     for (const Move &m : pseudo)
     {
-        std::cout << "Trying move m (inside of filterLegalMoves): " << m << "\n";
+        //std::cout << "Trying move m (inside of filterLegalMoves): " << m << "\n";
         makeMove(m);
-        std::cout << "succesfully performed move m (inside of filterLegalMoves): " << m << "\n";
+        //std::cout << "succesfully performed move m (inside of filterLegalMoves): " << m << "\n";
         if (!isKingInCheck(state.sideToMove == Color::White ? Color::Black : Color::White))
         {
             legal.push_back(m);
@@ -762,22 +837,22 @@ uint64_t Board::perft(int depth)
     uint64_t nodes = 0;
     std::vector<Move> pseudo;
     std::vector<Move> legal;
-    std::cout << "Attempt to generate pseudo legal moves...\n";
+    //std::cout << "Attempt to generate pseudo legal moves...\n";
     generateMoves(pseudo);
-    std::cout << "Attempt to filter legal moves...\n";
+    //std::cout << "Attempt to filter legal moves...\n";
     filterLegalMoves(pseudo, legal);
-    std::cout << "Successfully filtered legal moves\n";
+    //std::cout << "Successfully filtered legal moves\n";
     for (const Move &move : legal)
     {
-        std::cout << "Trying move Move: " << move << "\n";
+        //std::cout << "Trying move Move: " << move << "\n";
         makeMove(move);
-        std::cout << "Performed move: " << move << "\n";
+        //std::cout << "Performed move: " << move << "\n";
         if (!isKingInCheck(state.sideToMove == Color::White ? Color::Black : Color::White))
         {
-            std::cout << "Performing recursive call... \n";
+            //std::cout << "Performing recursive call... \n";
             nodes += perft(depth - 1);
-            std::cout << " nodes var changed to: " << nodes;
-            std::cout << " Legality checked Move: " << move << "\n";
+            //std::cout << " nodes var changed to: " << nodes;
+            //std::cout << " Legality checked Move: " << move << "\n";
         }
         undoMove(move);
         // std::cout << "Undoing move: " << move << "\n";
