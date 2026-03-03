@@ -203,6 +203,10 @@ void Board::makeMove(const Move &m)
 {
 
     // Saving move into memory stack:
+    if (isOutOfBounds(m.from) || isOutOfBounds(m.to))
+    {
+        throw std::invalid_argument("One of the numbers in move is out of bounds ");
+    }
     MoveHistory h = MoveHistory(m.from, m.to, m.piece, m.captured, m.promoted, m.flag, state.enPassantSquare, state.whiteCastleKingSide, state.whiteCastleQueenSide, state.blackCastleKingSide, state.blackCastleQueenSide, state.halfMoveCount);
     history.push_back(h);
     //
@@ -220,7 +224,8 @@ void Board::makeMove(const Move &m)
         board[m.to] = m.piece;
     }
     // Handles eating pawn with en passant
-    if (state.enPassantSquare != -1)
+    // if (state.enPassantSquare != -1) -- as I understand, this makes it think that every move after double step from pawn is en passant
+    if (m.flag == MoveFlag::EnPassant)
     {
         int back;
         if (m.piece.color == Color::White)
@@ -230,6 +235,10 @@ void Board::makeMove(const Move &m)
         else
         {
             back = m.to + 8;
+        }
+        if (isOutOfBounds(back))
+        {
+            throw std::invalid_argument("var 'back' is out of bounds ");
         }
         board[back] = Piece();
     }
@@ -555,11 +564,11 @@ void Board::generateGeometryMoves(int square, std::vector<Move> &moves, std::vec
             }
             if (isCapture(p, final))
             {
-                moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Normal));
+                moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Capture));
             }
             else
             {
-                moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Capture));
+                moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Normal));
             }
             if (p.type == PieceType::King)
             {
@@ -732,7 +741,9 @@ void Board::filterLegalMoves(const std::vector<Move> &pseudo, std::vector<Move> 
 {
     for (const Move &m : pseudo)
     {
+        std::cout << "Trying move m (inside of filterLegalMoves): " << m << "\n";
         makeMove(m);
+        std::cout << "succesfully performed move m (inside of filterLegalMoves): " << m << "\n";
         if (!isKingInCheck(state.sideToMove == Color::White ? Color::Black : Color::White))
         {
             legal.push_back(m);
@@ -740,26 +751,36 @@ void Board::filterLegalMoves(const std::vector<Move> &pseudo, std::vector<Move> 
         undoMove(m);
     }
 }
-uint64_t Board::perft(int depth) {
-   // std::cout << "Got to perft on depth " << depth << "\n";
-    if (depth==0) {
+uint64_t Board::perft(int depth)
+{
+    // std::cout << "Got to perft on depth " << depth << "\n";
+    if (depth == 0)
+    {
         return 1;
     }
-   // std::cout << "(2) Perf testing on depth " << depth << "\n";
-    uint64_t nodes=0;
+    // std::cout << "(2) Perf testing on depth " << depth << "\n";
+    uint64_t nodes = 0;
     std::vector<Move> pseudo;
+    std::vector<Move> legal;
+    std::cout << "Attempt to generate pseudo legal moves...\n";
     generateMoves(pseudo);
-    for (const  Move &move: pseudo) {
+    std::cout << "Attempt to filter legal moves...\n";
+    filterLegalMoves(pseudo, legal);
+    std::cout << "Successfully filtered legal moves\n";
+    for (const Move &move : legal)
+    {
+        std::cout << "Trying move Move: " << move << "\n";
         makeMove(move);
-        //std::cout << "Iterative move: " << move << "\n";
+        std::cout << "Performed move: " << move << "\n";
         if (!isKingInCheck(state.sideToMove == Color::White ? Color::Black : Color::White))
         {
+            std::cout << "Performing recursive call... \n";
             nodes += perft(depth - 1);
-            std::cout << "nodes var changed to: " << nodes;
-            std::cout << " Move: " << move << "\n";
+            std::cout << " nodes var changed to: " << nodes;
+            std::cout << " Legality checked Move: " << move << "\n";
         }
         undoMove(move);
-        //std::cout << "Undoing move: " << move << "\n";
+        // std::cout << "Undoing move: " << move << "\n";
     }
     return nodes;
 }
