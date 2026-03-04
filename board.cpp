@@ -414,15 +414,8 @@ void Board::makeMove(const Move &m)
     // if (state.enPassantSquare != -1) -- as I understand, this makes it think that every move after double step from pawn is en passant
     if (m.flag == MoveFlag::EnPassant)
     {
-        int back;
-        if (m.piece.color == Color::White)
-        {
-            back = m.to - 8;
-        }
-        else
-        {
-            back = m.to + 8;
-        }
+        int back = m.to + ((m.piece.color == Color::White) ? -8 : +8);
+
         if (isOutOfBounds(back))
         {
             throw std::invalid_argument("var 'back' is out of bounds ");
