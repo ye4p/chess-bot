@@ -21,14 +21,16 @@ public:
     void assignDefaultRow(int row, Color color);
     void assignPawns(int row, Color color);
     void startingPosition();
+    std::vector<std::string> splitString(std::string str, char delimiter);
     int codeToIndex(std::string code);
     std::string indexToCode(int index);
-    std::vector<std::string> splitString(std::string str, char delimiter);
     std::string getFEN();
     void setFEN(std::string s);
+    void displayBoardPieces();
     void displayBoard();
     Color checkSpace(int square);
     void flipSideToMove();
+    Color getSideToMove();
     bool isEndOfTheBoard(int square, Piece p);
     bool crossesBorder(int from, int to);
     bool crossesBorderKnight(int from, int to);
@@ -55,4 +57,5 @@ public:
     bool isKingInCheck(Color c);
     void filterLegalMoves(const std::vector<Move> &pseudo, std::vector<Move> &legal);
     uint64_t perft(int depth);
+    void perftDivide(int depth);
 };

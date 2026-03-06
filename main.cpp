@@ -97,10 +97,16 @@ int main()
     Board board;
     // For the actual move generation: minimax algorithm
     //  Alpha beta prunning
-    board.startingPosition();
-    uint64_t result=board.perft(3);
+    //board.startingPosition();
+    board.setFEN("rnbqkbnr/ppppp1pp/8/5p2/4P3/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 1");
+    // Piece wPawn=Piece(PieceType::Pawn, Color::White);
+    // board.FakeMove(wPawn, 13);
+    board.displayBoard();
+    uint64_t result=board.perft(2);    
     std::cout << result;
+
+    board.perftDivide(2);
    // std::cout << "Over";
     //testMoveFilter(board);
     return 0;
-};
+}; 

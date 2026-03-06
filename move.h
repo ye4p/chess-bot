@@ -21,5 +21,9 @@ struct Move
     Piece promoted;
     MoveFlag flag;
     Move(int f, int t, Piece piece, Piece captured = Piece(), Piece promoted = Piece(), MoveFlag flag = MoveFlag::Normal);
+    int codeToIndex(std::string code);
+    std::string indexToCode(int index);
+    void displayMove();
+    std::string getMoveCode();
 };
 std::ostream &operator<<(std::ostream &os, const Move &obj);

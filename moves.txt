@@ -1,0 +1,31 @@
+Side to mive is set to : Black
+R N B K Q B N R 
+P P P   P P P P 
+
+      P
+
+
+p p p p p p p p 
+r n b k q b n r
+h7h6: 30
+h7h5: 30
+g7g6: 30
+g7g5: 30
+f7f6: 30
+f7f5: 31
+e7e6: 30
+e7e5: 29
+d7d6: 30
+d7d5: 31
+c7c6: 30
+c7c5: 30
+b7b6: 30
+b7b5: 30
+a7a6: 30
+a7a5: 30
+g8h6: 30
+g8f6: 30
+b8c6: 30
+b8a6: 30
+
+ Total nodes at depth 2: 601

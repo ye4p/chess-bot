@@ -98,7 +98,10 @@ int Board::codeToIndex(std::string code)
     default:
         break;
     }
-    index += (num - 1) * 8;
+    //std::cout << "Reading number: " << num << "\n";
+    int numConverted=num-'0';
+    index = index+ ((numConverted - 1) * 8);
+   // std::cout << "Multiplication of num by 3: " << num*3 << "\n";
     return index;
 }
 std::string Board::indexToCode(int index)
@@ -137,18 +140,23 @@ std::string Board::indexToCode(int index)
 }
 std::string Board::getFEN()
 {
+    return " ";
 }
 
 void Board::setFEN(std::string s)
 {
+    //std::cout << "setFEN method started\n";
     std::vector<std::string> vec = splitString(s, ' ');
     std::vector<std::string> rows = splitString(vec[0], '/');
+   // std::cout << "Splitted the strings successfully\n";
     int i = 63;
+    // Handle position of pieces on the board.
     for (std::string row : rows)
     {
+        state = GameState(false);
         for (char let : row)
         {
-
+            //std::cout<< "Handling letter " << let << "\n";
             // Handle letters
             if (std::isalpha(let))
             {
@@ -156,6 +164,7 @@ void Board::setFEN(std::string s)
                 PieceType piece;
                 if (std::tolower(static_cast<unsigned char>(let)) == 'p')
                 {
+                   // std::cout<< "pawn found\n";
                     piece = PieceType::Pawn;
                 }
                 else if (std::tolower(static_cast<unsigned char>(let)) == 'n')
@@ -178,18 +187,24 @@ void Board::setFEN(std::string s)
                 {
                     piece = PieceType::Queen;
                 }
+                //std::cout << " current index: " << i << "\n";
                 board[i] = Piece(piece, color);
                 i--;
             }
             // Handle numbers
             if (std::isdigit(let))
             {
-                i -= let;
+                int letConverted=let-'0';
+                //std::cout<< "Let converted: " <<letConverted << "\n";
+                i -= letConverted;
+                //std::cout<< "index after hangling number: "<< i<<"\n";
             }
         }
     }
+    //std::cout << " Finished running pieces handling\n";
 
     // Check which color needs to move
+    //std::cout << "vec[1]: "<<vec[1]<<" vec[1] == 'w' result is: " << (vec[1] == "w") <<"\n";
     if (vec[1] == "w")
     {
         state.sideToMove = Color::White;
@@ -198,9 +213,9 @@ void Board::setFEN(std::string s)
     {
         state.sideToMove = Color::Black;
     }
+   // std::cout << " Finished setting color of side that is supposed to move, and it is "<< getSideToMove() << "\n";
 
     // Handle castling rights
-    state = GameState(false);
     for (char let : vec[2])
     {
         if (static_cast<unsigned char>(let) == 'K')
@@ -220,19 +235,24 @@ void Board::setFEN(std::string s)
             state.blackCastleQueenSide = true;
         }
     }
+    //std::cout << " Finished handling castling rights\n";
 
     // Handle en passant square
     int squareEnPassant = codeToIndex(vec[3]);
     state.enPassantSquare = squareEnPassant;
+   // std::cout << " Finished handling en passant square\n";
 
     // Halfmove clock
     state.halfMoveCount = std::stoi(vec[4]);
 
     // Fullmove count
     state.fullMoveCount = std::stoi(vec[5]);
+    //std::cout << " Finished half/fullmove clock\n";
+
+    std::cout << "Side to mive is set to : "<<  getSideToMove()<<"\n";
 }
 
-void Board::displayBoard()
+void Board::displayBoardPieces()
 {
     for (int i = 0; i < 8; i++)
     {
@@ -241,6 +261,46 @@ void Board::displayBoard()
             std::cout << board[i * 8 + j] << " ";
         }
         std::cout << "\n";
+    }
+}
+void Board::displayBoard() {
+    for (int i=0; i<64; i++) {
+        Piece p=board[i];
+        if (p.color==Color::White) {
+            if (p.type==PieceType::Pawn){
+                std::cout<< "P ";
+            } else if (p.type==PieceType::Knight) {
+                std::cout<< "N ";
+            } else if (p.type==PieceType::Bishop) {
+                std::cout<< "B ";
+            } else if (p.type==PieceType::Rook) {
+                std::cout << "R ";
+            } else if (p.type==PieceType::King) {
+                std::cout<< "K ";
+            } else if (p.type==PieceType::Queen) {
+                std::cout<< "Q ";
+            }
+        } else if (p.color==Color::Black) {
+            if (p.type==PieceType::Pawn){
+                std::cout<< "p ";
+            } else if (p.type==PieceType::Knight) {
+                std::cout<< "n ";
+            } else if (p.type==PieceType::Bishop) {
+                std::cout<< "b ";
+            } else if (p.type==PieceType::Rook) {
+                std::cout << "r ";
+            } else if (p.type==PieceType::King) {
+                std::cout<< "k ";
+            } else if (p.type==PieceType::Queen) {
+                std::cout<< "q ";
+            }
+
+        } else {
+            std::cout << "  ";
+        }
+        if (i%8==7) {
+            std::cout<< "\n";
+        }
     }
 }
 
@@ -267,6 +327,9 @@ void Board::flipSideToMove()
     {
         state.sideToMove = Color::White;
     }
+}
+Color Board::getSideToMove() {
+    return state.sideToMove;
 }
 bool Board::isEndOfTheBoard(int square, Piece p)
 {
@@ -312,19 +375,22 @@ bool Board::isCapture(Piece p, int to)
 }
 
 void Board::handlePawnCapture(int from, int to, Piece p, std::vector<Move> &moves)
-{
-    // TODO: add en passant logic
-    if ((checkSpace(to) != p.color) && (checkSpace(to) != Color::None) && !crossesBorder(from, to))
+{   
+    if (to == state.enPassantSquare )
+        { // EN PASSANT LOGIC
+           int back = to + (p.color == Color::White ? -8 : +8);
+            if (isEnemy(p, back)) {
+                moves.push_back(Move(from, to, p, board[back], Piece(), MoveFlag::EnPassant));
+                board[back] = Piece(); // This empties the spot where the pawn was en passant'ed
+                return;
+            }
+        }
+    //if ((checkSpace(to) != p.color) && (checkSpace(to) != Color::None) && !crossesBorder(from, to))
+    if (!crossesBorder(from, to) && (board[to].color!=Color::None & board[to].color!=p.color))
     {
         if (isEndOfTheBoard(to, p))
         {
             moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Queen, p.color), MoveFlag::Promotion));
-        }
-        else if (to == state.enPassantSquare)
-        { // EN PASSANT LOGIC
-            moves.push_back(Move(from, to, p, board[to], Piece(), MoveFlag::EnPassant));
-            int back = to + (p.color == Color::White ? +8 : -8);
-            board[back] = Piece(); // This empties the spot where the pawn was en passant'ed
         }
         else
         {
@@ -370,11 +436,12 @@ bool Board::canEnPassant(int square)
     int left, right;
     left = square + (p.color == Color::White ? +9 : -9);
     right = square + (p.color == Color::White ? +7 : -7);
-    if (!crossesBorderPawn(square, right) && right == state.enPassantSquare)
+    int back=state.enPassantSquare+ (p.color==Color::White? -8 : +8);
+    if (!crossesBorderPawn(square, right) && right == state.enPassantSquare && isEnemy(p, back))
     {
         return true;
     }
-    if (!crossesBorderPawn(square, left) && left == state.enPassantSquare)
+    if (!crossesBorderPawn(square, left) && left == state.enPassantSquare && isEnemy(p, back))
     {
         return true;
     }
@@ -783,6 +850,32 @@ void Board::generateKingMoves(int square, std::vector<Move> &moves)
 {
     std::vector<int> nums = {-9, -8, -7, -1, 1, 7, 8, 9};
     generateGeometryMoves(square, moves, nums);
+    Piece p=board[square];
+    if (p.color==Color::White) {
+        if ((state.whiteCastleKingSide==true && board[square+1].type==PieceType::None && board[square+2].type==PieceType::None) &&
+            (!isSquareAttacked(square) && !isSquareAttacked(square+1) && !isSquareAttacked(square+2) && !isSquareAttacked(square+3))
+    ) { // Also need to check if not under attack
+            moves.push_back(Move(square, square+2, p, board[square+2], Piece(), MoveFlag::KingCastle));
+        }
+        if ((state.whiteCastleQueenSide==true && board[square-1].type==PieceType::None && board[square-2].type==PieceType::None && board[square-3].type==PieceType::None) &&
+        (!isSquareAttacked(square) && !isSquareAttacked(square-1) && !isSquareAttacked(square-2) && !isSquareAttacked(square-3) && !isSquareAttacked(square-4))
+    ) {
+            moves.push_back(Move(square, square-2, p, board[square-2], Piece(), MoveFlag::QueenCastle));
+        }
+    }
+    if (p.color==Color::Black) {
+
+        if ((state.blackCastleKingSide==true && board[square+1].type==PieceType::None && board[square+2].type==PieceType::None) &&
+            (!isSquareAttacked(square) && !isSquareAttacked(square+1) && !isSquareAttacked(square+2) && !isSquareAttacked(square+3))
+    ) { // Also need to check if not under attack
+            moves.push_back(Move(square, square+2, p, board[square+2], Piece(), MoveFlag::KingCastle));
+        }
+        if ((state.blackCastleQueenSide==true && board[square-1].type==PieceType::None && board[square-2].type==PieceType::None && board[square-3].type==PieceType::None) &&
+        (!isSquareAttacked(square) && !isSquareAttacked(square-1) && !isSquareAttacked(square-2) && !isSquareAttacked(square-3) && !isSquareAttacked(square-4))
+    ) {
+            moves.push_back(Move(square, square-2, p, board[square-2], Piece(), MoveFlag::QueenCastle));
+        }
+    }
 }
 
 bool Board::isSquareAttacked(int square)
@@ -965,4 +1058,22 @@ uint64_t Board::perft(int depth)
         // std::cout << "Undoing move: " << move << "\n";
     }
     return nodes;
+}
+void Board::perftDivide(int depth) {
+    uint64_t totalNodes=0;
+    std::vector<Move> pseudo;
+    std::vector<Move> legal;
+    generateMoves(pseudo);
+    filterLegalMoves(pseudo, legal);
+    for (Move &move : legal) {
+        makeMove(move);
+        if (!isKingInCheck(state.sideToMove == Color::White ? Color::Black : Color::White)) {
+            uint64_t  nodes = perft(depth-1);
+
+            std::cout << move.getMoveCode() <<  ": " << nodes << std::endl;
+            totalNodes+=nodes;
+        }
+        undoMove(move);
+    }
+    std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;
 }
