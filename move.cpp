@@ -1,5 +1,6 @@
 #include "move.h"
 #include "board.h"
+#include <string>
 Move::Move(int f, int t, Piece piece, Piece captured, Piece promoted, MoveFlag flag)
     : from(f), to(t), piece(piece), captured(captured), promoted(promoted), flag(flag)
 {
@@ -56,10 +57,10 @@ int Move::codeToIndex(std::string code)
     default:
         break;
     }
-    //std::cout << "Reading number: " << num << "\n";
-    int numConverted=num-'0';
-    index = index+ ((numConverted - 1) * 8);
-   // std::cout << "Multiplication of num by 3: " << num*3 << "\n";
+    // std::cout << "Reading number: " << num << "\n";
+    int numConverted = num - '0';
+    index = index + ((numConverted - 1) * 8);
+    // std::cout << "Multiplication of num by 3: " << num*3 << "\n";
     return index;
 }
 std::string Move::indexToCode(int index)
@@ -96,14 +97,16 @@ std::string Move::indexToCode(int index)
     }
     return (let + whole);
 }
-void Move::displayMove() {
-    std::cout<< indexToCode(from) + indexToCode(to)<<"\n";
+void Move::displayMove()
+{
+    std::cout << indexToCode(from) + indexToCode(to) << "\n";
 }
-std::string Move::getMoveCode() {
+std::string Move::getMoveCode()
+{
     return indexToCode(from) + indexToCode(to);
 }
 std::ostream &operator<<(std::ostream &os, const Move &m)
 {
-    os <<" Move from square " << m.from << " To square " << m.to << " 1)  Piece moved: " << m.piece << " 2) Piece captured: " << m.captured << " 3) Piece Promoted: " << m.promoted << ", Move's flag: " << m.flag;
+    os << " Move from square " << m.from << " To square " << m.to << " 1)  Piece moved: " << m.piece << " 2) Piece captured: " << m.captured << " 3) Piece Promoted: " << m.promoted << ", Move's flag: " << m.flag;
     return os;
 }

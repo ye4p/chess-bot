@@ -97,16 +97,67 @@ int main()
     Board board;
     // For the actual move generation: minimax algorithm
     //  Alpha beta prunning
-    //board.startingPosition();
-    board.setFEN("rnbqkbnr/ppppp1pp/8/5p2/4P3/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 1");
-    // Piece wPawn=Piece(PieceType::Pawn, Color::White);
-    // board.FakeMove(wPawn, 13);
-    board.displayBoard();
-    uint64_t result=board.perft(2);    
-    std::cout << result;
 
+    // board.startingPosition();
+
+    // board.setFEN("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+    // board.setFEN("rnbqkbnr/p1pppppp/8/1p6/4P3/8/PPPP1PPP/RNBQKBNR w KQkq b6 0 1");
+    //  Piece wPawn=Piece(PieceType::Pawn, Color::White);
+    //  board.FakeMove(wPawn, 13);
+    // board.setFEN("rnbqkbnr/pppppppp/8/8/8/2N5/PPPPPPPP/R1BQKBNR b KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/ppp1pppp/8/3p4/8/2N5/PPPPPPPP/R1BQKBNR w KQkq d6 0 1");
+    // board.setFEN("rnbqkbnr/ppp1pppp/8/3N4/8/8/PPPPPPPP/R1BQKBNR b KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/pppppppp/8/8/8/6P1/PPPPPP1P/RNBQKBNR b KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/ppp1pppp/3p4/8/8/6P1/PPPPPP1P/RNBQKBNR w KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/ppp1pppp/3p4/8/8/6PB/PPPPPP1P/RNBQK1NR b KQkq - 0 1");
+
+    // board.setFEN("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1");
+    // board.setFEN("rnbqkbnr/1ppppppp/p7/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/1ppppppp/p6B/8/3P4/8/PPP1PPPP/RN1QKBNR b KQkq - 0 1");
+
+    // board.setFEN("rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/pppp1ppp/4p3/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/pppp1ppp/4p3/8/8/4P3/PPPPKPPP/RNBQ1BNR b - - 0 1");
+    // board.setFEN("rnb1kbnr/pppp1ppp/4pq2/8/8/4P3/PPPPKPPP/RNBQ1BNR w KQkq - 0 1");
+
+    // board.setFEN("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+    // board.setFEN("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 1");
+    // board.setFEN("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPPKPPP/RNBQ1BNR b KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/pp1ppppp/8/8/2p1P3/8/PPPPKPPP/RNBQ1BNR w KQkq - 0 1");
+
+    // board.setFEN("rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/pppp1ppp/8/4p3/8/4P3/PPPP1PPP/RNBQKBNR w KQkq e6 0 1");
+    // board.setFEN("rnbqkbnr/pppp1ppp/8/4p3/8/4P3/PPPPKPPP/RNBQ1BNR b KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/pppp1ppp/8/8/4p3/4P3/PPPPKPPP/RNBQ1BNR w KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/pppp1ppp/8/8/4p3/3KP3/PPPP1PPP/RNBQ1BNR b - - 0 1");
+
+    // board.setFEN("rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/ppp1pppp/8/3p4/8/4P3/PPPP1PPP/RNBQKBNR w KQkq d6 0 1");
+    // board.setFEN("rnbqkbnr/ppp1pppp/8/3p4/2B5/4P3/PPPP1PPP/RNBQK1NR b KQkq - 0 1");
+    // board.setFEN("rnbqkbnr/ppp1pppp/8/8/2p5/4P3/PPPP1PPP/RNBQK1NR w KQkq - 0 1");
+    board.setFEN("rnbqkbnr/ppp1pppp/8/8/2pP4/4P3/PPP2PPP/RNBQK1NR b KQkq d3 0 1");
+
+    board.displayBoard();
+    // Move m=Move(board.codeToIndex("e8"),board.codeToIndex("d7"), )
+    // board.generateGeometryMoves(board.codeToIndex("e8"), moves, {-9, -8, -7, -1, 1, 7, 8, 9});
+    // for (Move m : moves)
+    // {
+    //     m.displayMove();
+    //     std::cout << m << std::endl;
+    // }
+    // board.makeMove(moves[0]);
+    // std::cout << "Is king in check: " << board.isKingInCheck(Color::Black);
+    // uint64_t result = board.perft(2);
+    // std::cout << result << std::endl;
+    // std::cout << board.crossesBorderPawn(board.codeToIndex("g7"), board.codeToIndex("h6"));
+    // std::cout << "is under attack: " << board.isSquareAttacked(board.codeToIndex("d3"));
+    // board.generateGeometryMoves(board.codeToIndex("d8"), moves, {-9, -8, -7, -1, 1, 7, 8, 9});
+    // for (Move m : moves)
+    // {
+    //     m.displayMove();
+    // }
     board.perftDivide(2);
-   // std::cout << "Over";
-    //testMoveFilter(board);
+    //     std::cout << "Over";
+    //     testMoveFilter(board);
     return 0;
-}; 
+};

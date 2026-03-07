@@ -15,7 +15,7 @@ class Board
 
 public:
     Board();
-    Piece getPiece(int square);
+    Piece &getPiece(int square);
     int getEnPassantSquare();
     void setSideToMove(Color c);
     void assignDefaultRow(int row, Color color);
