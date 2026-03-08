@@ -667,6 +667,7 @@ void Board::undoMove(const Move &m)
     // Handle en passant
     else if (h.flag == MoveFlag::EnPassant)
     {
+        // std::cout << "UNDOING EN PASSANT\n";
         int dir;
         if (h.moved.color == Color::White)
         {
@@ -831,6 +832,7 @@ void Board::generateKnightMoves(int square, std::vector<Move> &moves)
 void Board::generateGeometryMoves(int square, std::vector<Move> &moves, std::vector<int> nums)
 {
     Piece p = board[square];
+    // PieceType type = p.type;
     for (int n : nums)
     {
         int mult = 1;
@@ -849,15 +851,18 @@ void Board::generateGeometryMoves(int square, std::vector<Move> &moves, std::vec
             {
                 break;
             }
+
             if (isCapture(p, final))
             {
                 moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Capture));
-                // std::cout << "Breaking geometrymoves method with a move from " << indexToCode(square) << " to " << indexToCode(final) << std::endl;
+                std::cout << "Breaking geometrymoves method with a move from " << indexToCode(square) << " to " << indexToCode(final) << std::endl;
                 break;
             }
             else
             {
                 moves.push_back(Move(square, final, p, board[final], Piece(), MoveFlag::Normal));
+                std::cout << "Result of isCapture; p.color and final " << isCapture(p, final) << "; " << p.color << "; " << indexToCode(final) << "; " << board[final].color << " I considered following move legal: ";
+                Move(square, final, p, board[final], Piece(), MoveFlag::Normal).displayMove();
             }
             if (p.type == PieceType::King)
             {
@@ -1131,10 +1136,20 @@ void Board::perftDivide(int depth)
     std::vector<Move> legal;
     generateMoves(pseudo);
     filterLegalMoves(pseudo, legal);
+    std::cout << "here are original legal moves\n";
+    for (Move m : legal)
+    {
+        m.displayMove();
+    }
     for (Move &move : legal)
     {
+        std::cout << "this move is considered legal: ";
         move.displayMove();
         makeMove(move);
+        std::cout << "Display board after making move ";
+        move.displayMove();
+        std::cout << move;
+        // displayBoard();
         if (!isKingInCheck(state.sideToMove == Color::White ? Color::Black : Color::White))
         {
             uint64_t nodes = perft(depth - 1);
@@ -1143,6 +1158,9 @@ void Board::perftDivide(int depth)
             totalNodes += nodes;
         }
         undoMove(move);
+        std::cout << "Display board after UNDOING move ";
+        move.displayMove();
+        // displayBoard();
     }
     std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;
 }

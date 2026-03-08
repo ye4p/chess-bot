@@ -78,6 +78,7 @@ void testMoveFilter(Board &board)
     Piece bRook = Piece(PieceType::Rook, Color::Black);
     Piece bPawn = Piece(PieceType::Pawn, Color::Black);
     Piece wPawn = Piece(PieceType::Pawn, Color::White);
+
     board.setSideToMove(Color::White);
     board.FakeMove(wPawn, 32);
     board.FakeMove(bPawn, 49);
@@ -93,7 +94,8 @@ void testMoveFilter(Board &board)
 
 int main()
 {
-    std::vector<Move> moves;
+    std::vector<Move> pseudo;
+    std::vector<Move> legal;
     Board board;
     // For the actual move generation: minimax algorithm
     //  Alpha beta prunning
@@ -137,7 +139,31 @@ int main()
     // board.setFEN("rnbqkbnr/ppp1pppp/8/8/2p5/4P3/PPPP1PPP/RNBQK1NR w KQkq - 0 1");
     board.setFEN("rnbqkbnr/ppp1pppp/8/8/2pP4/4P3/PPP2PPP/RNBQK1NR b KQkq d3 0 1");
 
-    board.displayBoard();
+    // Move m = Move(60, 28, Piece(PieceType::Queen, Color::Black), board.getPiece(28), Piece(), MoveFlag::Capture);
+    // board.makeMove(m);
+    // board.displayBoard();
+    // board.undoMove(m);
+    // board.displayBoard();
+
+    // board.displayBoard();
+    // std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
+    // board.generateMoves(pseudo);
+    // board.filterLegalMoves(pseudo, legal);
+    // board.setFEN("rnbqkbnr/ppp1pppp/8/8/2pP4/4P3/PPP2PPP/RNBQK1NR b KQkq d3 0 1");
+    // for (Move m : legal)
+    // {
+    //     if (m.flag == MoveFlag::EnPassant)
+    //     {
+    //         board.displayBoard();
+    //         m.displayMove();
+    //         std::cout << "Making move ...";
+    //         board.makeMove(m);
+    //         board.displayBoard();
+    //         std::cout << " Undoing move...";
+    //         board.undoMove(m);
+    //         board.displayBoard();
+    //     }
+    // }
     // Move m=Move(board.codeToIndex("e8"),board.codeToIndex("d7"), )
     // board.generateGeometryMoves(board.codeToIndex("e8"), moves, {-9, -8, -7, -1, 1, 7, 8, 9});
     // for (Move m : moves)
@@ -156,8 +182,11 @@ int main()
     // {
     //     m.displayMove();
     // }
+
     board.perftDivide(2);
-    //     std::cout << "Over";
+    std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
+    // board.displayBoard();
+
     //     testMoveFilter(board);
     return 0;
 };
