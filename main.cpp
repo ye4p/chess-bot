@@ -143,26 +143,20 @@ int main()
     // board.makeMove(m);
     // board.displayBoard();
     // board.undoMove(m);
-    // board.displayBoard();
+    board.displayBoard();
 
     // board.displayBoard();
     // std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
-    // board.generateMoves(pseudo);
-    // board.filterLegalMoves(pseudo, legal);
+    std::cout << "Starting generating moves...\n";
+    board.generateMoves(pseudo);
+    std::cout << "Generates psuedo legal moves:\n";
+    board.displayBoard();
+    board.filterLegalMoves(pseudo, legal);
+
     // board.setFEN("rnbqkbnr/ppp1pppp/8/8/2pP4/4P3/PPP2PPP/RNBQK1NR b KQkq d3 0 1");
     // for (Move m : legal)
     // {
-    //     if (m.flag == MoveFlag::EnPassant)
-    //     {
-    //         board.displayBoard();
-    //         m.displayMove();
-    //         std::cout << "Making move ...";
-    //         board.makeMove(m);
-    //         board.displayBoard();
-    //         std::cout << " Undoing move...";
-    //         board.undoMove(m);
-    //         board.displayBoard();
-    //     }
+    //     m.displayMove();
     // }
     // Move m=Move(board.codeToIndex("e8"),board.codeToIndex("d7"), )
     // board.generateGeometryMoves(board.codeToIndex("e8"), moves, {-9, -8, -7, -1, 1, 7, 8, 9});
@@ -183,8 +177,8 @@ int main()
     //     m.displayMove();
     // }
 
-    board.perftDivide(2);
-    std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
+    // board.perftDivide(2);
+    // std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
     // board.displayBoard();
 
     //     testMoveFilter(board);
