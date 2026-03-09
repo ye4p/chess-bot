@@ -137,21 +137,21 @@ int main()
     // board.setFEN("rnbqkbnr/ppp1pppp/8/3p4/8/4P3/PPPP1PPP/RNBQKBNR w KQkq d6 0 1");
     // board.setFEN("rnbqkbnr/ppp1pppp/8/3p4/2B5/4P3/PPPP1PPP/RNBQK1NR b KQkq - 0 1");
     // board.setFEN("rnbqkbnr/ppp1pppp/8/8/2p5/4P3/PPPP1PPP/RNBQK1NR w KQkq - 0 1");
-    board.setFEN("rnbqkbnr/ppp1pppp/8/8/2pP4/4P3/PPP2PPP/RNBQK1NR b KQkq d3 0 1");
+    //board.setFEN("rnbqkbnr/ppp1pppp/8/8/2pP4/4P3/PPP2PPP/RNBQK1NR b KQkq d3 0 1");
 
     // Move m = Move(60, 28, Piece(PieceType::Queen, Color::Black), board.getPiece(28), Piece(), MoveFlag::Capture);
     // board.makeMove(m);
     // board.displayBoard();
     // board.undoMove(m);
-    board.displayBoard();
+    //board.displayBoard();
 
+    // // board.displayBoard();
+    // // std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
+    // std::cout << "Starting generating moves...\n";
+    // board.generateMoves(pseudo);
+    // std::cout << "Generates psuedo legal moves:\n";
     // board.displayBoard();
-    // std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
-    std::cout << "Starting generating moves...\n";
-    board.generateMoves(pseudo);
-    std::cout << "Generates psuedo legal moves:\n";
-    board.displayBoard();
-    board.filterLegalMoves(pseudo, legal);
+    // board.filterLegalMoves(pseudo, legal);
 
     // board.setFEN("rnbqkbnr/ppp1pppp/8/8/2pP4/4P3/PPP2PPP/RNBQK1NR b KQkq d3 0 1");
     // for (Move m : legal)
@@ -167,7 +167,7 @@ int main()
     // }
     // board.makeMove(moves[0]);
     // std::cout << "Is king in check: " << board.isKingInCheck(Color::Black);
-    // uint64_t result = board.perft(2);
+    // uint64_t result = board.perft(6);
     // std::cout << result << std::endl;
     // std::cout << board.crossesBorderPawn(board.codeToIndex("g7"), board.codeToIndex("h6"));
     // std::cout << "is under attack: " << board.isSquareAttacked(board.codeToIndex("d3"));
@@ -177,7 +177,16 @@ int main()
     //     m.displayMove();
     // }
 
-    // board.perftDivide(2);
+
+    //
+    //      POSITION #2
+    //
+    board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+    board.displayBoard();
+    board.displayCastlingRights();
+    board.perftDivide(2);
+
+
     // std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
     // board.displayBoard();
 

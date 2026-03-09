@@ -28,6 +28,7 @@ public:
     void setFEN(std::string s);
     void displayBoardPieces();
     void displayBoard();
+    void displayCastlingRights();
     Color checkSpace(int square);
     void flipSideToMove();
     Color getSideToMove();
