@@ -36,6 +36,7 @@ public:
     bool crossesBorder(int from, int to);
     bool crossesBorderKnight(int from, int to);
     bool isAlly(Piece p, int to);
+    Color reverseColor(Color c);
     bool isCapture(Piece p, int to);
     void handlePawnCapture(int from, int to, Piece p, std::vector<Move> &moves);
     bool isOutOfBounds(int to);
@@ -54,7 +55,7 @@ public:
     void generateRookMoves(int square, std::vector<Move> &moves);
     void generateQueenMoves(int square, std::vector<Move> &moves);
     void generateKingMoves(int square, std::vector<Move> &moves);
-    bool isSquareAttacked(int square);
+    bool isSquareAttacked(int square, Color by);
     bool isKingInCheck(Color c);
     void filterLegalMoves(const std::vector<Move> &pseudo, std::vector<Move> &legal);
     uint64_t perft(int depth);

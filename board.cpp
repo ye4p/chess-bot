@@ -414,6 +414,16 @@ bool Board::isAlly(Piece p, int to)
 {
     return p.color == board[to].color;
 }
+Color Board::reverseColor(Color c) {
+    if (c==Color::White) {
+        return Color::Black;
+    } else if (c==Color::Black) {
+        return Color::White;
+    } else {
+        std::cout << " Error with attempt to change colors";
+        throw "Attempt to change color::None";
+    }
+}
 
 bool Board::isCapture(Piece p, int to)
 {
@@ -557,14 +567,14 @@ void Board::makeMove(const Move &m)
         if ((m.to - m.from) == -2)
         {
             normalizer = m.piece.color == Color::White ? 0 : 56;
-            finalRook = 3 + normalizer;
+            finalRook = 2 + normalizer;
             board[normalizer] = Piece();
             board[finalRook] = Piece(PieceType::Rook, m.piece.color);
         }
         else if ((m.to - m.from) == 2)
         {
-            normalizer = m.piece.color == Color::White ? 0 : 56 + 7;
-            finalRook = -2 + normalizer;
+            normalizer = (m.piece.color == Color::White ? 0 : 56) + 7;
+            finalRook = -3 + normalizer;
             board[normalizer] = Piece();
             board[finalRook] = Piece(PieceType::Rook, m.piece.color);
         }
@@ -695,16 +705,18 @@ void Board::undoMove(const Move &m)
         // int rookPos=h.to + ((h.to - h.from) == 2 ? -1 : 1);
         int rookPos;
         int rookInit;
-        if ((h.to - h.from) == 2)
+        if ((h.to - h.from) == -2)
+        {
+            rookPos = h.to +1;
+            rookInit = h.to -1;
+        }
+        else
         {
             rookPos = h.to - 1;
             rookInit = h.to + 2;
         }
-        else
-        {
-            rookPos = h.to + 1;
-            rookInit = h.to - 2;
-        }
+        //std::cout <<"rookPos: "<<rookPos<<std::endl;
+        //std::cout << "rookInit: "<<rookInit<<std::endl;
         board[rookPos] = Piece();
         board[rookInit] = Piece(PieceType::Rook, h.moved.color);
     }
@@ -915,18 +927,19 @@ void Board::generateKingMoves(int square, std::vector<Move> &moves)
     Piece p = board[square];
     if (p.color == Color::White)
     {
-        std::cout<<"Result of this: "<< (!isSquareAttacked(square) && !isSquareAttacked(square - 1) && !isSquareAttacked(square - 2) && !isSquareAttacked(square - 3)) <<"\n";
-        std::cout<<"Result of square: " << isSquareAttacked(square)<<std::endl;
-        std::cout<<"Result of square-1: " << isSquareAttacked(square-1)<<std::endl;
-        std::cout<<"Result of square-2: " << isSquareAttacked(square-2)<<std::endl;
-        std::cout<<"Result of this: "<< (state.whiteCastleKingSide == true && board[square - 1].type == PieceType::None && board[square - 2].type == PieceType::None)<<"\n";
+        // std::cout<<"Result of this: "<< (!isSquareAttacked(square, Color::Black) && !isSquareAttacked(square - 1, Color::Black) && !isSquareAttacked(square - 2, Color::Black) && !isSquareAttacked(square - 3, Color::Black)) <<"\n";
+        // std::cout<<"Result of square: " << isSquareAttacked(square,Color::Black)<<std::endl;
+        // std::cout<<"Result of square-1: " << isSquareAttacked(square-1,Color::Black)<<std::endl;
+        // std::cout<<"Result of square-2: " << isSquareAttacked(square-2,Color::Black)<<std::endl;
+        // std::cout<<"Result of square-3: " << isSquareAttacked(square-3,Color::Black)<<std::endl;
+        // std::cout<<"Result of this: "<< (state.whiteCastleKingSide == true && board[square - 1].type == PieceType::None && board[square - 2].type == PieceType::None)<<"\n";
         if ((state.whiteCastleKingSide == true && board[square - 1].type == PieceType::None && board[square - 2].type == PieceType::None) &&
-            (!isSquareAttacked(square) && !isSquareAttacked(square - 1) && !isSquareAttacked(square - 2) && !isSquareAttacked(square - 3)))
+            (!isSquareAttacked(square,Color::Black) && !isSquareAttacked(square - 1,Color::Black) && !isSquareAttacked(square - 2,Color::Black) && !isSquareAttacked(square - 3,Color::Black)))
         { // Also need to check if not under attack
             moves.push_back(Move(square, square - 2, p, board[square - 2], Piece(), MoveFlag::KingCastle));
         }
         if ((state.whiteCastleQueenSide == true && board[square + 1].type == PieceType::None && board[square + 2].type == PieceType::None && board[square + 3].type == PieceType::None) &&
-            (!isSquareAttacked(square) && !isSquareAttacked(square + 1) && !isSquareAttacked(square + 2) && !isSquareAttacked(square + 3) && !isSquareAttacked(square + 4)))
+            (!isSquareAttacked(square,Color::Black) && !isSquareAttacked(square + 1,Color::Black) && !isSquareAttacked(square + 2,Color::Black) && !isSquareAttacked(square + 3,Color::Black) && !isSquareAttacked(square + 4,Color::Black)))
         {
             moves.push_back(Move(square, square + 2, p, board[square + 2], Piece(), MoveFlag::QueenCastle));
         }
@@ -934,22 +947,28 @@ void Board::generateKingMoves(int square, std::vector<Move> &moves)
     }
     if (p.color == Color::Black)
     {
+        // std::cout << "0: "<< isSquareAttacked(square, Color::White)<<std::endl;
+        // std::cout << "-1: "<< isSquareAttacked(square-1, Color::White)<<std::endl;
+        // std::cout << "-2: "<< isSquareAttacked(square-2, Color::White)<<std::endl;
+        // std::cout << "-3: "<< isSquareAttacked(square-3, Color::White)<<std::endl;
+
 
         if ((state.blackCastleKingSide == true && board[square - 1].type == PieceType::None && board[square - 2].type == PieceType::None) &&
-            (!isSquareAttacked(square) && !isSquareAttacked(square - 1) && !isSquareAttacked(square - 2) && !isSquareAttacked(square - 3)))
+            (!isSquareAttacked(square, Color::White) && !isSquareAttacked(square - 1,Color::White) && !isSquareAttacked(square - 2,Color::White) && !isSquareAttacked(square - 3,Color::White)))
         { // Also need to check if not under attack
             moves.push_back(Move(square, square - 2, p, board[square - 2], Piece(), MoveFlag::KingCastle));
         }
         if ((state.blackCastleQueenSide == true && board[square + 1].type == PieceType::None && board[square + 2].type == PieceType::None && board[square + 3].type == PieceType::None) &&
-            (!isSquareAttacked(square) && !isSquareAttacked(square + 1) && !isSquareAttacked(square + 2) && !isSquareAttacked(square + 3) && !isSquareAttacked(square + 4)))
+            (!isSquareAttacked(square, Color::White) && !isSquareAttacked(square + 1, Color::White) && !isSquareAttacked(square + 2, Color::White) && !isSquareAttacked(square + 3, Color::White) && !isSquareAttacked(square + 4, Color::White)))
         {
             moves.push_back(Move(square, square + 2, p, board[square + 2], Piece(), MoveFlag::QueenCastle));
         }
     }
 }
 
-bool Board::isSquareAttacked(int square)
+bool Board::isSquareAttacked(int square, Color by)
 {
+    //std::cout<<"Started running is square attacked\n";
     Piece p = board[square];
 
     // Checks for knight attacks
@@ -959,13 +978,13 @@ bool Board::isSquareAttacked(int square)
         int check = square + n;
         if (!isOutOfBounds(check))
         {
-            if (!crossesBorderKnight(check, square) && isEnemy(p, check))
+            if (!crossesBorderKnight(check, square) && by==board[check].color)
             {
                 if (board[check].type == PieceType::Knight)
                 {
                     // std::cout << "Crosses border knight:" << crossesBorderKnight(check, square) << "\n";
                     // std::cout << "Attacked by knight\n";
-                    std::cout<<"True by knight"<<std::endl;
+                    //std::cout<<"True by knight"<<std::endl;
                     return true;
                 }
             }
@@ -988,17 +1007,20 @@ bool Board::isSquareAttacked(int square)
             { // If doesn't work can just change to when its on the borders (?)
                 break;
             }
-            if (board[check].color == p.color)
+            if (board[check].color == reverseColor(by))
             {
                 break; // Breaks if there is an ally on this square
             }
+           // displayBoard();
+            // std::cout <<board[check].color<< " and " <<p.color<<std::endl;
+            // std::cout<<"Move from " <<indexToCode(square) << " to " << indexToCode(check)<< " Showed "<<(board[check].color == p.color) <<std::endl;
             if (board[check].type != PieceType::None && board[check].type != PieceType::Bishop && board[check].type != PieceType::Queen)
             {
                 break;
             }
             if (board[check].type == PieceType::Bishop || board[check].type == PieceType::Queen)
             {
-                std::cout << "Attacked by bishop/queen\n";
+                // std::cout << "Attacked by bishop/queen\n";
                 return true;
             }
             mult++;
@@ -1021,7 +1043,7 @@ bool Board::isSquareAttacked(int square)
             { // If doesn't work can just change to when its on the borders (?)
                 break;
             }
-            if (board[check].color == p.color)
+            if (board[check].color == reverseColor(by))
             {
                 break; // Breaks if there is an ally on this square
             }
@@ -1032,7 +1054,7 @@ bool Board::isSquareAttacked(int square)
             if (board[check].type == PieceType::Rook || board[check].type == PieceType::Queen)
             {
                 // std::cout << " Attacked from square: " << indexToCode(check);
-                std::cout << "Attacked rook/queen\n";
+                // std::cout << "Attacked rook/queen\n";
                 return true;
             }
             mult++;
@@ -1066,7 +1088,7 @@ bool Board::isSquareAttacked(int square)
     for (int n : numsPawn)
     {
         // std::cout << "Looping over: " << n << "\n";
-        if (board[n].color == p.color || board[n].color == Color::None)
+        if (board[n].color!=by)
         {
             continue;
         }
@@ -1076,7 +1098,7 @@ bool Board::isSquareAttacked(int square)
         }
         if (board[n].type == PieceType::Pawn)
         {
-            std::cout << "Attacked by pawn\n";
+           // std::cout << "Attacked by pawn\n";
             return true;
         }
     }
@@ -1098,7 +1120,7 @@ bool Board::isKingInCheck(Color c)
     {
         if (board[i].type == PieceType::King && board[i].color == c)
         {
-            if (isSquareAttacked(i))
+            if (isSquareAttacked(i, reverseColor(board[i].color)))
             {
                 return true;
             }
@@ -1111,14 +1133,17 @@ void Board::filterLegalMoves(const std::vector<Move> &pseudo, std::vector<Move> 
     for (const Move &m : pseudo)
     {
         // std::cout << "Trying move m (inside of filterLegalMoves): " << m << "\n";
+        //std::cout<<"Trying to make move..."<<m<<std::endl;
         makeMove(m);
-
+        //std::cout << "Made move " << m<<std::endl;
         // std::cout << "succesfully performed move m (inside of filterLegalMoves): " << m << "\n";
         if (!isKingInCheck(state.sideToMove == Color::White ? Color::Black : Color::White))
         {
             legal.push_back(m);
         }
+        //std::cout << "Checked if king was in check;\n";
         undoMove(m);
+        //std::cout<<"Undid move " << m << std::endl;
     }
 }
 uint64_t Board::perft(int depth)
@@ -1160,8 +1185,9 @@ void Board::perftDivide(int depth)
     std::vector<Move> pseudo;
     std::vector<Move> legal;
     generateMoves(pseudo);
+    //std::cout << "Generated pseudo moves\n";
     filterLegalMoves(pseudo, legal);
-   // std::cout << "here are original legal moves\n";
+    //std::cout << "Generated legal moves\n";
     // for (Move m : legal)
     // {
     //     m.displayMove();

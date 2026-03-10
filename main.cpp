@@ -182,8 +182,17 @@ int main()
     //      POSITION #2
     //
     board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+    //a1b1
+    // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K1R1 b Qkq - ");
+    // board.displayCastlingRights();
     board.displayBoard();
-    board.displayCastlingRights();
+    // board.displayCastlingRights();
+
+    // board.generateKingMoves(board.codeToIndex("e1"), pseudo);
+    // std::cout <<"Outputing moves: \n";
+    // for (Move m :pseudo) {
+    //     m.displayMove();
+    // }
     board.perftDivide(2);
 
 
