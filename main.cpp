@@ -137,13 +137,13 @@ int main()
     // board.setFEN("rnbqkbnr/ppp1pppp/8/3p4/8/4P3/PPPP1PPP/RNBQKBNR w KQkq d6 0 1");
     // board.setFEN("rnbqkbnr/ppp1pppp/8/3p4/2B5/4P3/PPPP1PPP/RNBQK1NR b KQkq - 0 1");
     // board.setFEN("rnbqkbnr/ppp1pppp/8/8/2p5/4P3/PPPP1PPP/RNBQK1NR w KQkq - 0 1");
-    //board.setFEN("rnbqkbnr/ppp1pppp/8/8/2pP4/4P3/PPP2PPP/RNBQK1NR b KQkq d3 0 1");
+    // board.setFEN("rnbqkbnr/ppp1pppp/8/8/2pP4/4P3/PPP2PPP/RNBQK1NR b KQkq d3 0 1");
 
     // Move m = Move(60, 28, Piece(PieceType::Queen, Color::Black), board.getPiece(28), Piece(), MoveFlag::Capture);
     // board.makeMove(m);
     // board.displayBoard();
     // board.undoMove(m);
-    //board.displayBoard();
+    // board.displayBoard();
 
     // // board.displayBoard();
     // // std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
@@ -177,14 +177,17 @@ int main()
     //     m.displayMove();
     // }
 
-
     //
     //      POSITION #2
     //
-    board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
-    //a1b1
-    // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K1R1 b Qkq - ");
-    // board.displayCastlingRights();
+    //  board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+    // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N4Q/PPPBBPPP/R3K2R b KQkq - 0 1");
+    //  a1b1
+    //   board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K1R1 b Qkq - ");
+    //   board.displayCastlingRights();
+    // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/1R2K2R b Kkq - 1 1");
+    board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q2/PPPBBPpP/1R2K2R w Kkq - 0 2");
+
     board.displayBoard();
     // board.displayCastlingRights();
 
@@ -193,8 +196,7 @@ int main()
     // for (Move m :pseudo) {
     //     m.displayMove();
     // }
-    board.perftDivide(2);
-
+    board.perftDivide(1);
 
     // std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
     // board.displayBoard();
