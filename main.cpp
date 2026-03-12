@@ -183,7 +183,7 @@ int main()
     //
     //      POSITION #2
     //
-    // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+    board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
     //
     // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N4Q/PPPBBPPP/R3K2R b KQkq - 0 1");
     //  a1b1
@@ -197,7 +197,7 @@ int main()
     // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/1R2K2R b Kkq - ");
     // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q2/PPPBBPpP/1R2K2R w Kkq - ");
     // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P2P/2N2Q2/PPPBBPp1/1R2K2R b Kkq - ");
-    board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1"); // 74416
+   // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1"); // 74416
     // board.setFEN("r3k3/p1ppqpb1/bn2pnp1/3PN3/1p2P2r/2N2Q1p/PPPBBPPP/R2K3R w q - 2 2"); // 1815
 
     board.displayBoard();
@@ -214,7 +214,7 @@ int main()
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     std::cout << "It took " << (double)duration.count() / 1000 << std::endl;
-    std::cout << "NPS: " << (double)nodes / (duration.count() / 1000) << std::endl;
+    std::cout << "NPS: " << (double)nodes / ((double)duration.count() / 1000) << std::endl;
     // std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
     // board.displayBoard();
 

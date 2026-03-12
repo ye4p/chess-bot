@@ -1092,34 +1092,24 @@ bool Board::isSquareAttacked(int square, Color by)
     // std::cout << "left value: "<< left<<std::endl;
     // std::cout << "right value: " << right<<std::endl;
     //  std::cout << "left and right" << left << " " << right << "\n";
-    std::vector<int> numsPawn;
     // std::cout << "Is out of bouds left " << isOutOfBounds(left) << "\n";
+
+    //NPS before getting rid of vector for pos 2 perft 3(laptop): 226k
+    //NPS after: 307k
     if (!isOutOfBounds(left))
     {
-        numsPawn.push_back(left);
-    }
-    if (!isOutOfBounds(right))
-    {
-        numsPawn.push_back(right);
-    }
-    for (int n : numsPawn)
-    {
-        // std::cout << "Looping over: " << n << "\n";
-        if (board[n].color != by)
+        if (board[left].color == by && !crossesBorderPawn(left, square) &&board[left].type == PieceType::Pawn)
         {
-            continue;
-        }
-        if (crossesBorderPawn(n, square))
-        {
-            continue;
-        }
-        if (board[n].type == PieceType::Pawn)
-        {
-            // std::cout << "Attacked by pawn\n";
             return true;
         }
     }
-
+    if (!isOutOfBounds(right))
+    {
+        if (board[right].color == by && !crossesBorderPawn(right, square) &&board[right].type == PieceType::Pawn)
+        {
+            return true;
+        }
+    }
     // Add checking for en passant ONLY if p is pawn itself
     if (p.type == PieceType::Pawn && state.enPassantSquare != -1)
     {
