@@ -451,19 +451,15 @@ void Board::handlePawnCapture(int from, int to, Piece p, std::vector<Move> &move
             return;
         }
     }
-    if (isEndOfTheBoard(to, p) && isEnemy(p, to))
-    {
-        moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Rook, p.color), MoveFlag::Promotion));
-        moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Bishop, p.color), MoveFlag::Promotion));
-        moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Queen, p.color), MoveFlag::Promotion));
-        moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Knight, p.color), MoveFlag::Promotion));
-    }
     // if ((checkSpace(to) != p.color) && (checkSpace(to) != Color::None) && !crossesBorder(from, to))
     if (board[to].color != Color::None && board[to].color != p.color)
     {
         if (isEndOfTheBoard(to, p))
         {
+            moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Rook, p.color), MoveFlag::Promotion));
+            moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Bishop, p.color), MoveFlag::Promotion));
             moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Queen, p.color), MoveFlag::Promotion));
+            moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Knight, p.color), MoveFlag::Promotion));
         }
         else
         {
