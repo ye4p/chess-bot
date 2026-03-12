@@ -192,11 +192,12 @@ int main()
     // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/1R2K2R b Kkq - 1 1");
     // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q2/PPPBBPpP/1R2K2R w Kkq - 0 2");
     //
-    //board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3KR2 b Qkq - ");
+    // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3KR2 b Qkq - ");
     //
     // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/1R2K2R b Kkq - ");
     // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q2/PPPBBPpP/1R2K2R w Kkq - ");
     board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P2P/2N2Q2/PPPBBPp1/1R2K2R b Kkq - ");
+    std::cout << board.getPiece(board.codeToIndex("f1")) << std::endl;
 
     board.displayBoard();
     // board.displayCastlingRights();
@@ -206,13 +207,13 @@ int main()
     // for (Move m :pseudo) {
     //     m.displayMove();
     // }
-    auto start=std::chrono::steady_clock::now();
+    auto start = std::chrono::steady_clock::now();
     int nodes = board.perftDivide(1);
     auto end = std::chrono::steady_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    std::cout << "It took "<< (double)duration.count()/1000 << std::endl;
-    std::cout << "NPS: "<< (double)nodes/(duration.count()/1000) <<std::endl;
+    std::cout << "It took " << (double)duration.count() / 1000 << std::endl;
+    std::cout << "NPS: " << (double)nodes / (duration.count() / 1000) << std::endl;
     // std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
     // board.displayBoard();
 

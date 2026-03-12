@@ -103,7 +103,27 @@ void Move::displayMove()
 }
 std::string Move::getMoveCode()
 {
-    return indexToCode(from) + indexToCode(to);
+    std::string result = indexToCode(from) + indexToCode(to);
+    if (flag == MoveFlag::Promotion)
+    {
+        if (promoted.type == PieceType::Queen)
+        {
+            result += "q";
+        }
+        else if (promoted.type == PieceType::Bishop)
+        {
+            result += "b";
+        }
+        else if (promoted.type == PieceType::Knight)
+        {
+            result += "n";
+        }
+        else if (promoted.type == PieceType::Rook)
+        {
+            result += "r";
+        }
+    }
+    return result;
 }
 std::ostream &operator<<(std::ostream &os, const Move &m)
 {

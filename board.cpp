@@ -451,11 +451,12 @@ void Board::handlePawnCapture(int from, int to, Piece p, std::vector<Move> &move
             return;
         }
     }
-    if (isEndOfTheBoard(to, p)) {
+    if (isEndOfTheBoard(to, p) && isEnemy(p, to))
+    {
         moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Rook, p.color), MoveFlag::Promotion));
-        moves.push_back(Move(from, to, p,  board[to], Piece(PieceType::Bishop, p.color), MoveFlag::Promotion));
-        moves.push_back(Move(from, to, p,  board[to], Piece(PieceType::Queen, p.color), MoveFlag::Promotion));
-        moves.push_back(Move(from, to, p,  board[to], Piece(PieceType::Knight, p.color), MoveFlag::Promotion));
+        moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Bishop, p.color), MoveFlag::Promotion));
+        moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Queen, p.color), MoveFlag::Promotion));
+        moves.push_back(Move(from, to, p, board[to], Piece(PieceType::Knight, p.color), MoveFlag::Promotion));
     }
     // if ((checkSpace(to) != p.color) && (checkSpace(to) != Color::None) && !crossesBorder(from, to))
     if (board[to].color != Color::None && board[to].color != p.color)
@@ -825,7 +826,7 @@ void Board::generatePawnMoves(int square, std::vector<Move> &moves)
             moves.push_back(Move(square, forward, p, Piece(), Piece(PieceType::Queen, p.color), MoveFlag::Promotion));
             moves.push_back(Move(square, forward, p, Piece(), Piece(PieceType::Rook, p.color), MoveFlag::Promotion));
             moves.push_back(Move(square, forward, p, Piece(), Piece(PieceType::Bishop, p.color), MoveFlag::Promotion));
-            moves.push_back(Move(square, forward, p, Piece(), Piece(PieceType::Knight, p.color), MoveFlag::Promotion));     
+            moves.push_back(Move(square, forward, p, Piece(), Piece(PieceType::Knight, p.color), MoveFlag::Promotion));
         }
         else
         {
@@ -948,10 +949,7 @@ void Board::generateKingMoves(int square, std::vector<Move> &moves)
         //     (!isSquareAttacked(square, Color::Black) && !isSquareAttacked(square - 1, Color::Black) && !isSquareAttacked(square - 2, Color::Black));
         // std::cout << "Result of this: " << (!isSquareAttacked(square, Color::Black) && !isSquareAttacked(square - 1, Color::Black) && !isSquareAttacked(square - 2, Color::Black) && !isSquareAttacked(square - 3, Color::Black)) << "\n";
         // std::cout << "Result of square: " << isSquareAttacked(square, Color::Black) << std::endl;
-    
-    
-    
-    
+
         // std::cout << "Result of square-1: " << isSquareAttacked(square - 1, Color::Black) << std::endl;
         // std::cout << "Result of square-2: " << isSquareAttacked(square - 2, Color::Black) << std::endl;
         // std::cout<<"Result of square-3: " << isSquareAttacked(square-3,Color::Black)<<std::endl;
@@ -1095,9 +1093,9 @@ bool Board::isSquareAttacked(int square, Color by)
         left = square - 9;
         right = square - 7;
     }
-    //std::cout << "left value: "<< left<<std::endl;
-    //std::cout << "right value: " << right<<std::endl;
-    // std::cout << "left and right" << left << " " << right << "\n";
+    // std::cout << "left value: "<< left<<std::endl;
+    // std::cout << "right value: " << right<<std::endl;
+    //  std::cout << "left and right" << left << " " << right << "\n";
     std::vector<int> numsPawn;
     // std::cout << "Is out of bouds left " << isOutOfBounds(left) << "\n";
     if (!isOutOfBounds(left))
