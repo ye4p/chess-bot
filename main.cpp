@@ -214,7 +214,7 @@ int main()
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     std::cout << "It took " << (double)duration.count() / 1000 << std::endl;
-    std::cout << "NPS: " << (double)nodes / (duration.count() / 1000) << std::endl;
+    std::cout << "NPS: " << (double)nodes / ((double)duration.count() / 1000) << std::endl;
     // std::cout << "The d4: " << board.getPiece(board.codeToIndex("d4")) << "\n";
     // board.displayBoard();
 
