@@ -63,4 +63,4 @@ if __name__ == "__main__":
     fen9="r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P2P/2N2Q2/PPPBBPp1/1R2K2R b Kkq - "
     fen10="r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1" #79989
     fen11="r3k3/p1ppqpb1/bn2pnp1/3PN3/1p2P2r/2N2Q1p/PPPBBPPP/R2K3R w q - 2 2" #1947
-    perft_divide(fen10, 3)
+    perft_divide(fen1, 4)
