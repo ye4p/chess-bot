@@ -196,7 +196,11 @@ void Board::setFEN(std::string s)
             {
                 int letConverted = let - '0';
                 // std::cout<< "Let converted: " <<letConverted << "\n";
-                i -= letConverted;
+                for (int k = 0; k < letConverted; k++)
+                {
+                    board[i] = Piece();
+                    i--;
+                }
                 // std::cout<< "index after hangling number: "<< i<<"\n";
             }
         }
@@ -1094,18 +1098,18 @@ bool Board::isSquareAttacked(int square, Color by)
     //  std::cout << "left and right" << left << " " << right << "\n";
     // std::cout << "Is out of bouds left " << isOutOfBounds(left) << "\n";
 
-    //NPS before getting rid of vector for pos 2 perft 3(laptop): 226k
-    //NPS after: 307k
+    // NPS before getting rid of vector for pos 2 perft 3(laptop): 226k
+    // NPS after: 307k
     if (!isOutOfBounds(left))
     {
-        if (board[left].color == by && !crossesBorderPawn(left, square) &&board[left].type == PieceType::Pawn)
+        if (board[left].color == by && !crossesBorderPawn(left, square) && board[left].type == PieceType::Pawn)
         {
             return true;
         }
     }
     if (!isOutOfBounds(right))
     {
-        if (board[right].color == by && !crossesBorderPawn(right, square) &&board[right].type == PieceType::Pawn)
+        if (board[right].color == by && !crossesBorderPawn(right, square) && board[right].type == PieceType::Pawn)
         {
             return true;
         }
