@@ -945,18 +945,9 @@ void Board::generateKingMoves(int square, std::vector<Move> &moves)
     Piece p = board[square];
     if (p.color == Color::White)
     {
-        // std::cout << "Result of the whole thing: " << (state.whiteCastleKingSide == true && board[square - 1].type == PieceType::None && board[square - 2].type == PieceType::None) &&
-        //     (!isSquareAttacked(square, Color::Black) && !isSquareAttacked(square - 1, Color::Black) && !isSquareAttacked(square - 2, Color::Black));
-        // std::cout << "Result of this: " << (!isSquareAttacked(square, Color::Black) && !isSquareAttacked(square - 1, Color::Black) && !isSquareAttacked(square - 2, Color::Black) && !isSquareAttacked(square - 3, Color::Black)) << "\n";
-        // std::cout << "Result of square: " << isSquareAttacked(square, Color::Black) << std::endl;
-
-        // std::cout << "Result of square-1: " << isSquareAttacked(square - 1, Color::Black) << std::endl;
-        // std::cout << "Result of square-2: " << isSquareAttacked(square - 2, Color::Black) << std::endl;
-        // std::cout<<"Result of square-3: " << isSquareAttacked(square-3,Color::Black)<<std::endl;
-        // std::cout<<"Result of this: "<< (state.whiteCastleKingSide == true && board[square - 1].type == PieceType::None && board[square - 2].type == PieceType::None)<<"\n";
         if ((state.whiteCastleKingSide == true && board[square - 1].type == PieceType::None && board[square - 2].type == PieceType::None) &&
             (!isSquareAttacked(square, Color::Black) && !isSquareAttacked(square - 1, Color::Black) && !isSquareAttacked(square - 2, Color::Black)))
-        { // Also need to check if not under attack
+        {
             moves.push_back(Move(square, square - 2, p, board[square - 2], Piece(), MoveFlag::KingCastle));
         }
         if ((state.whiteCastleQueenSide == true && board[square + 1].type == PieceType::None && board[square + 2].type == PieceType::None && board[square + 3].type == PieceType::None) &&
@@ -967,14 +958,9 @@ void Board::generateKingMoves(int square, std::vector<Move> &moves)
     }
     if (p.color == Color::Black)
     {
-        // std::cout << "0: "<< isSquareAttacked(square, Color::White)<<std::endl;
-        // std::cout << "-1: "<< isSquareAttacked(square-1, Color::White)<<std::endl;
-        // std::cout << "-2: "<< isSquareAttacked(square-2, Color::White)<<std::endl;
-        // std::cout << "-3: "<< isSquareAttacked(square-3, Color::White)<<std::endl;
-
         if ((state.blackCastleKingSide == true && board[square - 1].type == PieceType::None && board[square - 2].type == PieceType::None) &&
             (!isSquareAttacked(square, Color::White) && !isSquareAttacked(square - 1, Color::White) && !isSquareAttacked(square - 2, Color::White)))
-        { // Also need to check if not under attack
+        {
             moves.push_back(Move(square, square - 2, p, board[square - 2], Piece(), MoveFlag::KingCastle));
         }
         if ((state.blackCastleQueenSide == true && board[square + 1].type == PieceType::None && board[square + 2].type == PieceType::None && board[square + 3].type == PieceType::None) &&
