@@ -26,7 +26,7 @@ class Board
     std::array<uint64_t, 3> occupancies;
     // 0 - all white pieces, 1 - all black pieces, 2 - all pieces
 
-    uint8_t castlingRights = 0b0000;
+    uint8_t castlingRights = 0b0000; // 1st - white king, 2nd - white queen, 3rd - black king, 4th - black queen
 
     int enPassantSquare = -1;
 
@@ -130,7 +130,9 @@ class Board
 
             for (char let : vec[2])
             {
-                if (std::isupper(let))
+                char lower = std::tolower(let);
+                int shift = (std::isupper(let) ? 2 : 0);
+                if (lower == 'k')
                 {
                 }
             }
