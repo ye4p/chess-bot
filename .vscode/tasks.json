@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build cpp",
+      "type": "shell",
+      "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
+      "args": [
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "${workspaceFolder}\\v2\\main.cpp",
+        "${workspaceFolder}\\v2\\board.cpp",
+        "-o",
+        "${workspaceFolder}\\v2\\chessbot.exe",
+        "-lgdi32",
+        "-luser32"
+      ],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"]
+    }
+  ]
+}
