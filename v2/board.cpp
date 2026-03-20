@@ -70,7 +70,7 @@ inline int Board::popcount(uint64_t bb)
 void Board::displayBoard(uint64_t bb)
 {
     std::cout << "\n";
-    for (int rank = 0; rank < 8; rank++)
+    for (int rank = 7; rank > -1; rank--)
     {
         for (int file = 0; file < 8; file++)
         {
