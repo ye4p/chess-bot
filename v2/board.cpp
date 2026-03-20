@@ -10,6 +10,14 @@
 #include <unordered_map>
 #include <cstdio>
 
+Undo::Undo(uint8_t castlingRights, int8_t enPassantSquare, uint8_t halfMoveClock, uint64_t fullMoveClock)
+{
+    this->castlingRights = castlingRights;
+    this->enPassantSquare = enPassantSquare;
+    this->halfMoveClock = halfMoveClock;
+    this->fullMoveClock = fullMoveClock;
+}
+
 Board::Board()
 {
     bbs.fill(0ULL);
@@ -69,12 +77,13 @@ void Board::displayBoard(uint64_t bb)
             int square = rank * 8 + file;
             if (!file)
             {
-                printf(" %d", (isBitSet(bb, square) ? 1 : 0));
+                printf(" %d ", 8 - rank);
             }
+            printf(" %d", (isBitSet(bb, square) ? 1 : 0));
         }
         std::cout << "\n";
     }
-    printf("\n      a b c d e f g h\n\n");
+    printf("\n    a b c d e f g h\n\n");
     printf("bitboard: %lld\n\n", bb);
 }
 
@@ -235,7 +244,15 @@ uint64_t Board::mask_pawn_attacks(int side, int square)
     // set piece on bb
     // set_bit()
     setBit(bb, square);
-    displayBoard(occupancies[2]);
+    displayBoard(bb);
+    displayBoard(bb << 7);
+    if (!side)
+    {
+        attack |= (bb << 7);
+    }
+    else
+    {
+    }
     return 0;
 }
 
