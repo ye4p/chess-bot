@@ -148,7 +148,6 @@ void Board::setFEN(std::string s)
                 int color = (std::isupper(let) ? 0 : 6);
                 char letConverted = std::tolower(let);
                 int piece = pieceMap.at(letConverted);
-                int fullPiece = piece + color;
                 setBit(bbs[piece + color], i);
                 i++;
             }
@@ -249,10 +248,13 @@ uint64_t Board::mask_pawn_attacks(int side, int square)
     if (!side)
     {
         attack |= (bb << 7);
+        attack |= (bb << 9);
     }
     else
     {
     }
+    displayBoard(bb);
+    displayBoard(attack);
     return 0;
 }
 

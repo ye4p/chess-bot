@@ -47,6 +47,12 @@ enum squares : int{
     // a1, b1, c1, d1, e1, f1, g1, h1,
 };
 // clang-format on
+
+namespace masks
+{
+    constexpr uint64_t notAfile = 9259542123273814144;
+}
+
 class Board
 {
 
