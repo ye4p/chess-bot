@@ -72,7 +72,7 @@ class Board
 
     bool whiteToMove = true;
 
-    // BBitboards with attacks:
+    // Bitboards with attacks:
     uint64_t pawn_attacks[2][64];
 
 public:
