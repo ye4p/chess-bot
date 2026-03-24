@@ -258,6 +258,21 @@ uint64_t Board::mask_pawn_attacks(int side, int square)
     return 0;
 }
 
+uint64_t Board::mask_knight_attacks(int square) {
+    uint64_t attacks=0ULL;
+
+    int rank = square/8;
+    int file = square%8;
+
+    int dr[] = {-2, -1, 1, 2, 2, 1, -1, -2};
+    int df[] = {1, 2, 2, 1, -1, -2, -2, -1};
+
+    for (int i=0; i<8; i++) {
+        int r = rank+ dr[i];
+        int f = file + df[i];
+    }
+}
+
 void Board::generateMoves()
 {
 }

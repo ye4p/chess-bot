@@ -74,6 +74,7 @@ class Board
 
     // Bitboards with attacks:
     uint64_t pawn_attacks[2][64];
+    uint64_t knight_attacks[64];
 
 public:
     Board();
@@ -91,6 +92,7 @@ public:
     void setFEN(std::string s);
     void updateOccupancies();
     uint64_t mask_pawn_attacks(int side, int square);
+    uint64_t mask_knight_attacks(int square);
     void generateMoves();
     void generateKnightMoves();
     void generateKingMoves();
