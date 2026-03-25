@@ -270,7 +270,11 @@ uint64_t Board::mask_knight_attacks(int square) {
     for (int i=0; i<8; i++) {
         int r = rank+ dr[i];
         int f = file + df[i];
+        if (r>=0 && r<8 && f>=0 && f<8) {
+            attacks|= (1ULL<<(r*8+file));
+        }
     }
+    return attacks;
 }
 
 void Board::generateMoves()
