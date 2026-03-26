@@ -236,13 +236,15 @@ void Board::updateOccupancies()
 
 uint64_t Board::mask_pawn_attacks(int side, int square)
 {
-    // attack bb
     uint64_t attack = 0ULL;
+
     int rank = square / 8;
     int file = square % 8;
+
     int f1 = file + 1;
     int f2 = file - 1;
     int r = rank + (!side ? +1 : -1);
+
     if (r >= 0 && r < 8 && f1 >= 0 && f1 < 8)
     {
         attack |= (1ULL << (r * 8 + f1));
@@ -272,24 +274,28 @@ uint64_t Board::mask_knight_attacks(int square)
     {
         int r = rank + dr[i];
         int f = file + df[i];
+
         if (r >= 0 && r < 8 && f >= 0 && f < 8)
         {
             attacks |= (1ULL << (r * 8 + f));
         }
     }
-    if (attacks > 0)
-    {
-        displayBoard(attacks);
-    }
+    // if (attacks > 0)
+    // {
+    //     displayBoard(attacks);
+    // }
     return attacks;
 }
 uint64_t Board::mask_king_attacks(int square)
 {
     uint64_t attacks = 0ULL;
+
     int rank = square / 8;
     int file = square % 8;
+
     int dr[] = {-1, 0, 1, -1, 1, -1, 0, 1};
     int df[] = {-1, -1, -1, 0, 0, 1, 1, 1};
+
     for (int i = 0; i < 8; i++)
     {
         int r = rank + dr[i];
@@ -299,10 +305,58 @@ uint64_t Board::mask_king_attacks(int square)
             attacks |= (1ULL << (r * 8 + f));
         }
     }
-    if (attacks > 0)
-    {
-        displayBoard(attacks);
+    // if (attacks > 0)
+    // {
+    //     displayBoard(attacks);
+    // }
+    return attacks;
+}
+uint64_t Board::mask_bishop_attacks(int square) {
+    uint64_t attacks=0ULL;
+
+    int rank = square/8;
+    int file = square%8;
+
+    int dr[]={-1, -1, 1, 1};
+    int df[]={-1, 1, -1 ,1};
+    
+    for (int i=0; i<4; i++) {
+        int r = rank + dr[i];
+        int f = file + df[i];
+        while (r>=0 && r < 8 && f >=0 && f <8) {
+            attacks|=(1ULL<<(r*8+f));
+            r+=dr[i];
+            f+=df[i];
+        }
     }
+    // if (attacks>0) {
+    //     displayBoard(attacks);
+    // }
+    return attacks;
+
+}
+
+uint64_t Board::mask_rook_attacks(int square) {
+    uint64_t attacks=0ULL;
+
+    int rank = square/8;
+    int file = square%8;
+
+    int dr[]={0, 0, -1, 1};
+    int df[]={-1, 1, 0,0};
+
+    for (int i=0; i<4; i++) {
+        int r = rank+ dr[i];
+        int f = file + df[i];
+        while (r>=0 && r<8 && f>=0 && f<8) {
+            attacks|=(1ULL<<(r*8+f));
+            r+=dr[i];
+            f+=df[i];
+        }
+    }
+    // if (attacks>0) {
+    //     displayBoard(attacks);
+    // }
     return attacks;
 }
 
@@ -332,6 +386,16 @@ void Board::generatePawnMoves()
     for (int i = 0; i < 64; i++)
     {
         pawn_attacks[1][i] = mask_pawn_attacks(1, i);
+    }
+}
+void Board::generateBishopMoves() {
+    for (int i=0; i<64; i++) {
+        bishop_attacks[i]=mask_bishop_attacks(i);
+    }
+}
+void Board::generateRookMoves() {
+    for (int i=0; i<64; i++) {
+        rook_attacks[i]=mask_rook_attacks(i);
     }
 }
 void Board::generateSlidingMoves()

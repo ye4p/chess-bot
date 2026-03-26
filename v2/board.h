@@ -101,6 +101,8 @@ public:
     uint64_t pawn_attacks[2][64];
     uint64_t knight_attacks[64];
     uint64_t king_attacks[64];
+    uint64_t bishop_attacks[64];
+    uint64_t rook_attacks[64];
 
     Board();
     void inline setBit(uint64_t &bb, int square);
@@ -119,9 +121,13 @@ public:
     uint64_t mask_pawn_attacks(int side, int square);
     uint64_t mask_knight_attacks(int square);
     uint64_t mask_king_attacks(int square);
+    uint64_t mask_bishop_attacks(int square);
+    uint64_t mask_rook_attacks(int square);
     void generateMoves();
     void generateKnightMoves();
     void generateKingMoves();
     void generatePawnMoves();
+    void generateBishopMoves();
+    void generateRookMoves();
     void generateSlidingMoves();
 };
