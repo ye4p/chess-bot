@@ -238,19 +238,24 @@ uint64_t Board::mask_pawn_attacks(int side, int square)
 {
     // attack bb
     uint64_t attack = 0ULL;
-    // piece bb
-    uint64_t bb = 0ULL;
-    // set piece on bb
-    // set_bit()
     int rank = square / 8;
     int file = square % 8;
-    setBit(bb, square);
-    displayBoard(bb);
-    int f1 = 1;
-    int f2 = -1;
-    int r = !side ? +1 : -1;
-
-    return 0;
+    int f1 = file + 1;
+    int f2 = file - 1;
+    int r = rank + (!side ? +1 : -1);
+    if (r >= 0 && r < 8 && f1 >= 0 && f1 < 8)
+    {
+        attack |= (1ULL << (r * 8 + f1));
+    }
+    if (r >= 0 && r < 8 && f2 >= 0 && f2 < 8)
+    {
+        attack |= (1ULL << (r * 8 + f2));
+    }
+    // if (attack > 0)
+    // {
+    //     displayBoard(attack);
+    // }
+    return attack;
 }
 
 uint64_t Board::mask_knight_attacks(int square)
@@ -267,9 +272,36 @@ uint64_t Board::mask_knight_attacks(int square)
     {
         int r = rank + dr[i];
         int f = file + df[i];
-        if (r>=0 && r<8 && f>=0 && f<8) {
-            attacks|= (1ULL<<(r*8+file));
+        if (r >= 0 && r < 8 && f >= 0 && f < 8)
+        {
+            attacks |= (1ULL << (r * 8 + f));
         }
+    }
+    if (attacks > 0)
+    {
+        displayBoard(attacks);
+    }
+    return attacks;
+}
+uint64_t Board::mask_king_attacks(int square)
+{
+    uint64_t attacks = 0ULL;
+    int rank = square / 8;
+    int file = square % 8;
+    int dr[] = {-1, 0, 1, -1, 1, -1, 0, 1};
+    int df[] = {-1, -1, -1, 0, 0, 1, 1, 1};
+    for (int i = 0; i < 8; i++)
+    {
+        int r = rank + dr[i];
+        int f = file + df[i];
+        if (r >= 0 && r < 8 && f >= 0 && f < 8)
+        {
+            attacks |= (1ULL << (r * 8 + f));
+        }
+    }
+    if (attacks > 0)
+    {
+        displayBoard(attacks);
     }
     return attacks;
 }
@@ -279,9 +311,28 @@ void Board::generateMoves()
 }
 void Board::generateKnightMoves()
 {
+    for (int i = 0; i < 64; i++)
+    {
+        knight_attacks[i] = mask_knight_attacks(i);
+    }
 }
 void Board::generateKingMoves()
 {
+    for (int i = 0; i < 64; i++)
+    {
+        king_attacks[i] = mask_king_attacks(i);
+    }
+}
+void Board::generatePawnMoves()
+{
+    for (int i = 0; i < 64; i++)
+    {
+        pawn_attacks[0][i] = mask_pawn_attacks(0, i);
+    }
+    for (int i = 0; i < 64; i++)
+    {
+        pawn_attacks[1][i] = mask_pawn_attacks(1, i);
+    }
 }
 void Board::generateSlidingMoves()
 {
