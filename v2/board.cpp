@@ -242,33 +242,30 @@ uint64_t Board::mask_pawn_attacks(int side, int square)
     uint64_t bb = 0ULL;
     // set piece on bb
     // set_bit()
+    int rank = square / 8;
+    int file = square % 8;
     setBit(bb, square);
     displayBoard(bb);
-    displayBoard(bb << 7);
-    if (!side)
-    {
-        attack |= (bb << 7);
-        attack |= (bb << 9);
-    }
-    else
-    {
-    }
-    displayBoard(bb);
-    displayBoard(attack);
+    int f1 = 1;
+    int f2 = -1;
+    int r = !side ? +1 : -1;
+
     return 0;
 }
 
-uint64_t Board::mask_knight_attacks(int square) {
-    uint64_t attacks=0ULL;
+uint64_t Board::mask_knight_attacks(int square)
+{
+    uint64_t attacks = 0ULL;
 
-    int rank = square/8;
-    int file = square%8;
+    int rank = square / 8;
+    int file = square % 8;
 
     int dr[] = {-2, -1, 1, 2, 2, 1, -1, -2};
     int df[] = {1, 2, 2, 1, -1, -2, -2, -1};
 
-    for (int i=0; i<8; i++) {
-        int r = rank+ dr[i];
+    for (int i = 0; i < 8; i++)
+    {
+        int r = rank + dr[i];
         int f = file + df[i];
     }
 }
