@@ -311,47 +311,52 @@ uint64_t Board::mask_king_attacks(int square)
     // }
     return attacks;
 }
-uint64_t Board::mask_bishop_attacks(int square) {
-    uint64_t attacks=0ULL;
+uint64_t Board::mask_bishop_attacks(int square)
+{
+    uint64_t attacks = 0ULL;
 
-    int rank = square/8;
-    int file = square%8;
+    int rank = square / 8;
+    int file = square % 8;
 
-    int dr[]={-1, -1, 1, 1};
-    int df[]={-1, 1, -1 ,1};
-    
-    for (int i=0; i<4; i++) {
+    int dr[] = {-1, -1, 1, 1};
+    int df[] = {-1, 1, -1, 1};
+
+    for (int i = 0; i < 4; i++)
+    {
         int r = rank + dr[i];
         int f = file + df[i];
-        while (r>=0 && r < 8 && f >=0 && f <8) {
-            attacks|=(1ULL<<(r*8+f));
-            r+=dr[i];
-            f+=df[i];
+        while (r >= 0 && r < 8 && f >= 0 && f < 8)
+        {
+            attacks |= (1ULL << (r * 8 + f));
+            r += dr[i];
+            f += df[i];
         }
     }
     // if (attacks>0) {
     //     displayBoard(attacks);
     // }
     return attacks;
-
 }
 
-uint64_t Board::mask_rook_attacks(int square) {
-    uint64_t attacks=0ULL;
+uint64_t Board::mask_rook_attacks(int square)
+{
+    uint64_t attacks = 0ULL;
 
-    int rank = square/8;
-    int file = square%8;
+    int rank = square / 8;
+    int file = square % 8;
 
-    int dr[]={0, 0, -1, 1};
-    int df[]={-1, 1, 0,0};
+    int dr[] = {0, 0, -1, 1};
+    int df[] = {-1, 1, 0, 0};
 
-    for (int i=0; i<4; i++) {
-        int r = rank+ dr[i];
+    for (int i = 0; i < 4; i++)
+    {
+        int r = rank + dr[i];
         int f = file + df[i];
-        while (r>=0 && r<8 && f>=0 && f<8) {
-            attacks|=(1ULL<<(r*8+f));
-            r+=dr[i];
-            f+=df[i];
+        while (r >= 0 && r < 8 && f >= 0 && f < 8)
+        {
+            attacks |= (1ULL << (r * 8 + f));
+            r += dr[i];
+            f += df[i];
         }
     }
     // if (attacks>0) {
@@ -388,14 +393,18 @@ void Board::generatePawnMoves()
         pawn_attacks[1][i] = mask_pawn_attacks(1, i);
     }
 }
-void Board::generateBishopMoves() {
-    for (int i=0; i<64; i++) {
-        bishop_attacks[i]=mask_bishop_attacks(i);
+void Board::generateBishopMoves()
+{
+    for (int i = 0; i < 64; i++)
+    {
+        bishop_attacks[i] = mask_bishop_attacks(i);
     }
 }
-void Board::generateRookMoves() {
-    for (int i=0; i<64; i++) {
-        rook_attacks[i]=mask_rook_attacks(i);
+void Board::generateRookMoves()
+{
+    for (int i = 0; i < 64; i++)
+    {
+        rook_attacks[i] = mask_rook_attacks(i);
     }
 }
 void Board::generateSlidingMoves()
