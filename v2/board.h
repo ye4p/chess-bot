@@ -123,6 +123,7 @@ public:
     uint64_t mask_king_attacks(int square);
     uint64_t mask_bishop_attacks(int square);
     uint64_t mask_rook_attacks(int square);
+    uint64_t get_bishop_attacks(int square, uint64_t board_occupancy);
     void generateMoves();
     void generateKnightMoves();
     void generateKingMoves();

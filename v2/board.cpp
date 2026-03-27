@@ -365,6 +365,13 @@ uint64_t Board::mask_rook_attacks(int square)
     return attacks;
 }
 
+uint64_t Board::get_bishop_attacks(int square, uint64_t board_occupancy) {
+    board_occupancy&=bishop_attacks[square];
+
+    int index = (board_occupancy*BISHOP_MAGICS[square]) >> (64-popcount(board_occupancy));
+    return 0ULL;
+}
+
 void Board::generateMoves()
 {
 }
