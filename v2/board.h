@@ -97,19 +97,21 @@ class Board
     bool whiteToMove = true;
 
 public:
-    // Bitboards with attacks:
-    uint64_t pawn_attacks[2][64];
-    uint64_t knight_attacks[64];
-    uint64_t king_attacks[64];
-    uint64_t bishop_attacks[64];
-    uint64_t rook_attacks[64];
+    // Bitboard masks with attacks:
+    uint64_t pawn_masks[2][64];
+    uint64_t knight_masks[64];
+    uint64_t king_masks[64];
+    uint64_t bishop_masks[64];
+    uint64_t rook_masks[64];
+    uint64_t bishop_relevant_bits[64];
 
     Board();
     void inline setBit(uint64_t &bb, int square);
     void clearBit(uint64_t &bb, int square);
     bool isBitSet(uint64_t bb, int square);
-    uint64_t get_lsb(uint64_t bb);
-    uint64_t pop_lsb(uint64_t &bb);
+    uint64_t get_lsb_bb(uint64_t bb);
+    uint64_t pop_lsb_bb(uint64_t &bb);
+    int get_lsb_index(uint64_t bb);
     inline int popcount(uint64_t bb);
     void displayBoard(uint64_t bb);
     std::vector<std::string> splitString(std::string str, char delimiter);
@@ -124,6 +126,7 @@ public:
     uint64_t mask_bishop_attacks(int square);
     uint64_t mask_rook_attacks(int square);
     uint64_t get_bishop_attacks(int square, uint64_t board_occupancy);
+    uint64_t set_occupancy(int index, int bits, uint64_t mask);
     void generateMoves();
     void generateKnightMoves();
     void generateKingMoves();
