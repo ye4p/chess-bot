@@ -10,13 +10,65 @@
 #include <unordered_map>
 #include <cstdio>
 
-Undo::Undo(uint8_t castlingRights, int8_t enPassantSquare, uint8_t halfMoveClock, uint64_t fullMoveClock)
+Undo::Undo()
+{
+    castlingRights = 0b1111;
+    capturedPiece = -1;
+    enPassantSquare = -1;
+    halfMoveClock = 0;
+    fullMoveClock = 1;
+}
+
+Undo::Undo(uint8_t castlingRights, uint8_t capturedPiece, int8_t enPassantSquare, uint8_t halfMoveClock, uint16_t fullMoveClock)
 {
     this->castlingRights = castlingRights;
+    this->capturedPiece = capturedPiece;
     this->enPassantSquare = enPassantSquare;
     this->halfMoveClock = halfMoveClock;
     this->fullMoveClock = fullMoveClock;
 }
+
+//
+
+Move::Move()
+{
+    data = 0;
+}
+Move::Move(int from, int to, int type = 0, int promotion = 0)
+{
+    data = ((promotion << 14) || (type << 12) || (to << 6) || from);
+}
+
+int Move::from() const
+{
+    return (data & 0x3F);
+}
+int Move::to() const
+{
+    return ((data >> 6) & 0x3F);
+}
+int Move::type() const
+{
+    return ((data >> 12) & 0x3);
+}
+int Move::promotion() const
+{
+    return ((data >> 14) & 0x3);
+}
+
+bool Move::isCastling() const
+{
+    return (type() == 3);
+}
+bool Move::isEnPassant() const
+{
+    return (type() == 2);
+}
+bool Move::isPromotion() const
+{
+    return (type() == 1);
+}
+//
 
 Board::Board()
 {
@@ -46,6 +98,17 @@ bool Board::isBitSet(uint64_t bb, int square)
 {
     return (bb & (1ULL << square)) > 0;
 }
+int Board::pieceOn(int square)
+{
+    for (int i = 0; i < 12; i++)
+    {
+        if (isBitSet(bbs[i], square))
+        {
+            return i;
+        }
+    }
+    return -1;
+}
 uint64_t Board::get_lsb_bb(uint64_t bb)
 {
     return (bb & ((~bb) + 1));
@@ -68,7 +131,7 @@ inline int Board::popcount(uint64_t bb)
     //     bb&=bb-1;
     //     count++;
     // }
-    return __builtin_popcount(bb);
+    return __builtin_popcountll(bb);
 }
 
 void Board::displayBoard(uint64_t bb)
@@ -356,7 +419,7 @@ uint64_t Board::mask_rook_attacks(int square)
     {
         int r = rank + dr[i];
         int f = file + df[i];
-        while (r >= 0 && r < 8 && f >= 0 && f < 8)
+        while (r > 0 && r < 7 && f > 0 && f < 7)
         {
             attacks |= (1ULL << (r * 8 + f));
             r += dr[i];
@@ -373,8 +436,8 @@ uint64_t Board::get_bishop_attacks(int square, uint64_t board_occupancy)
 {
     board_occupancy &= bishop_masks[square];
 
-    int index = (board_occupancy * BISHOP_MAGICS[square]) >> (64 - popcount(board_occupancy));
-    return 0ULL;
+    int index = (board_occupancy * BISHOP_MAGICS[square]) >> (64 - bishop_relevant_bits[square]);
+    return bishop_attacks[square][index];
 }
 
 uint64_t Board::set_occupancy(int index, int bits, uint64_t mask)
@@ -383,11 +446,95 @@ uint64_t Board::set_occupancy(int index, int bits, uint64_t mask)
     for (int i = 0; i < bits; i++)
     {
         int square = get_lsb_index(mask);
+        mask &= mask - 1;
+        if (index & (1 << i))
+        {
+            occupancy |= (1ULL << square);
+        }
+    }
+    return occupancy;
+}
+
+uint64_t Board::bishop_attacks_from_occupancy(int square, uint64_t blockers)
+{
+    uint64_t attacks = 0ULL;
+    int r = square / 8;
+    int f = square % 8;
+
+    // NE
+    for (int i = r + 1, j = f + 1; i <= 7 && j <= 7; i++, j++)
+    {
+        attacks |= (1ULL << (i * 8 + j));
+        if (blockers & (1ULL << (i * 8 + j)))
+            break;
+    }
+    // NW
+    for (int i = r + 1, j = f - 1; i <= 7 && j >= 0; i++, j--)
+    {
+        attacks |= (1ULL << (i * 8 + j));
+        if (blockers & (1ULL << (i * 8 + j)))
+            break;
+    }
+    // SE
+    for (int i = r - 1, j = f + 1; i >= 0 && j <= 7; i--, j++)
+    {
+        attacks |= (1ULL << (i * 8 + j));
+        if (blockers & (1ULL << (i * 8 + j)))
+            break;
+    }
+    // SW
+    for (int i = r - 1, j = f - 1; i >= 0 && j >= 0; i--, j--)
+    {
+        attacks |= (1ULL << (i * 8 + j));
+        if (blockers & (1ULL << (i * 8 + j)))
+            break;
+    }
+    return attacks;
+}
+
+uint64_t Board::rook_attacks_from_occupancy(int square, uint64_t blockers)
+{
+    uint64_t attacks = 0ULL;
+    int r = square / 8;
+    int f = square % 8;
+    // N
+    for (int i = r + 1; i <= 7; i++)
+    {
+        attacks |= (1ULL << (i * 8 + f));
+        if (blockers & (1ULL << (i * 8 + f)))
+            break;
+    }
+    // S
+    for (int i = r - 1; i >= 0; i--)
+    {
+        attacks |= (1ULL << (i * 8 + f));
+        if (blockers & (1ULL << (i * 8 + f)))
+            break;
+    }
+    // E
+    for (int j = f + 1; j <= 7; j++)
+    {
+        attacks |= (1ULL << (r * 8 + j));
+        if (blockers & (1ULL << (r * 8 + j)))
+            break;
+    }
+    // W
+    for (int j = f - 1; j >= 0; j--)
+    {
+        attacks |= (1ULL << (r * 8 + j));
+        if (blockers & (1ULL << (r * 8 + j)))
+            break;
     }
 }
 
 void Board::generateMoves()
 {
+    std::vector<Move> moves;
+    uint64_t from_bb, to_bb;
+    from_bb = bbs[0];
+    while (from_bb >> 0)
+    {
+    }
 }
 void Board::generateKnightMoves()
 {
@@ -420,15 +567,66 @@ void Board::generateBishopMoves()
     {
         bishop_masks[i] = mask_bishop_attacks(i);
         bishop_relevant_bits[i] = popcount(bishop_masks[i]);
+
+        int occupancy_count = 1 << bishop_relevant_bits[i];
+
+        // Generating all occupancies and attacks
+        for (int j = 0; j < occupancy_count; j++)
+        {
+            uint64_t occupancy = set_occupancy(j, bishop_relevant_bits[i], bishop_masks[i]);
+
+            // Computing exact attacks for this occupancy (smhw related to ray tracing)
+            uint64_t attacks = bishop_attacks_from_occupancy(i, occupancy);
+
+            // Filling magic attack table
+            int magic_index = (occupancy * BISHOP_MAGICS[i]) >> (64 - bishop_relevant_bits[i]);
+            bishop_attacks[i][magic_index] = attacks;
+        }
     }
 }
 void Board::generateRookMoves()
 {
     for (int i = 0; i < 64; i++)
     {
+        // gen all attack masks and relevant bits
         rook_masks[i] = mask_rook_attacks(i);
+        rook_relevant_bits[i] = popcount(rook_masks[i]);
+
+        int occupancy_count = 1 << rook_relevant_bits[i];
+        for (int j = 0; j < occupancy_count; j++)
+        {
+            uint64_t occupancy = set_occupancy(j, rook_relevant_bits[i], rook_masks[i]);
+
+            uint64_t attacks = rook_attacks_from_occupancy(i, occupancy);
+
+            int magic_index = (occupancy * ROOK_MAGICS[i]) >> (64 - rook_relevant_bits[i]);
+            rook_attacks[i][magic_index] = attacks;
+        }
     }
 }
 void Board::generateSlidingMoves()
 {
+}
+
+// Make/unmake move logic
+
+void Board::makeMove(Move m, Undo &undo)
+{
+    undo.enPassantSquare = enPassantSquare;
+    undo.castlingRights = castlingRights;
+    undo.fullMoveClock = fullMoveClock;
+    undo.halfMoveClock = halfMoveClock;
+    undo.capturedPiece = pieceOn(m.to());
+}
+void Board::unmakeMove(Move m, Undo &undo)
+{
+    castlingRights = undo.castlingRights;
+    enPassantSquare = undo.enPassantSquare;
+    fullMoveClock = undo.fullMoveClock;
+    halfMoveClock = undo.halfMoveClock;
+    if (undo.capturedPiece != -1)
+    {
+        setBit(bbs[undo.capturedPiece], m.to());
+        mailbox[m.to()] = undo.capturedPiece;
+    }
 }
