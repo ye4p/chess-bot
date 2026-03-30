@@ -532,7 +532,7 @@ void Board::generateMoves()
     std::vector<Move> moves;
     uint64_t from_bb, to_bb;
     from_bb = bbs[0];
-    while (from_bb >> 0)
+    while (from_bb > 0)
     {
     }
 }
