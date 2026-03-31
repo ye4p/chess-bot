@@ -103,6 +103,7 @@ struct Move
     bool isPromotion() const;
     bool isEnPassant() const;
     bool isCastling() const;
+    bool isCapture() const;
 };
 // clang-format off
 enum squares : int{
@@ -195,6 +196,7 @@ public:
     uint64_t mask_rook_attacks(int square);
 
     uint64_t get_bishop_attacks(int square, uint64_t board_occupancy);
+    uint64_t get_rook_attacks(int square, uint64_t board_occupancy);
     uint64_t set_occupancy(int index, int bits, uint64_t mask);
     uint64_t bishop_attacks_from_occupancy(int square, uint64_t blockers);
     uint64_t rook_attacks_from_occupancy(int square, uint64_t blockers);
