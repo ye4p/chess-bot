@@ -73,14 +73,32 @@ struct Undo
 struct Move
 {
 
-    // first 6 bits - from, next 6 - to, 2 for type(0-normal, 1-promotion, 2- en passant, 3 -castling), and 2 for promoted piece type(0 - knight, 1-bishop, 2-rook, 3-queen)
+    //  first 6 bits - from, next 6 - to, 
+    //  2 for type(0-normal, 1-promotion, 2- en passant, 3 -castling), 
+    //  and 2 for promoted piece type(0 - knight, 1-bishop, 2-rook, 3-queen)
+
+    // NEW WAY - 4 bits for variations:
+    // 0000 - quiet
+    // 0001 - pawn double push
+    // 0010 - king castle
+    // 0011 - queen castle
+    // 0100 - capture
+    // 0101 - en passant
+    // 1000 - knight promotion
+    // 1001 - bishop promotion
+    // 1010 - rook promotion
+    // 1011 - queen promotion
+    // 1100 - knight promotion + capture
+    // 1101 - bishop promotion + capture
+    // 1110 - rook promotion + capture
+    // 1111 - queen promotion + capture
+
     uint16_t data;
     Move();
-    Move(int from, int to, int type = 0, int promotion = 0);
+    Move(int from, int to, int status);
     int from() const;
     int to() const;
-    int type() const;
-    int promotion() const;
+    int status() const;
 
     bool isPromotion() const;
     bool isEnPassant() const;

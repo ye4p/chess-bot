@@ -34,9 +34,9 @@ Move::Move()
 {
     data = 0;
 }
-Move::Move(int from, int to, int type = 0, int promotion = 0)
+Move::Move(int from, int to, int status=0)
 {
-    data = ((promotion << 14) || (type << 12) || (to << 6) || from);
+    data = ((status << 12) || (to << 6) || from);
 }
 
 int Move::from() const
@@ -47,13 +47,9 @@ int Move::to() const
 {
     return ((data >> 6) & 0x3F);
 }
-int Move::type() const
+int Move::status() const
 {
-    return ((data >> 12) & 0x3);
-}
-int Move::promotion() const
-{
-    return ((data >> 14) & 0x3);
+    return (((data >> 12) & 0xE) ==0x2);
 }
 
 bool Move::isCastling() const
@@ -530,10 +526,51 @@ uint64_t Board::rook_attacks_from_occupancy(int square, uint64_t blockers)
 void Board::generateMoves()
 {
     std::vector<Move> moves;
-    uint64_t from_bb, to_bb;
+
+    uint64_t from_bb;
+
     from_bb = bbs[0];
     while (from_bb > 0)
     {
+        // White pawns
+        int from = pop_lsb_bb(from_bb);
+        uint64_t pseudolegal=pawn_masks[0][from] & (!occupancies[0]);
+        while (pseudolegal>0) {
+            int to = pop_lsb_bb(pseudolegal);
+
+            if ( 0xff00000000000000 & to) {
+                moves.push_back(Move(from, to, 1, 0));
+                moves.push_back(Move(from, to, 1, 1)); 
+                moves.push_back(Move(from, to, 1, 2)); 
+                moves.push_back(Move(from, to, 1, 3));  
+            } else if (enPassantSquare & to) {
+                moves.push_back(Move(from, to, 2, 0));
+            } else {
+                moves.push_back(Move(from, to, 0, 0));
+            }
+        } 
+    }
+
+    //  White knights
+    from_bb= bbs[1];
+    while (from_bb>0) {
+        int from = pop_lsb_bb(from_bb);
+        uint64_t pseudolegal=knight_masks[from] & (!occupancies[0]);
+        while (pseudolegal>0) {
+            int to =pop_lsb_bb(pseudolegal);
+            moves.push_back(Move(from,to, 0,0));
+        }
+    }
+
+    // White bishops
+    from_bb=bbs[2];
+    while   (from_bb>0) {
+        int from =pop_lsb_bb(from_bb);
+        uint64_t pseudolegal=get_bishop_attacks(from, occupancies[2]);
+        while (pseudolegal>0) {
+            int to = pop_lsb_bb(pseudolegal);
+            moves.push_back(Move(from, to, 0, 0));
+        }
     }
 }
 void Board::generateKnightMoves()
