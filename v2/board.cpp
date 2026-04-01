@@ -34,7 +34,7 @@ Move::Move()
 {
     data = 0;
 }
-Move::Move(int from, int to, int status=0)
+Move::Move(int from, int to, int status = 0)
 {
     data = ((status << 12) || (to << 6) || from);
 }
@@ -58,14 +58,15 @@ bool Move::isCastling() const
 }
 bool Move::isEnPassant() const
 {
-    return (status() == 0x5); //0b0101
+    return (status() == 0x5); // 0b0101
 }
 bool Move::isPromotion() const
 {
-    return (status() & 0x8); //0b1000
+    return (status() & 0x8); // 0b1000
 }
-bool Move::isCapture() const {
-    return (status() & 0x4 ); //0b0100
+bool Move::isCapture() const
+{
+    return (status() & 0x4); // 0b0100
 }
 //
 
@@ -545,64 +546,83 @@ void Board::generateMoves()
     {
         // White pawns
         int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal=pawn_masks[0][from] & (!occupancies[0]);
-        while (pseudolegal>0) {
+        uint64_t pseudolegal = pawn_masks[0][from] & (~occupancies[0]);
+        while (pseudolegal > 0)
+        {
             int to = pop_lsb_bb(pseudolegal);
-            if (to==enPassantSquare) {
+            if (to == enPassantSquare)
+            {
                 moves.push_back(Move(from, to, 0b0101)); // en passant status bitwise
-            } else if ( (0xff00000000000000 & to ) && (to & occupancies[1])) { // If last row for white pawns(promotion)
+            }
+            else if ((0xff00000000000000 & (1ULL << to)) && ((1ULL << to) & occupancies[1]))
+            { // If last row for white pawns(promotion)
                 moves.push_back(Move(from, to, 0b1100));
-                moves.push_back(Move(from, to, 0b1101)); 
-                moves.push_back(Move(from, to, 0b1110)); 
-                moves.push_back(Move(from, to, 0b1111));  
-            } else if (0xff00000000000000 & to ) {
+                moves.push_back(Move(from, to, 0b1101));
+                moves.push_back(Move(from, to, 0b1110));
+                moves.push_back(Move(from, to, 0b1111));
+            }
+            else if (0xff00000000000000 & (1ULL << to))
+            {
                 moves.push_back(Move(from, to, 0b1000));
-                moves.push_back(Move(from, to, 0b1001)); 
-                moves.push_back(Move(from, to, 0b1010)); 
-                moves.push_back(Move(from, to, 0b1011));  
-            } else {
+                moves.push_back(Move(from, to, 0b1001));
+                moves.push_back(Move(from, to, 0b1010));
+                moves.push_back(Move(from, to, 0b1011));
+            }
+            else
+            {
                 moves.push_back(Move(from, to, 0b0000));
             }
-        } 
+        }
     }
 
     //  White knights
-    from_bb= bbs[1];
-    while (from_bb>0) {
+    from_bb = bbs[1];
+    while (from_bb > 0)
+    {
         int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal=knight_masks[from] & (!occupancies[0]);
-        while (pseudolegal>0) {
-            int to =pop_lsb_bb(pseudolegal);
-            if (to & occupancies[1]) {
-                moves.push_back(Move(from,to, 0b0100));
-            }   else {
-                moves.push_back(Move(from,to, 0b0000));
+        uint64_t pseudolegal = knight_masks[from] & (~occupancies[0]);
+        while (pseudolegal > 0)
+        {
+            int to = pop_lsb_bb(pseudolegal);
+            if ((1ULL << to) & occupancies[1])
+            {
+                moves.push_back(Move(from, to, 0b0100));
+            }
+            else
+            {
+                moves.push_back(Move(from, to, 0b0000));
             }
         }
     }
 
     // White bishops
-    from_bb=bbs[2];
-    while   (from_bb>0) {
-        int from =pop_lsb_bb(from_bb);
-        uint64_t pseudolegal=get_bishop_attacks(from, occupancies[2]);
-        while (pseudolegal>0) {
+    from_bb = bbs[2];
+    while (from_bb > 0)
+    {
+        int from = pop_lsb_bb(from_bb);
+        uint64_t pseudolegal = get_bishop_attacks(from, occupancies[2]) & ~occupancies[0];
+        while (pseudolegal > 0)
+        {
             int to = pop_lsb_bb(pseudolegal);
-            if (to & occupancies[1]) {
+            if ((1ULL << to) & occupancies[1])
+            {
                 moves.push_back(Move(from, to, 0b0100));
-            } else {
+            }
+            else
+            {
                 moves.push_back(Move(from, to, 0b0000));
             }
         }
     }
 
     // White rooks
-    from_bb=bbs[3];
-    while (from_bb>0) {
+    from_bb = bbs[3];
+    while (from_bb > 0)
+    {
         int from = pop_lsb_bb(from_bb);
         uint64_t pseudolegal = get_rook_attacks(from, occupancies[2]);
-        while (pseudolegal>0) {
-            
+        while (pseudolegal > 0)
+        {
         }
     }
 }
