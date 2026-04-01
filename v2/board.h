@@ -143,6 +143,9 @@ public:
 
     std::array<int, 64> mailbox;
 
+    std::array<Move, 256> moveList;
+    std::array<Move, 265> legalList;
+
     uint8_t castlingRights = 0b0000; // 1st - white king, 2nd - white queen, 3rd - black king, 4th - black queen
 
     int enPassantSquare = -1;
@@ -150,7 +153,8 @@ public:
     int halfMoveClock = 0;
     int fullMoveClock = 1;
 
-    bool whiteToMove = true;
+    int sideToMove=0;
+   // bool whiteToMove = true;
 
     Undo undo;
 
@@ -209,6 +213,12 @@ public:
     void generateRookMoves();
     void generateSlidingMoves();
 
-    void makeMove(Move m, Undo &undo);
-    void unmakeMove(Move m, Undo &undo);
+    void makeMove(Move m);
+    void unmakeMove(Move m);
+
+    bool isSquareAttacked(int square, int by);
+    bool isKingAttacked(int square,int by);
+
+    int perft(int depth);
+    int perftDivide(int depth);
 };
