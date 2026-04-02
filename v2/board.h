@@ -144,7 +144,7 @@ public:
     std::array<int, 64> mailbox;
 
     std::array<Move, 256> moveList;
-    std::array<Move, 265> legalList;
+    std::array<Move, 256> legalList;
 
     uint8_t castlingRights = 0b0000; // 1st - white king, 2nd - white queen, 3rd - black king, 4th - black queen
 

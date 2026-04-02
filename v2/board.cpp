@@ -72,8 +72,10 @@ bool Move::isCapture() const
 
 Board::Board()
 {
+    std::cout << "Running constructor for board\n";
     bbs.fill(0ULL);
     occupancies.fill(0ULL);
+    mailbox.fill(0);
     castlingRights = 0b0000;
     enPassantSquare = -1;
     halfMoveClock = 0;
@@ -940,13 +942,16 @@ int Board::perft(int depth) {
     }
 
     int nodes=0;
+    std::cout << "Generating moves...\n";
     generateMoves();
+    std::cout << "Finished generating moves\n";
+    
     for (int i=0; i<moveList.size(); i++) {
         if (moveList[i].data==0) {
             break;
         }
         makeMove(moveList[i]);
-        
+
     }
 
 }
