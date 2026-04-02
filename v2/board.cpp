@@ -78,7 +78,7 @@ Board::Board()
     enPassantSquare = -1;
     halfMoveClock = 0;
     fullMoveClock = 1;
-    sideToMove=0;
+    sideToMove = 0;
 }
 
 //
@@ -203,8 +203,8 @@ void Board::setFEN(std::string s)
     enPassantSquare = -1;
     halfMoveClock = 0;
     fullMoveClock = 0;
-    sideToMove=0;
-    //whiteToMove = true;
+    sideToMove = 0;
+    // whiteToMove = true;
 
     int i = 0;
     for (std::string row : rows)
@@ -232,7 +232,7 @@ void Board::setFEN(std::string s)
     }
     else
     {
-        sideToMove=1;
+        sideToMove = 1;
     }
 
     for (char let : vec[2])
@@ -538,7 +538,7 @@ uint64_t Board::rook_attacks_from_occupancy(int square, uint64_t blockers)
 
 void Board::generateMoves()
 {
-    int count=0;
+    int count = 0;
 
     uint64_t from_bb;
 
@@ -550,7 +550,7 @@ void Board::generateMoves()
     from_bb = bbs[0];
     while (from_bb > 0)
     {
-        
+
         int from = pop_lsb_bb(from_bb);
         uint64_t pseudolegal = pawn_masks[0][from] & (~occupancies[0]);
         while (pseudolegal > 0)
@@ -558,31 +558,31 @@ void Board::generateMoves()
             int to = pop_lsb_bb(pseudolegal);
             if (to == enPassantSquare)
             {
-                moveList[count]=Move(from, to, 0b0101); // en passant status bitwise
+                moveList[count] = Move(from, to, 0b0101); // en passant status bitwise
             }
             else if ((0xff00000000000000 & (1ULL << to)) && ((1ULL << to) & occupancies[1]))
             { // If last row for white pawns(promotion)
-                moveList[count]=Move(from, to, 0b1100);
+                moveList[count] = Move(from, to, 0b1100);
                 count++;
-                moveList[count]=Move(from, to, 0b1101);
+                moveList[count] = Move(from, to, 0b1101);
                 count++;
-                moveList[count]=Move(from, to, 0b1110);
+                moveList[count] = Move(from, to, 0b1110);
                 count++;
-                moveList[count]=Move(from, to, 0b1111);
+                moveList[count] = Move(from, to, 0b1111);
             }
             else if (0xff00000000000000 & (1ULL << to))
             {
-                moveList[count]=Move(from, to, 0b1000);
+                moveList[count] = Move(from, to, 0b1000);
                 count++;
-                moveList[count]=Move(from, to, 0b1001);
+                moveList[count] = Move(from, to, 0b1001);
                 count++;
-                moveList[count]=Move(from, to, 0b1010);
+                moveList[count] = Move(from, to, 0b1010);
                 count++;
-                moveList[count]=Move(from, to, 0b1011);
+                moveList[count] = Move(from, to, 0b1011);
             }
             else
             {
-                moveList[count]=Move(from, to, 0b0000);
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
@@ -599,11 +599,11 @@ void Board::generateMoves()
             int to = pop_lsb_bb(pseudolegal);
             if ((1ULL << to) & occupancies[1])
             {
-                moveList[count]=Move(from, to, 0b0100);
+                moveList[count] = Move(from, to, 0b0100);
             }
             else
             {
-                moveList[count]=Move(from, to, 0b0000);
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
@@ -620,11 +620,11 @@ void Board::generateMoves()
             int to = pop_lsb_bb(pseudolegal);
             if ((1ULL << to) & occupancies[1])
             {
-                moveList[count]=Move(from, to, 0b0100);
+                moveList[count] = Move(from, to, 0b0100);
             }
             else
             {
-                moveList[count]=Move(from, to, 0b0000);
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
@@ -639,42 +639,55 @@ void Board::generateMoves()
         while (pseudolegal > 0)
         {
             int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL<<to) & occupancies[1]) {
-                moveList[count]=Move(from, to, 0b0100);
-            } else {
-                moveList[count]=Move(from, to, 0b0000);
+            if ((1ULL << to) & occupancies[1])
+            {
+                moveList[count] = Move(from, to, 0b0100);
+            }
+            else
+            {
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
     }
 
     // White queens
-    from_bb=bbs[4];
-    while (from_bb>0) {
-        int from= pop_lsb_bb(from_bb);
-        uint64_t pseudolegal=(get_bishop_attacks(from, occupancies[2]) | get_rook_attacks(from, occupancies[2])) & ~occupancies[0];
-        while (pseudolegal>0) {
+    from_bb = bbs[4];
+    while (from_bb > 0)
+    {
+        int from = pop_lsb_bb(from_bb);
+        uint64_t pseudolegal = (get_bishop_attacks(from, occupancies[2]) | get_rook_attacks(from, occupancies[2])) & ~occupancies[0];
+        while (pseudolegal > 0)
+        {
             int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL<<to) & occupancies[1]) {
-                moveList[count]=Move(from, to, 0b0100);
-            } else {
-                moveList[count]=Move(from, to, 0b0000);
+            if ((1ULL << to) & occupancies[1])
+            {
+                moveList[count] = Move(from, to, 0b0100);
+            }
+            else
+            {
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
     }
 
-    //White kings
-    from_bb=bbs[5];
-    while (from_bb>0) {
-        int from=pop_lsb_bb(from_bb);
-        uint64_t pseudolegal=king_masks[from] & ~occupancies[0];
-        while (pseudolegal>0) {
+    // White kings
+    from_bb = bbs[5];
+    while (from_bb > 0)
+    {
+        int from = pop_lsb_bb(from_bb);
+        uint64_t pseudolegal = king_masks[from] & ~occupancies[0];
+        while (pseudolegal > 0)
+        {
             int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL<<to) & occupancies[1]) {
-                moveList[count]=Move(from, to, 0b0100);
-            } else {
-                moveList[count]=Move(from, to, 0b0000);
+            if ((1ULL << to) & occupancies[1])
+            {
+                moveList[count] = Move(from, to, 0b0100);
+            }
+            else
+            {
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
@@ -688,7 +701,7 @@ void Board::generateMoves()
     from_bb = bbs[6];
     while (from_bb > 0)
     {
-        
+
         int from = pop_lsb_bb(from_bb);
         uint64_t pseudolegal = pawn_masks[1][from] & (~occupancies[1]);
         while (pseudolegal > 0)
@@ -696,31 +709,31 @@ void Board::generateMoves()
             int to = pop_lsb_bb(pseudolegal);
             if (to == enPassantSquare)
             {
-                moveList[count]=Move(from, to, 0b0101); // en passant status bitwise
+                moveList[count] = Move(from, to, 0b0101); // en passant status bitwise
             }
             else if ((0x00000000000000ff & (1ULL << to)) && ((1ULL << to) & occupancies[0]))
             { // If last row for white pawns(promotion)
-                moveList[count]=Move(from, to, 0b1100);
+                moveList[count] = Move(from, to, 0b1100);
                 count++;
-                moveList[count]=Move(from, to, 0b1101);
+                moveList[count] = Move(from, to, 0b1101);
                 count++;
-                moveList[count]=Move(from, to, 0b1110);
+                moveList[count] = Move(from, to, 0b1110);
                 count++;
-                moveList[count]=Move(from, to, 0b1111);
+                moveList[count] = Move(from, to, 0b1111);
             }
             else if (0x00000000000000ff & (1ULL << to))
             {
-                moveList[count]=Move(from, to, 0b0100);
+                moveList[count] = Move(from, to, 0b0100);
                 count++;
-                moveList[count]=Move(from, to, 0b0101);
+                moveList[count] = Move(from, to, 0b0101);
                 count++;
-                moveList[count]=Move(from, to, 0b0110);
+                moveList[count] = Move(from, to, 0b0110);
                 count++;
-                moveList[count]=Move(from, to, 0b0111);
+                moveList[count] = Move(from, to, 0b0111);
             }
             else
             {
-                moveList[count]=Move(from, to, 0b0000);
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
@@ -737,11 +750,11 @@ void Board::generateMoves()
             int to = pop_lsb_bb(pseudolegal);
             if ((1ULL << to) & occupancies[0])
             {
-                moveList[count]=Move(from, to, 0b0100);
+                moveList[count] = Move(from, to, 0b0100);
             }
             else
             {
-                moveList[count]=Move(from, to, 0b0000);
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
@@ -758,11 +771,11 @@ void Board::generateMoves()
             int to = pop_lsb_bb(pseudolegal);
             if ((1ULL << to) & occupancies[0])
             {
-                moveList[count]=Move(from, to, 0b0100);
+                moveList[count] = Move(from, to, 0b0100);
             }
             else
             {
-                moveList[count]=Move(from, to, 0b0000);
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
@@ -777,42 +790,55 @@ void Board::generateMoves()
         while (pseudolegal > 0)
         {
             int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL<<to) & occupancies[0]) {
-                moveList[count]=Move(from, to, 0b0100);
-            } else {
-                moveList[count]=Move(from, to, 0b0000);
+            if ((1ULL << to) & occupancies[0])
+            {
+                moveList[count] = Move(from, to, 0b0100);
+            }
+            else
+            {
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
     }
 
     // Black queens
-    from_bb=bbs[10];
-    while (from_bb>0) {
-        int from= pop_lsb_bb(from_bb);
-        uint64_t pseudolegal=(get_bishop_attacks(from, occupancies[2]) | get_rook_attacks(from, occupancies[2])) & ~occupancies[1];
-        while (pseudolegal>0) {
+    from_bb = bbs[10];
+    while (from_bb > 0)
+    {
+        int from = pop_lsb_bb(from_bb);
+        uint64_t pseudolegal = (get_bishop_attacks(from, occupancies[2]) | get_rook_attacks(from, occupancies[2])) & ~occupancies[1];
+        while (pseudolegal > 0)
+        {
             int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL<<to) & occupancies[0]) {
-                moveList[count]=Move(from, to, 0b0100);
-            } else {
-                moveList[count]=Move(from, to, 0b0000);
+            if ((1ULL << to) & occupancies[0])
+            {
+                moveList[count] = Move(from, to, 0b0100);
+            }
+            else
+            {
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
     }
 
     //  Black kings
-    from_bb=bbs[11];
-    while (from_bb>0) {
-        int from=pop_lsb_bb(from_bb);
-        uint64_t pseudolegal=king_masks[from] & ~occupancies[1];
-        while (pseudolegal>0) {
+    from_bb = bbs[11];
+    while (from_bb > 0)
+    {
+        int from = pop_lsb_bb(from_bb);
+        uint64_t pseudolegal = king_masks[from] & ~occupancies[1];
+        while (pseudolegal > 0)
+        {
             int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL<<to) & occupancies[0]) {
-                moveList[count]=Move(from, to, 0b0100);
-            } else {
-                moveList[count]=Move(from, to, 0b0000);
+            if ((1ULL << to) & occupancies[0])
+            {
+                moveList[count] = Move(from, to, 0b0100);
+            }
+            else
+            {
+                moveList[count] = Move(from, to, 0b0000);
             }
             count++;
         }
@@ -890,7 +916,7 @@ void Board::generateSlidingMoves()
 {
 }
 
-// Make/unmake move logic
+// Make/undo move logic
 
 void Board::makeMove(Move m)
 {
@@ -899,8 +925,19 @@ void Board::makeMove(Move m)
     undo.fullMoveClock = fullMoveClock;
     undo.halfMoveClock = halfMoveClock;
     undo.capturedPiece = pieceOn(m.to());
+
+    // Move piece from source → target.
+    // Handle captures (including en passant).
+    // Handle special moves: castling, promotion, en passant.
+    // Update game state:
+    // Side to move
+    // Castling rights
+    // En passant square
+    // Halfmove/fullmove clocks
+    // Update hash/eval (if used).
+    // Save undo info for full restoration.
 }
-void Board::unmakeMove(Move m)
+void Board::undoMove(Move m)
 {
     castlingRights = undo.castlingRights;
     enPassantSquare = undo.enPassantSquare;
@@ -915,17 +952,19 @@ void Board::unmakeMove(Move m)
 
 // Is square attacked function
 
-bool Board::isSquareAttacked(int square, int by) {
-    int color = (by ? 0: 6);
-    uint64_t res1= knight_masks[square] & bbs[1+color];
-    uint64_t res2=king_masks[square] & bbs[5+color];
+bool Board::isSquareAttacked(int square, int by)
+{
+    int color = (by ? 0 : 6);
+    uint64_t res1 = knight_masks[square] & bbs[1 + color];
+    uint64_t res2 = king_masks[square] & bbs[5 + color];
     uint64_t res3 = pawn_masks[by][square] & bbs[color];
-    uint64_t res4= get_rook_attacks(square, occupancies[2]) & ~occupancies[!by];
-    uint64_t res5= get_bishop_attacks(square, occupancies[2]) & ~occupancies[!by];
-    return (1ULL<<square) & res1 & res2 & res3 & res4 & res5;
+    uint64_t res4 = get_rook_attacks(square, occupancies[2]) & ~occupancies[!by];
+    uint64_t res5 = get_bishop_attacks(square, occupancies[2]) & ~occupancies[!by];
+    return (1ULL << square) & res1 & res2 & res3 & res4 & res5;
 }
 
-bool Board::isKingAttacked(int square,int by) {
+bool Board::isKingAttacked(int by)
+{
     int kingIndex = get_lsb_bb(bbs[5 + !by]);
     return isSquareAttacked(kingIndex, by);
 }
@@ -934,23 +973,31 @@ bool Board::isKingAttacked(int square,int by) {
 //  TESTING
 //
 
-int Board::perft(int depth) {
-    if (depth==0) {
+int Board::perft(int depth)
+{
+    if (depth == 0)
+    {
         return 1;
     }
 
-    int nodes=0;
+    int nodes = 0;
     generateMoves();
-    for (int i=0; i<moveList.size(); i++) {
-        if (moveList[i].data==0) {
+    for (int i = 0; i < moveList.size(); i++)
+    {
+        if (moveList[i].data == 0)
+        {
             break;
         }
         makeMove(moveList[i]);
-        
+        if (!isKingAttacked(!sideToMove))
+        {
+            nodes += perft(depth - 1);
+        }
+        undoMove(moveList[i]);
     }
-
+    return nodes;
 }
 
-int Board::perftDivide(int depth) {
-
+int Board::perftDivide(int depth)
+{
 }
