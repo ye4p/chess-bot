@@ -73,8 +73,8 @@ struct Undo
 struct Move
 {
 
-    //  first 6 bits - from, next 6 - to, 
-    //  2 for type(0-normal, 1-promotion, 2- en passant, 3 -castling), 
+    //  first 6 bits - from, next 6 - to,
+    //  2 for type(0-normal, 1-promotion, 2- en passant, 3 -castling),
     //  and 2 for promoted piece type(0 - knight, 1-bishop, 2-rook, 3-queen)
 
     // NEW WAY - 4 bits for variations:
@@ -153,8 +153,8 @@ public:
     int halfMoveClock = 0;
     int fullMoveClock = 1;
 
-    int sideToMove=0;
-   // bool whiteToMove = true;
+    int sideToMove = 0;
+    // bool whiteToMove = true;
 
     Undo undo;
 
@@ -214,10 +214,10 @@ public:
     void generateSlidingMoves();
 
     void makeMove(Move m);
-    void unmakeMove(Move m);
+    void undoMove(Move m);
 
     bool isSquareAttacked(int square, int by);
-    bool isKingAttacked(int square,int by);
+    bool isKingAttacked(int by);
 
     int perft(int depth);
     int perftDivide(int depth);
