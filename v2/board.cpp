@@ -68,11 +68,29 @@ bool Move::isCapture() const
 {
     return (status() & 0x4); // 0b0100
 }
+
+std::ostream &operator<<(std::ostream &os, const Move &m)
+{
+    os << "Move from " << m.from() << " to " << m.to() << " with status: " << m.status() << "\n";
+    return os;
+}
+
 //
+
+uint64_t Board::pawn_masks[2][64];
+uint64_t Board::knight_masks[64];
+uint64_t Board::king_masks[64];
+uint64_t Board::bishop_masks[64];
+uint64_t Board::rook_masks[64];
+
+uint64_t Board::bishop_relevant_bits[64];
+uint64_t Board::rook_relevant_bits[64];
+
+uint64_t Board::bishop_attacks[64][512];
+uint64_t Board::rook_attacks[64][4096];
 
 Board::Board()
 {
-    std::cout << "Running constructor for board\n";
     bbs.fill(0ULL);
     occupancies.fill(0ULL);
     mailbox.fill(0);
@@ -81,6 +99,17 @@ Board::Board()
     halfMoveClock = 0;
     fullMoveClock = 1;
     sideToMove = 0;
+    std::cout << " Generating King moves\n";
+    generateKingMoves();
+    std::cout << " Generating pawn moves\n";
+    generatePawnMoves();
+    std::cout << " Generating knight moves\n";
+    generateKnightMoves();
+    std::cout << " Generating bishop moves\n";
+    generateBishopMoves();
+    std::cout << " Generating rook moves\n";
+    generateRookMoves();
+    std::cout << " Fin\n";
 }
 
 //
@@ -136,7 +165,31 @@ inline int Board::popcount(uint64_t bb)
     return __builtin_popcountll(bb);
 }
 
-void Board::displayBoard(uint64_t bb)
+//
+//  DISPLAYING STUFF
+//
+
+void Board::displayBoard()
+{
+    std::cout << "\n";
+    for (int rank = 7; rank > -1; rank--)
+    {
+        for (int file = 0; file < 8; file++)
+        {
+            int square = rank * 8 + file;
+            if (!file)
+            {
+                printf(" %d ", 8 - rank);
+            }
+            printf(" %d", (isBitSet(occupancies[2], square) ? 1 : 0));
+        }
+        std::cout << "\n";
+    }
+    printf("\n    a b c d e f g h\n\n");
+    printf("bitboard: %lld\n\n", occupancies[2]);
+}
+
+void Board::displayBB(uint64_t bb)
 {
     std::cout << "\n";
     for (int rank = 7; rank > -1; rank--)
@@ -154,6 +207,14 @@ void Board::displayBoard(uint64_t bb)
     }
     printf("\n    a b c d e f g h\n\n");
     printf("bitboard: %lld\n\n", bb);
+}
+
+void Board::displayMoves()
+{
+    for (int i = 0; i < moveList.size(); i++)
+    {
+        std::cout << moveList[i];
+    }
 }
 
 //
@@ -536,10 +597,16 @@ uint64_t Board::rook_attacks_from_occupancy(int square, uint64_t blockers)
         if (blockers & (1ULL << (r * 8 + j)))
             break;
     }
+    return attacks;
 }
+
+//
+// MAIN MOVE GENERATION FUNCTION
+//
 
 void Board::generateMoves()
 {
+    moveList.fill(Move());
     int count = 0;
 
     uint64_t from_bb;
@@ -552,11 +619,12 @@ void Board::generateMoves()
     from_bb = bbs[0];
     while (from_bb > 0)
     {
-
+        std::cout << "Started going over pawns...\n";
         int from = pop_lsb_bb(from_bb);
         uint64_t pseudolegal = pawn_masks[0][from] & (~occupancies[0]);
         while (pseudolegal > 0)
         {
+            std::cout << "Started going over to squares...\n";
             int to = pop_lsb_bb(pseudolegal);
             if (to == enPassantSquare)
             {
@@ -586,6 +654,7 @@ void Board::generateMoves()
             {
                 moveList[count] = Move(from, to, 0b0000);
             }
+            std::cout << "Added move\n";
             count++;
         }
     }
@@ -898,24 +967,29 @@ void Board::generateRookMoves()
 {
     for (int i = 0; i < 64; i++)
     {
+        //  std::cout << "starting with i=" << i << "\n";
         // gen all attack masks and relevant bits
         rook_masks[i] = mask_rook_attacks(i);
+        // std::cout << "mask rook attacks\n";
         rook_relevant_bits[i] = popcount(rook_masks[i]);
+        // std::cout << "rook relevant bits\n";
 
         int occupancy_count = 1 << rook_relevant_bits[i];
+        // std::cout << "occupancy count\n";
         for (int j = 0; j < occupancy_count; j++)
         {
             uint64_t occupancy = set_occupancy(j, rook_relevant_bits[i], rook_masks[i]);
-
+            // std::cout << "occupancy\n";
             uint64_t attacks = rook_attacks_from_occupancy(i, occupancy);
+            // std::cout << "attacks\n";
 
             int magic_index = (occupancy * ROOK_MAGICS[i]) >> (64 - rook_relevant_bits[i]);
+            // std::cout << "magic index\n";
             rook_attacks[i][magic_index] = attacks;
+            // std::cout << "rook attacks\n";
         }
+        // std::cout << "successfully did i=" << i << "\n";
     }
-}
-void Board::generateSlidingMoves()
-{
 }
 
 // Make/undo move logic
@@ -972,6 +1046,15 @@ bool Board::isKingAttacked(int by)
 }
 
 //
+// INITIALIZING
+//
+
+void Board::startpos()
+{
+    setFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+}
+
+//
 //  TESTING
 //
 
@@ -982,11 +1065,10 @@ int Board::perft(int depth)
         return 1;
     }
 
-    int nodes=0;
+    int nodes = 0;
     std::cout << "Generating moves...\n";
     generateMoves();
     std::cout << "Finished generating moves\n";
-    generateMoves();
     for (int i = 0; i < moveList.size(); i++)
     {
         if (moveList[i].data == 0)

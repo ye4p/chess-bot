@@ -105,6 +105,9 @@ struct Move
     bool isCastling() const;
     bool isCapture() const;
 };
+
+std::ostream &operator<<(std::ostream &os, const Move &obj);
+
 // clang-format off
 enum squares : int{
     a1, b1, c1, d1, e1, f1 ,g1, h1,
@@ -159,18 +162,18 @@ public:
     Undo undo;
 
     // Bitboard masks with attacks:
-    uint64_t pawn_masks[2][64];
-    uint64_t knight_masks[64];
-    uint64_t king_masks[64];
-    uint64_t bishop_masks[64];
-    uint64_t rook_masks[64];
+    static uint64_t pawn_masks[2][64];
+    static uint64_t knight_masks[64];
+    static uint64_t king_masks[64];
+    static uint64_t bishop_masks[64];
+    static uint64_t rook_masks[64];
 
-    uint64_t bishop_relevant_bits[64];
-    uint64_t rook_relevant_bits[64];
+    static uint64_t bishop_relevant_bits[64];
+    static uint64_t rook_relevant_bits[64];
 
     //  Magic bbs
-    uint64_t bishop_attacks[64][512];
-    uint64_t rook_attacks[64][4096];
+    static uint64_t bishop_attacks[64][512];
+    static uint64_t rook_attacks[64][4096];
 
     Board();
     void inline setBit(uint64_t &bb, int square);
@@ -183,7 +186,9 @@ public:
     int get_lsb_index(uint64_t bb);
     inline int popcount(uint64_t bb);
 
-    void displayBoard(uint64_t bb);
+    void displayBoard();
+    void displayBB(uint64_t bb);
+    void displayMoves();
 
     std::vector<std::string> splitString(std::string str, char delimiter);
     int codeToIndex(std::string code);
@@ -211,7 +216,6 @@ public:
     void generatePawnMoves();
     void generateBishopMoves();
     void generateRookMoves();
-    void generateSlidingMoves();
 
     void makeMove(Move m);
     void undoMove(Move m);
@@ -219,6 +223,10 @@ public:
     bool isSquareAttacked(int square, int by);
     bool isKingAttacked(int by);
 
+    //  Initializing
+    void startpos();
+
+    //  Testing
     int perft(int depth);
     int perftDivide(int depth);
 };
