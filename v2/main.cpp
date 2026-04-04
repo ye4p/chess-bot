@@ -8,15 +8,14 @@ int main()
     auto board = std::make_unique<Board>();
 
     // Default position
-    std::cout << "Setting fen\n";
     board->startpos();
-    std::cout << "Set fen\n";
+
     board->displayBoard();
 
     board->generateMoves();
     board->displayMoves();
-    // int res = board->perft(2);
-    // std::cout << res;
+    //  int res = board->perft(2);
+    //  std::cout << res;
 
     return 0;
 }

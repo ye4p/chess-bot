@@ -36,7 +36,7 @@ Move::Move()
 }
 Move::Move(int from, int to, int status = 0)
 {
-    data = ((status << 12) || (to << 6) || from);
+    data = ((status << 12) | (to << 6) | from);
 }
 
 int Move::from() const
@@ -78,6 +78,8 @@ std::ostream &operator<<(std::ostream &os, const Move &m)
 //
 
 uint64_t Board::pawn_masks[2][64];
+uint64_t Board::pawn_push[2][64];
+uint64_t Board::pawn_double_push[2][64];
 uint64_t Board::knight_masks[64];
 uint64_t Board::king_masks[64];
 uint64_t Board::bishop_masks[64];
@@ -142,10 +144,19 @@ int Board::pieceOn(int square)
 }
 uint64_t Board::get_lsb_bb(uint64_t bb)
 {
+    if (!bb)
+    {
+        throw std::runtime_error("BB is already empty, can't GET lsb");
+    }
+
     return (bb & ((~bb) + 1));
 }
 uint64_t Board::pop_lsb_bb(uint64_t &bb)
 {
+    if (!bb)
+    {
+        throw std::runtime_error("BB is already empty, can't POP lsb");
+    }
     int square = __builtin_ctzll(bb);
     bb &= bb - 1;
     return square;
@@ -269,7 +280,8 @@ void Board::setFEN(std::string s)
     sideToMove = 0;
     // whiteToMove = true;
 
-    int i = 0;
+    int rank = 7;
+    int file = 0;
     for (std::string row : rows)
     {
         for (char let : row)
@@ -279,15 +291,17 @@ void Board::setFEN(std::string s)
                 int color = (std::isupper(let) ? 0 : 6);
                 char letConverted = std::tolower(let);
                 int piece = pieceMap.at(letConverted);
-                setBit(bbs[piece + color], i);
-                i++;
+                setBit(bbs[piece + color], rank * 8 + file);
+                file++;
             }
             if (std::isdigit(let))
             {
                 int letConverted = let - '0';
-                i += letConverted;
+                file += letConverted;
             }
         }
+        rank--;
+        file = 0;
     }
     if (vec[1] == "w")
     {
@@ -386,7 +400,25 @@ uint64_t Board::mask_pawn_attacks(int side, int square)
     }
     // if (attack > 0)
     // {
-    //     displayBoard(attack);
+    //     displayBB(attack);
+    // }
+    return attack;
+}
+
+uint64_t Board::mask_pawn_push(int side, int square, int push)
+{
+    uint64_t attack = 0ULL;
+    int rank = square / 8;
+    int file = square % 8;
+    int dir = (side ? -1 : 1);
+    int r = rank + (push * dir);
+    if (r >= 0 && r < 8)
+    {
+        attack |= (1ULL << (r * 8 + file));
+    }
+    // if (attack)
+    // {
+    //     displayBB(attack);
     // }
     return attack;
 }
@@ -508,7 +540,7 @@ uint64_t Board::get_rook_attacks(int square, uint64_t board_occupancy)
 {
     board_occupancy &= rook_masks[square];
 
-    int index = (board_occupancy * BISHOP_MAGICS[square]) >> (64 - rook_relevant_bits[square]);
+    int index = (board_occupancy * ROOK_MAGICS[square]) >> (64 - rook_relevant_bits[square]);
     return rook_attacks[square][index];
 }
 
@@ -619,13 +651,13 @@ void Board::generateMoves()
     from_bb = bbs[0];
     while (from_bb > 0)
     {
-        std::cout << "Started going over pawns...\n";
         int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = pawn_masks[0][from] & (~occupancies[0]);
+        uint64_t pseudolegal = pawn_masks[0][from] & (occupancies[1]);
         while (pseudolegal > 0)
         {
-            std::cout << "Started going over to squares...\n";
             int to = pop_lsb_bb(pseudolegal);
+
+            //  En passant
             if (to == enPassantSquare)
             {
                 moveList[count] = Move(from, to, 0b0101); // en passant status bitwise
@@ -652,10 +684,30 @@ void Board::generateMoves()
             }
             else
             {
-                moveList[count] = Move(from, to, 0b0000);
+                moveList[count] = Move(from, to, 0b0100);
             }
-            std::cout << "Added move\n";
+            std::cout << "Added move " << Move(from, to, 0b0000);
+
             count++;
+        }
+        pseudolegal = pawn_push[0][from] & (~occupancies[2]);
+        while (pseudolegal)
+        {
+            int to = pop_lsb_bb(pseudolegal);
+            //  Regular Push
+            moveList[count] = Move(from, to, 0b0000);
+            count++;
+        }
+        pseudolegal = pawn_double_push[0][from] & (~occupancies[2]);
+        while (pseudolegal)
+        {
+            int to = pop_lsb_bb(pseudolegal);
+            //  Double Push
+            if ((pawn_double_push[0][from] | pawn_push[0][from]) & ~occupancies[2])
+            {
+                moveList[count] = Move(from, to, 0b0001);
+                count++;
+            }
         }
     }
 
@@ -808,6 +860,25 @@ void Board::generateMoves()
             }
             count++;
         }
+        pseudolegal = pawn_push[1][from] & (~occupancies[2]);
+        while (pseudolegal)
+        {
+            int to = pop_lsb_bb(pseudolegal);
+            //  Regular Push
+            moveList[count] = Move(from, to, 0b0000);
+            count++;
+        }
+        pseudolegal = pawn_double_push[1][from] & (~occupancies[2]);
+        while (pseudolegal)
+        {
+            int to = pop_lsb_bb(pseudolegal);
+            //  Double Push
+            if ((pawn_double_push[1][from] | pawn_push[1][from]) & ~occupancies[2])
+            {
+                moveList[count] = Move(from, to, 0b0001);
+                count++;
+            }
+        }
     }
 
     //  Black knights
@@ -934,10 +1005,11 @@ void Board::generatePawnMoves()
     for (int i = 0; i < 64; i++)
     {
         pawn_masks[0][i] = mask_pawn_attacks(0, i);
-    }
-    for (int i = 0; i < 64; i++)
-    {
         pawn_masks[1][i] = mask_pawn_attacks(1, i);
+        pawn_push[0][i] = mask_pawn_push(0, i, 1);
+        pawn_push[1][i] = mask_pawn_push(1, i, 1);
+        pawn_double_push[0][i] = mask_pawn_push(0, i, 2);
+        pawn_double_push[1][i] = mask_pawn_push(1, i, 2);
     }
 }
 void Board::generateBishopMoves()
