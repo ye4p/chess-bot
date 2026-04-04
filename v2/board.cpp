@@ -371,12 +371,7 @@ void Board::updateOccupancies()
 }
 
 //
-// Move generation & representation
-//
-
-//
-//  First 6 bits - FROM square, next 6 bits - TO square, 3 bits - piece type that just moved,
-//  3 bits - piece type that got captured, 3 bits - promotion piece, and the rest 11 are for move flags
+// PREGENERATION STAGE
 //
 
 uint64_t Board::mask_pawn_attacks(int side, int square)
@@ -528,22 +523,6 @@ uint64_t Board::mask_rook_attacks(int square)
     return attacks;
 }
 
-uint64_t Board::get_bishop_attacks(int square, uint64_t board_occupancy)
-{
-    board_occupancy &= bishop_masks[square];
-
-    int index = (board_occupancy * BISHOP_MAGICS[square]) >> (64 - bishop_relevant_bits[square]);
-    return bishop_attacks[square][index];
-}
-
-uint64_t Board::get_rook_attacks(int square, uint64_t board_occupancy)
-{
-    board_occupancy &= rook_masks[square];
-
-    int index = (board_occupancy * ROOK_MAGICS[square]) >> (64 - rook_relevant_bits[square]);
-    return rook_attacks[square][index];
-}
-
 uint64_t Board::set_occupancy(int index, int bits, uint64_t mask)
 {
     uint64_t occupancy = 0ULL;
@@ -633,7 +612,7 @@ uint64_t Board::rook_attacks_from_occupancy(int square, uint64_t blockers)
 }
 
 //
-// MAIN MOVE GENERATION FUNCTION
+// MAIN MOVE GENERATION
 //
 
 void Board::generateMoves()
@@ -1012,6 +991,23 @@ void Board::generatePawnMoves()
         pawn_double_push[1][i] = mask_pawn_push(1, i, 2);
     }
 }
+
+uint64_t Board::get_bishop_attacks(int square, uint64_t board_occupancy)
+{
+    board_occupancy &= bishop_masks[square];
+
+    int index = (board_occupancy * BISHOP_MAGICS[square]) >> (64 - bishop_relevant_bits[square]);
+    return bishop_attacks[square][index];
+}
+
+uint64_t Board::get_rook_attacks(int square, uint64_t board_occupancy)
+{
+    board_occupancy &= rook_masks[square];
+
+    int index = (board_occupancy * ROOK_MAGICS[square]) >> (64 - rook_relevant_bits[square]);
+    return rook_attacks[square][index];
+}
+
 void Board::generateBishopMoves()
 {
     for (int i = 0; i < 64; i++)
@@ -1035,6 +1031,7 @@ void Board::generateBishopMoves()
         }
     }
 }
+
 void Board::generateRookMoves()
 {
     for (int i = 0; i < 64; i++)
