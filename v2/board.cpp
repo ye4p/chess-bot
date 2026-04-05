@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <cstdio>
+#include <random>
 
 Undo::Undo()
 {
@@ -371,8 +372,62 @@ void Board::updateOccupancies()
 }
 
 //
-// PREGENERATION STAGE
+// INITIALIZATION/PREGENERATION STAGE
 //
+
+// Magic bbs gen
+uint64_t Board::rand64()
+{
+    static std::mt19937_64 rng(std::random_device{}());
+    return rng();
+}
+
+uint64_t Board::sparse_rand()
+{
+    return rand64() & rand64() & rand64();
+}
+
+uint64_t Board::find_magic(int sq, bool bishop)
+{
+    uint64_t mask = bishop ? mask_bishop_attacks(sq) : mask_rook_attacks(sq);
+    int bits = popcount(mask);
+    int size = 1 << bits;
+
+    //  Build occupancy/attack pairs
+    uint64_t occs[4096], atks[4096];
+    for (int i = 0; i < size; i++)
+    {
+        occs[i] = set_occupancy(i, bits, mask);
+        atks[i] = bishop ? bishop_attacks_from_occupancy(sq, occs[i]) : rook_attacks_from_occupancy(sq, occs[i]);
+    }
+
+    //  Trial and error:
+    for (int attempt = 0; attempt < 100000000; attempt++)
+    {
+        uint64_t magic = sparse_rand();
+        if (popcount((mask * magic) >> 56) < 6)
+            continue;
+        uint64_t used[4096] = {};
+        bool fail = false;
+        for (int i = 0; i < size && !fail; i++)
+        {
+            int idx = (occs[i] * magic) >> (64 - bits);
+            if (!used(idx))
+            {
+                used[idx] = atks[i];
+            }
+            else if (used[idx] != atks[i])
+            {
+                fail = true;
+            }
+        }
+        if (!fail)
+        {
+            return magic;
+        }
+    }
+    return 0ULL;
+}
 
 uint64_t Board::mask_pawn_attacks(int side, int square)
 {
