@@ -192,6 +192,7 @@ public:
     uint64_t pop_lsb_bb(uint64_t &bb);
     int get_lsb_index(uint64_t bb);
     inline int popcount(uint64_t bb);
+    int findPiece(int square);
 
     void displayBoard();
     void displayBB(uint64_t bb);
@@ -209,6 +210,7 @@ public:
     uint64_t rand64();
     uint64_t sparse_rand();
     uint64_t find_magic(int sq, bool bishop);
+    void searchAllMagics();
 
     //  Initialization
     uint64_t mask_pawn_attacks(int side, int square);

@@ -50,7 +50,7 @@ int Move::to() const
 }
 int Move::status() const
 {
-    return (((data >> 12) & 0xE));
+    return (((data >> 12) & 0xF));
 }
 
 bool Move::isCastling() const
@@ -92,6 +92,10 @@ uint64_t Board::rook_relevant_bits[64];
 uint64_t Board::bishop_attacks[64][512];
 uint64_t Board::rook_attacks[64][4096];
 
+uint64_t Board::BISHOP_MAGICS[64];
+uint64_t Board::ROOK_MAGICS[64];
+
+//  Constructor
 Board::Board()
 {
     bbs.fill(0ULL);
@@ -112,6 +116,8 @@ Board::Board()
     generateBishopMoves();
     std::cout << " Generating rook moves\n";
     generateRookMoves();
+    std::cout<< "Searching for magic numbers\n";
+    searchAllMagics();
     std::cout << " Fin\n";
 }
 
@@ -175,6 +181,15 @@ inline int Board::popcount(uint64_t bb)
     //     count++;
     // }
     return __builtin_popcountll(bb);
+}
+
+int Board::findPiece(int square) {
+    for (int i=0; i<12;i++) {
+        if ((bbs[i]&(1ULL<<square))==0) {
+            return i;
+        }
+    }
+    throw std::runtime_error("Piece not found");
 }
 
 //
@@ -402,7 +417,7 @@ uint64_t Board::find_magic(int sq, bool bishop)
     }
 
     //  Trial and error:
-    for (int attempt = 0; attempt < 100000000; attempt++)
+    for (int attempt = 0; attempt < 300000; attempt++)
     {
         uint64_t magic = sparse_rand();
         if (popcount((mask * magic) >> 56) < 6)
@@ -412,7 +427,7 @@ uint64_t Board::find_magic(int sq, bool bishop)
         for (int i = 0; i < size && !fail; i++)
         {
             int idx = (occs[i] * magic) >> (64 - bits);
-            if (!used(idx))
+            if (!used[idx])
             {
                 used[idx] = atks[i];
             }
@@ -427,6 +442,12 @@ uint64_t Board::find_magic(int sq, bool bishop)
         }
     }
     return 0ULL;
+}
+void Board::searchAllMagics() {
+    for (int i=0; i<64; i++) {
+        BISHOP_MAGICS[i]=find_magic(i, true);
+        ROOK_MAGICS[i]=find_magic(i, false);
+    }
 }
 
 uint64_t Board::mask_pawn_attacks(int side, int square)
@@ -1126,7 +1147,10 @@ void Board::makeMove(Move m)
     undo.halfMoveClock = halfMoveClock;
     undo.capturedPiece = pieceOn(m.to());
 
+    int p=findPiece(m.from());
     // Move piece from source → target.
+    clearBit(bbs[p], m.from());
+    setBit(bbs[p], m.to());
     // Handle captures (including en passant).
     // Handle special moves: castling, promotion, en passant.
     // Update game state:
