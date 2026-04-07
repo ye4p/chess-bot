@@ -205,6 +205,12 @@ public:
 
     void updateOccupancies();
 
+    // Magic generation
+    uint64_t rand64();
+    uint64_t sparse_rand();
+    uint64_t find_magic(int sq, bool bishop);
+
+    //  Initialization
     uint64_t mask_pawn_attacks(int side, int square);
     uint64_t mask_pawn_push(int side, int square, int push);
     uint64_t mask_knight_attacks(int square);
