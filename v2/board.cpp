@@ -466,7 +466,6 @@ void Board::searchAllMagics()
     // for (int i : ROOK_MAGICS) {
     //     std::cout<<i<<", ";
     // }
-
 }
 
 uint64_t Board::mask_pawn_attacks(int side, int square)
@@ -717,355 +716,354 @@ void Board::generateMoves()
 
     uint64_t from_bb;
 
-    if (sideToMove) {
+    if (!sideToMove)
+    {
         //
-    //  WHITE PIECES MOVE GENERATION
-    //
+        //  WHITE PIECES MOVE GENERATION
+        //
 
-    // White pawns
-    from_bb = bbs[0];
-    while (from_bb > 0)
-    {
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = pawn_masks[0][from] & (occupancies[1]);
-        while (pseudolegal > 0)
+        // White pawns
+        from_bb = bbs[0];
+        while (from_bb > 0)
         {
-            int to = pop_lsb_bb(pseudolegal);
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = pawn_masks[0][from] & (occupancies[1]);
+            while (pseudolegal > 0)
+            {
+                int to = pop_lsb_bb(pseudolegal);
 
-            //  En passant
-            if (to == enPassantSquare)
-            {
-                moveList[count] = Move(from, to, 0b0101); // en passant status bitwise
-            }
-            else if ((0xff00000000000000 & (1ULL << to)) && ((1ULL << to) & occupancies[1]))
-            { // If last row for white pawns(promotion)
-                moveList[count] = Move(from, to, 0b1100);
-                count++;
-                moveList[count] = Move(from, to, 0b1101);
-                count++;
-                moveList[count] = Move(from, to, 0b1110);
-                count++;
-                moveList[count] = Move(from, to, 0b1111);
-            }
-            else if (0xff00000000000000 & (1ULL << to))
-            {
-                moveList[count] = Move(from, to, 0b1000);
-                count++;
-                moveList[count] = Move(from, to, 0b1001);
-                count++;
-                moveList[count] = Move(from, to, 0b1010);
-                count++;
-                moveList[count] = Move(from, to, 0b1011);
-            }
-            else
-            {
-                moveList[count] = Move(from, to, 0b0100);
-            }
-            std::cout << "Added move " << Move(from, to, 0b0000);
+                //  En passant
+                if (to == enPassantSquare)
+                {
+                    moveList[count] = Move(from, to, 0b0101); // en passant status bitwise
+                }
+                else if ((0xff00000000000000 & (1ULL << to)) && ((1ULL << to) & occupancies[1]))
+                { // If last row for white pawns(promotion)
+                    moveList[count] = Move(from, to, 0b1100);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1101);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1110);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1111);
+                }
+                else if (0xff00000000000000 & (1ULL << to))
+                {
+                    moveList[count] = Move(from, to, 0b1000);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1001);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1010);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1011);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                }
+                std::cout << "Added move " << Move(from, to, 0b0000);
 
-            count++;
-        }
-        pseudolegal = pawn_push[0][from] & (~occupancies[2]);
-        while (pseudolegal)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            //  Regular Push
-            moveList[count] = Move(from, to, 0b0000);
-            count++;
-        }
-        pseudolegal = pawn_double_push[0][from] & (~occupancies[2]);
-        while (pseudolegal)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            //  Double Push
-            if ((pawn_double_push[0][from] | pawn_push[0][from]) & ~occupancies[2])
-            {
-                moveList[count] = Move(from, to, 0b0001);
                 count++;
             }
-        }
-    }
-
-    //  White knights
-    from_bb = bbs[1];
-    while (from_bb > 0)
-    {
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = knight_masks[from] & (~occupancies[0]);
-        while (pseudolegal > 0)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL << to) & occupancies[1])
+            pseudolegal = pawn_push[0][from] & (~occupancies[2]);
+            while (pseudolegal)
             {
-                moveList[count] = Move(from, to, 0b0100);
-            }
-            else
-            {
+                int to = pop_lsb_bb(pseudolegal);
+                //  Regular Push
                 moveList[count] = Move(from, to, 0b0000);
-            }
-            count++;
-        }
-    }
-
-    // White bishops
-    from_bb = bbs[2];
-    while (from_bb > 0)
-    {
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = get_bishop_attacks(from, occupancies[2]) & ~occupancies[0];
-        while (pseudolegal > 0)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL << to) & occupancies[1])
-            {
-                moveList[count] = Move(from, to, 0b0100);
-            }
-            else
-            {
-                moveList[count] = Move(from, to, 0b0000);
-            }
-            count++;
-        }
-    }
-
-    // White rooks
-    from_bb = bbs[3];
-    while (from_bb > 0)
-    {
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = get_rook_attacks(from, occupancies[2]) & ~occupancies[0];
-        while (pseudolegal > 0)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL << to) & occupancies[1])
-            {
-                moveList[count] = Move(from, to, 0b0100);
-            }
-            else
-            {
-                moveList[count] = Move(from, to, 0b0000);
-            }
-            count++;
-        }
-    }
-
-    // White queens
-    from_bb = bbs[4];
-    while (from_bb > 0)
-    {
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = (get_bishop_attacks(from, occupancies[2]) | get_rook_attacks(from, occupancies[2])) & ~occupancies[0];
-        while (pseudolegal > 0)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL << to) & occupancies[1])
-            {
-                moveList[count] = Move(from, to, 0b0100);
-            }
-            else
-            {
-                moveList[count] = Move(from, to, 0b0000);
-            }
-            count++;
-        }
-    }
-
-    // White kings
-    from_bb = bbs[5];
-    while (from_bb > 0)
-    {
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = king_masks[from] & ~occupancies[0];
-        while (pseudolegal > 0)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL << to) & occupancies[1])
-            {
-                moveList[count] = Move(from, to, 0b0100);
-            }
-            else
-            {
-                moveList[count] = Move(from, to, 0b0000);
-            }
-            count++;
-        }
-    }
-
-    }
-     else {
-
-    //
-    //  BLACK PIECES MOVE GENERATION
-    //
-
-    // Black pawns
-    from_bb = bbs[6];
-    while (from_bb > 0)
-    {
-
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = pawn_masks[1][from] & (~occupancies[1]);
-        while (pseudolegal > 0)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            if (to == enPassantSquare)
-            {
-                moveList[count] = Move(from, to, 0b0101); // en passant status bitwise
-            }
-            else if ((0x00000000000000ff & (1ULL << to)) && ((1ULL << to) & occupancies[0]))
-            { // If last row for white pawns(promotion)
-                moveList[count] = Move(from, to, 0b1100);
                 count++;
-                moveList[count] = Move(from, to, 0b1101);
-                count++;
-                moveList[count] = Move(from, to, 0b1110);
-                count++;
-                moveList[count] = Move(from, to, 0b1111);
             }
-            else if (0x00000000000000ff & (1ULL << to))
+            pseudolegal = pawn_double_push[0][from] & (~occupancies[2]);
+            while (pseudolegal)
             {
-                moveList[count] = Move(from, to, 0b0100);
-                count++;
-                moveList[count] = Move(from, to, 0b0101);
-                count++;
-                moveList[count] = Move(from, to, 0b0110);
-                count++;
-                moveList[count] = Move(from, to, 0b0111);
+                int to = pop_lsb_bb(pseudolegal);
+                //  Double Push
+                if ((pawn_double_push[0][from] | pawn_push[0][from]) & ~occupancies[2])
+                {
+                    moveList[count] = Move(from, to, 0b0001);
+                    count++;
+                }
             }
-            else
-            {
-                moveList[count] = Move(from, to, 0b0000);
-            }
-            count++;
         }
-        pseudolegal = pawn_push[1][from] & (~occupancies[2]);
-        while (pseudolegal)
+
+        //  White knights
+        from_bb = bbs[1];
+        while (from_bb > 0)
         {
-            int to = pop_lsb_bb(pseudolegal);
-            //  Regular Push
-            moveList[count] = Move(from, to, 0b0000);
-            count++;
-        }
-        pseudolegal = pawn_double_push[1][from] & (~occupancies[2]);
-        while (pseudolegal)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            //  Double Push
-            if ((pawn_double_push[1][from] | pawn_push[1][from]) & ~occupancies[2])
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = knight_masks[from] & (~occupancies[0]);
+            while (pseudolegal > 0)
             {
-                moveList[count] = Move(from, to, 0b0001);
+                int to = pop_lsb_bb(pseudolegal);
+                if ((1ULL << to) & occupancies[1])
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
+                count++;
+            }
+        }
+
+        // White bishops
+        from_bb = bbs[2];
+        while (from_bb > 0)
+        {
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = get_bishop_attacks(from, occupancies[2]) & ~occupancies[0];
+            while (pseudolegal > 0)
+            {
+                int to = pop_lsb_bb(pseudolegal);
+                if ((1ULL << to) & occupancies[1])
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
+                count++;
+            }
+        }
+
+        // White rooks
+        from_bb = bbs[3];
+        while (from_bb > 0)
+        {
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = get_rook_attacks(from, occupancies[2]) & ~occupancies[0];
+            while (pseudolegal > 0)
+            {
+                int to = pop_lsb_bb(pseudolegal);
+                if ((1ULL << to) & occupancies[1])
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
+                count++;
+            }
+        }
+
+        // White queens
+        from_bb = bbs[4];
+        while (from_bb > 0)
+        {
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = (get_bishop_attacks(from, occupancies[2]) | get_rook_attacks(from, occupancies[2])) & ~occupancies[0];
+            while (pseudolegal > 0)
+            {
+                int to = pop_lsb_bb(pseudolegal);
+                if ((1ULL << to) & occupancies[1])
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
+                count++;
+            }
+        }
+
+        // White kings
+        from_bb = bbs[5];
+        while (from_bb > 0)
+        {
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = king_masks[from] & ~occupancies[0];
+            while (pseudolegal > 0)
+            {
+                int to = pop_lsb_bb(pseudolegal);
+                if ((1ULL << to) & occupancies[1])
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
                 count++;
             }
         }
     }
-
-    //  Black knights
-    from_bb = bbs[7];
-    while (from_bb > 0)
+    else
     {
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = knight_masks[from] & (~occupancies[1]);
-        while (pseudolegal > 0)
+
+        //
+        //  BLACK PIECES MOVE GENERATION
+        //
+
+        // Black pawns
+        from_bb = bbs[6];
+        while (from_bb > 0)
         {
-            int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL << to) & occupancies[0])
+
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = pawn_masks[1][from] & (~occupancies[1]);
+            while (pseudolegal > 0)
             {
-                moveList[count] = Move(from, to, 0b0100);
+                int to = pop_lsb_bb(pseudolegal);
+                if (to == enPassantSquare)
+                {
+                    moveList[count] = Move(from, to, 0b0101); // en passant status bitwise
+                }
+                else if ((0x00000000000000ff & (1ULL << to)) && ((1ULL << to) & occupancies[0]))
+                { // If last row for white pawns(promotion)
+                    moveList[count] = Move(from, to, 0b1100);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1101);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1110);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1111);
+                }
+                else if (0x00000000000000ff & (1ULL << to))
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                    count++;
+                    moveList[count] = Move(from, to, 0b0101);
+                    count++;
+                    moveList[count] = Move(from, to, 0b0110);
+                    count++;
+                    moveList[count] = Move(from, to, 0b0111);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
+                count++;
             }
-            else
+            pseudolegal = pawn_push[1][from] & (~occupancies[2]);
+            while (pseudolegal)
             {
+                int to = pop_lsb_bb(pseudolegal);
+                //  Regular Push
                 moveList[count] = Move(from, to, 0b0000);
+                count++;
             }
-            count++;
+            pseudolegal = pawn_double_push[1][from] & (~occupancies[2]);
+            while (pseudolegal)
+            {
+                int to = pop_lsb_bb(pseudolegal);
+                //  Double Push
+                if ((pawn_double_push[1][from] | pawn_push[1][from]) & ~occupancies[2])
+                {
+                    moveList[count] = Move(from, to, 0b0001);
+                    count++;
+                }
+            }
+        }
+
+        //  Black knights
+        from_bb = bbs[7];
+        while (from_bb > 0)
+        {
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = knight_masks[from] & (~occupancies[1]);
+            while (pseudolegal > 0)
+            {
+                int to = pop_lsb_bb(pseudolegal);
+                if ((1ULL << to) & occupancies[0])
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
+                count++;
+            }
+        }
+
+        // Black bishops
+        from_bb = bbs[8];
+        while (from_bb > 0)
+        {
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = get_bishop_attacks(from, occupancies[2]) & ~occupancies[1];
+            while (pseudolegal > 0)
+            {
+                int to = pop_lsb_bb(pseudolegal);
+                if ((1ULL << to) & occupancies[0])
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
+                count++;
+            }
+        }
+
+        // Black rooks
+        from_bb = bbs[9];
+        while (from_bb > 0)
+        {
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = get_rook_attacks(from, occupancies[2]) & ~occupancies[1];
+            while (pseudolegal > 0)
+            {
+                int to = pop_lsb_bb(pseudolegal);
+                if ((1ULL << to) & occupancies[0])
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
+                count++;
+            }
+        }
+
+        // Black queens
+        from_bb = bbs[10];
+        while (from_bb > 0)
+        {
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = (get_bishop_attacks(from, occupancies[2]) | get_rook_attacks(from, occupancies[2])) & ~occupancies[1];
+            while (pseudolegal > 0)
+            {
+                int to = pop_lsb_bb(pseudolegal);
+                if ((1ULL << to) & occupancies[0])
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
+                count++;
+            }
+        }
+
+        //  Black kings
+        from_bb = bbs[11];
+        while (from_bb > 0)
+        {
+            int from = pop_lsb_bb(from_bb);
+            uint64_t pseudolegal = king_masks[from] & ~occupancies[1];
+            while (pseudolegal > 0)
+            {
+                int to = pop_lsb_bb(pseudolegal);
+                if ((1ULL << to) & occupancies[0])
+                {
+                    moveList[count] = Move(from, to, 0b0100);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
+                count++;
+            }
         }
     }
-
-    // Black bishops
-    from_bb = bbs[8];
-    while (from_bb > 0)
-    {
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = get_bishop_attacks(from, occupancies[2]) & ~occupancies[1];
-        while (pseudolegal > 0)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL << to) & occupancies[0])
-            {
-                moveList[count] = Move(from, to, 0b0100);
-            }
-            else
-            {
-                moveList[count] = Move(from, to, 0b0000);
-            }
-            count++;
-        }
-    }
-
-    // Black rooks
-    from_bb = bbs[9];
-    while (from_bb > 0)
-    {
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = get_rook_attacks(from, occupancies[2]) & ~occupancies[1];
-        while (pseudolegal > 0)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL << to) & occupancies[0])
-            {
-                moveList[count] = Move(from, to, 0b0100);
-            }
-            else
-            {
-                moveList[count] = Move(from, to, 0b0000);
-            }
-            count++;
-        }
-    }
-
-    // Black queens
-    from_bb = bbs[10];
-    while (from_bb > 0)
-    {
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = (get_bishop_attacks(from, occupancies[2]) | get_rook_attacks(from, occupancies[2])) & ~occupancies[1];
-        while (pseudolegal > 0)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL << to) & occupancies[0])
-            {
-                moveList[count] = Move(from, to, 0b0100);
-            }
-            else
-            {
-                moveList[count] = Move(from, to, 0b0000);
-            }
-            count++;
-        }
-    }
-
-    //  Black kings
-    from_bb = bbs[11];
-    while (from_bb > 0)
-    {
-        int from = pop_lsb_bb(from_bb);
-        uint64_t pseudolegal = king_masks[from] & ~occupancies[1];
-        while (pseudolegal > 0)
-        {
-            int to = pop_lsb_bb(pseudolegal);
-            if ((1ULL << to) & occupancies[0])
-            {
-                moveList[count] = Move(from, to, 0b0100);
-            }
-            else
-            {
-                moveList[count] = Move(from, to, 0b0000);
-            }
-            count++;
-        }
-    }
-     }
-
-    
 }
 void Board::generateKnightMoves()
 {
