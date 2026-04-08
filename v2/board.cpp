@@ -112,12 +112,12 @@ Board::Board()
     generatePawnMoves();
     std::cout << " Generating knight moves\n";
     generateKnightMoves();
+    std::cout << "Searching for magic numbers\n";
+    searchAllMagics();
     std::cout << " Generating bishop moves\n";
     generateBishopMoves();
     std::cout << " Generating rook moves\n";
     generateRookMoves();
-    std::cout<< "Searching for magic numbers\n";
-    searchAllMagics();
     std::cout << " Fin\n";
 }
 
@@ -183,9 +183,12 @@ inline int Board::popcount(uint64_t bb)
     return __builtin_popcountll(bb);
 }
 
-int Board::findPiece(int square) {
-    for (int i=0; i<12;i++) {
-        if ((bbs[i]&(1ULL<<square))==0) {
+int Board::findPiece(int square)
+{
+    for (int i = 0; i < 12; i++)
+    {
+        if (bbs[i] & (1ULL << square))
+        {
             return i;
         }
     }
@@ -417,7 +420,7 @@ uint64_t Board::find_magic(int sq, bool bishop)
     }
 
     //  Trial and error:
-    for (int attempt = 0; attempt < 300000; attempt++)
+    for (int attempt = 0; attempt < 100000000; attempt++)
     {
         uint64_t magic = sparse_rand();
         if (popcount((mask * magic) >> 56) < 6)
@@ -443,10 +446,16 @@ uint64_t Board::find_magic(int sq, bool bishop)
     }
     return 0ULL;
 }
-void Board::searchAllMagics() {
-    for (int i=0; i<64; i++) {
-        BISHOP_MAGICS[i]=find_magic(i, true);
-        ROOK_MAGICS[i]=find_magic(i, false);
+void Board::searchAllMagics()
+{
+    for (int i = 0; i < 64; i++)
+    {
+        BISHOP_MAGICS[i] = find_magic(i, true);
+        ROOK_MAGICS[i] = find_magic(i, false);
+        if (!BISHOP_MAGICS[i])
+            throw std::runtime_error("BISHOP MAGIC FAILED");
+        if (!ROOK_MAGICS[i])
+            throw std::runtime_error("ROOK MAGIC FAILED");
     }
 }
 
@@ -1147,7 +1156,7 @@ void Board::makeMove(Move m)
     undo.halfMoveClock = halfMoveClock;
     undo.capturedPiece = pieceOn(m.to());
 
-    int p=findPiece(m.from());
+    int p = findPiece(m.from());
     // Move piece from source → target.
     clearBit(bbs[p], m.from());
     setBit(bbs[p], m.to());
