@@ -423,8 +423,8 @@ uint64_t Board::find_magic(int sq, bool bishop)
     for (int attempt = 0; attempt < 100000000; attempt++)
     {
         uint64_t magic = sparse_rand();
-        if (popcount((mask * magic) >> 56) < 6)
-            continue;
+        // if (popcount((mask * magic) >> 56) < 6)
+        //     continue;
         uint64_t used[4096] = {};
         bool fail = false;
         for (int i = 0; i < size && !fail; i++)
@@ -446,6 +446,7 @@ uint64_t Board::find_magic(int sq, bool bishop)
     }
     return 0ULL;
 }
+
 void Board::searchAllMagics()
 {
     for (int i = 0; i < 64; i++)
@@ -457,6 +458,15 @@ void Board::searchAllMagics()
         if (!ROOK_MAGICS[i])
             throw std::runtime_error("ROOK MAGIC FAILED");
     }
+
+    // for (int i : BISHOP_MAGICS) {
+    //     std::cout<<i<<", ";
+    // }
+    // std::cout<< "\n\n\n\n";
+    // for (int i : ROOK_MAGICS) {
+    //     std::cout<<i<<", ";
+    // }
+
 }
 
 uint64_t Board::mask_pawn_attacks(int side, int square)
@@ -707,7 +717,8 @@ void Board::generateMoves()
 
     uint64_t from_bb;
 
-    //
+    if (sideToMove) {
+        //
     //  WHITE PIECES MOVE GENERATION
     //
 
@@ -880,6 +891,9 @@ void Board::generateMoves()
         }
     }
 
+    }
+     else {
+
     //
     //  BLACK PIECES MOVE GENERATION
     //
@@ -1049,6 +1063,9 @@ void Board::generateMoves()
             count++;
         }
     }
+     }
+
+    
 }
 void Board::generateKnightMoves()
 {
