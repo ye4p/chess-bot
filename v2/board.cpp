@@ -92,8 +92,8 @@ uint64_t Board::rook_relevant_bits[64];
 uint64_t Board::bishop_attacks[64][512];
 uint64_t Board::rook_attacks[64][4096];
 
-uint64_t Board::BISHOP_MAGICS[64];
-uint64_t Board::ROOK_MAGICS[64];
+// uint64_t Board::BISHOP_MAGICS[64];
+// uint64_t Board::ROOK_MAGICS[64];
 
 //  Constructor
 Board::Board()
@@ -112,8 +112,8 @@ Board::Board()
     generatePawnMoves();
     std::cout << " Generating knight moves\n";
     generateKnightMoves();
-    std::cout << "Searching for magic numbers\n";
-    searchAllMagics();
+    // std::cout << "Searching for magic numbers\n";
+    // searchAllMagics();
     std::cout << " Generating bishop moves\n";
     generateBishopMoves();
     std::cout << " Generating rook moves\n";
@@ -447,26 +447,26 @@ uint64_t Board::find_magic(int sq, bool bishop)
     return 0ULL;
 }
 
-void Board::searchAllMagics()
-{
-    for (int i = 0; i < 64; i++)
-    {
-        BISHOP_MAGICS[i] = find_magic(i, true);
-        ROOK_MAGICS[i] = find_magic(i, false);
-        if (!BISHOP_MAGICS[i])
-            throw std::runtime_error("BISHOP MAGIC FAILED");
-        if (!ROOK_MAGICS[i])
-            throw std::runtime_error("ROOK MAGIC FAILED");
-    }
+// void Board::searchAllMagics()
+// {
+//     for (int i = 0; i < 64; i++)
+//     {
+//         BISHOP_MAGICS[i] = find_magic(i, true);
+//         ROOK_MAGICS[i] = find_magic(i, false);
+//         if (!BISHOP_MAGICS[i])
+//             throw std::runtime_error("BISHOP MAGIC FAILED");
+//         if (!ROOK_MAGICS[i])
+//             throw std::runtime_error("ROOK MAGIC FAILED");
+//     }
 
-    // for (int i : BISHOP_MAGICS) {
-    //     std::cout<<i<<", ";
-    // }
-    // std::cout<< "\n\n\n\n";
-    // for (int i : ROOK_MAGICS) {
-    //     std::cout<<i<<", ";
-    // }
-}
+//     // for (int i : BISHOP_MAGICS) {
+//     //     std::cout<<i<<", ";
+//     // }
+//     // std::cout<< "\n\n\n\n";
+//     // for (int i : ROOK_MAGICS) {
+//     //     std::cout<<i<<", ";
+//     // }
+// }
 
 uint64_t Board::mask_pawn_attacks(int side, int square)
 {
@@ -604,7 +604,7 @@ uint64_t Board::mask_rook_attacks(int square)
     {
         int r = rank + dr[i];
         int f = file + df[i];
-        while (r > 0 && r < 7 && f > 0 && f < 7)
+        while (((r > 0 && r < 7) || ((rank == 0 || rank == 7) && df[i] != 0)) && ((f > 0 && f < 7) || ((file == 0 || file == 7) && dr[i] != 0)))
         {
             attacks |= (1ULL << (r * 8 + f));
             r += dr[i];
@@ -1139,12 +1139,14 @@ void Board::generateRookMoves()
         //  std::cout << "starting with i=" << i << "\n";
         // gen all attack masks and relevant bits
         rook_masks[i] = mask_rook_attacks(i);
-        // std::cout << "mask rook attacks\n";
         rook_relevant_bits[i] = popcount(rook_masks[i]);
         // std::cout << "rook relevant bits\n";
 
         int occupancy_count = 1 << rook_relevant_bits[i];
-        // std::cout << "occupancy count\n";
+        if (i == 0) {
+            std::cout << "mask rook attacks: " << rook_masks[i] << "\n";
+            std::cout << "occupancy count: " << occupancy_count << "\n";
+        }
         for (int j = 0; j < occupancy_count; j++)
         {
             uint64_t occupancy = set_occupancy(j, rook_relevant_bits[i], rook_masks[i]);
@@ -1155,7 +1157,8 @@ void Board::generateRookMoves()
             int magic_index = (occupancy * ROOK_MAGICS[i]) >> (64 - rook_relevant_bits[i]);
             // std::cout << "magic index\n";
             rook_attacks[i][magic_index] = attacks;
-            // std::cout << "rook attacks\n";
+            if (i == 0 && j == 72339069014639102)
+                std::cout << "rook attacks " << attacks << "\n";
         }
         // std::cout << "successfully did i=" << i << "\n";
     }
@@ -1165,37 +1168,116 @@ void Board::generateRookMoves()
 
 void Board::makeMove(Move m)
 {
-    undo.enPassantSquare = enPassantSquare;
-    undo.castlingRights = castlingRights;
-    undo.fullMoveClock = fullMoveClock;
-    undo.halfMoveClock = halfMoveClock;
-    undo.capturedPiece = pieceOn(m.to());
+    // undo.enPassantSquare = enPassantSquare;
+    // undo.castlingRights = castlingRights;
+    // undo.fullMoveClock = fullMoveClock;
+    // undo.halfMoveClock = halfMoveClock;
+    // undo.capturedPiece = pieceOn(m.to());
+
 
     int p = findPiece(m.from());
+
     // Move piece from source → target.
+    int pc=-1;
     clearBit(bbs[p], m.from());
+    if (m.isEnPassant()) {
+        int square=m.to();
+        int rank=square/8;
+        int file=square%8;
+        pc=findPiece(m.to()+ (sideToMove? +8:-8));
+        clearBit(
+            bbs[!sideToMove? 6 : 0], // if white
+            pc
+        );
+    } else if (m.isCapture()) {
+        pc=findPiece(m.to());
+        clearBit(bbs[pc], m.to());
+    }
+
     setBit(bbs[p], m.to());
-    // Handle captures (including en passant).
-    // Handle special moves: castling, promotion, en passant.
-    // Update game state:
-    // Side to move
-    // Castling rights
-    // En passant square
-    // Halfmove/fullmove clocks
-    // Update hash/eval (if used).
+
+    //  Promotion
+    if (m.isPromotion()) {
+        clearBit(bbs[p], m.to());
+        int promotedStatus=m.status();
+        promotedStatus&=0x3;
+        if (promotedStatus==3) {
+            promotedStatus=4;
+        } else if (promotedStatus==2) {
+            promotedStatus=3;
+        } else if (promotedStatus==1) {
+            promotedStatus=2;
+        } else {
+            promotedStatus=1;
+        }
+        setBit(bbs[promotedStatus+ (sideToMove ? +6: +0)],m.to());
+    }
+
+    //  Castling
+    if (m.status()==0b0010 || m.status()==0b0011) {
+        int bb_index=5+(sideToMove ? 6 : 0);
+        int king=get_lsb_index(bbs[5+(sideToMove ? 6 : 0)]);
+        if (m.status()==0b0010) {   // King castle
+            setBit(bbs[bb_index], king+2);
+            clearBit(bbs[3+ (sideToMove ? 6 : 0)], king+3);
+        }
+    }
+
     // Save undo info for full restoration.
+    undoStack[index]=Undo(castlingRights, pc, enPassantSquare, halfMoveClock, fullMoveClock);
+
+    // Castling rights
+    if (p==5 || p==11) {
+        castlingRights&=(sideToMove? 0b1100 : 0b0011);
+    }
+
+    if ((castlingRights & 0b1100) && p==5) {
+        if (m.from()==0) {
+            castlingRights&=0b1011;
+        } else if (m.from()==7) {
+            castlingRights&=0b0111;
+        }
+    }
+
+    if ((castlingRights & 0b0011) && p==11) {
+        if (m.from()==56) {
+            castlingRights&=0b1110;
+        } else if (m.from()==63) {
+            castlingRights&=0b1101;
+        }   
+    }
+
+    // Update game state
+    enPassantSquare=-1;
+    if (m.status()==0b0001) {
+        enPassantSquare=m.to()+(sideToMove ? +8 : -8);
+    }
+
+    // Halfmove/fullmove clocks
+    fullMoveClock++;
+    if (p==0 || p==6 || m.isCapture()) {
+        halfMoveClock=0;
+    } else {
+        halfMoveClock++;
+    }
+    
+    // Side to move
+    sideToMove=!sideToMove;
+
+    // Side to move switch
+    
 }
 void Board::undoMove(Move m)
 {
-    castlingRights = undo.castlingRights;
-    enPassantSquare = undo.enPassantSquare;
-    fullMoveClock = undo.fullMoveClock;
-    halfMoveClock = undo.halfMoveClock;
-    if (undo.capturedPiece != -1)
-    {
-        setBit(bbs[undo.capturedPiece], m.to());
-        mailbox[m.to()] = undo.capturedPiece;
-    }
+    // castlingRights = undo.castlingRights;
+    // enPassantSquare = undo.enPassantSquare;
+    // fullMoveClock = undo.fullMoveClock;
+    // halfMoveClock = undo.halfMoveClock;
+    // if (undo.capturedPiece != -1)
+    // {
+    //     setBit(bbs[undo.capturedPiece], m.to());
+    //     mailbox[m.to()] = undo.capturedPiece;
+    // }
 }
 
 // Is square attacked function
