@@ -122,7 +122,7 @@ Board::Board()
 }
 
 //
-//      Helper Methods:
+//      HELPER METHODS FOR BITWISE INTERACTION:
 //
 void Board::setBit(uint64_t &bb, int square)
 {
@@ -183,6 +183,22 @@ inline int Board::popcount(uint64_t bb)
     return __builtin_popcountll(bb);
 }
 
+void Board::updateOccupancies()
+{
+    occupancies[0] = 0ULL;
+    occupancies[1] = 0ULL;
+    occupancies[2] = 0ULL;
+    for (int i = 0; i <= 5; i++)
+    {
+        occupancies[0] |= bbs[i];
+    }
+    for (int i = 6; i <= 11; i++)
+    {
+        occupancies[1] |= bbs[i];
+    }
+    occupancies[2] = occupancies[0] | occupancies[1];
+}
+
 int Board::findPiece(int square)
 {
     for (int i = 0; i < 12; i++)
@@ -192,6 +208,7 @@ int Board::findPiece(int square)
             return i;
         }
     }
+    std::cout << "ERROR with square " << square << "\n";
     throw std::runtime_error("Piece not found");
 }
 
@@ -248,7 +265,7 @@ void Board::displayMoves()
 }
 
 //
-// FEN
+// FEN PROCESSING
 //
 
 std::vector<std::string> Board::splitString(std::string str, char delimiter)
@@ -277,6 +294,22 @@ std::string Board::indexToCode(int index)
     std::string s;
     s += char('a' + file);
     s += char('1' + rank);
+    return s;
+}
+
+std::string Board::moveToCode(Move m)
+{
+    int r1 = m.from() / 8;
+    int f1 = m.from() % 8;
+    int r2 = m.to() / 8;
+    int f2 = m.to() % 8;
+    std::string s = "";
+    // s += char('a' + f1) + char('1' + r1);
+    // s += char('a' + f2) + char('1' + r2);
+    auto l1 = fileMap.find(f1);
+    auto l2 = fileMap.find(f2);
+    s += l1->second + char(r1);
+    s += l2->second + char(r2);
     return s;
 }
 
@@ -372,21 +405,6 @@ void Board::setFEN(std::string s)
         fullMoveClock = std::stoi(vec[5]);
     }
     updateOccupancies();
-}
-void Board::updateOccupancies()
-{
-    occupancies[0] = 0ULL;
-    occupancies[1] = 0ULL;
-    occupancies[2] = 0ULL;
-    for (int i = 0; i <= 5; i++)
-    {
-        occupancies[0] |= bbs[i];
-    }
-    for (int i = 6; i <= 11; i++)
-    {
-        occupancies[1] |= bbs[i];
-    }
-    occupancies[2] = occupancies[0] | occupancies[1];
 }
 
 //
@@ -1143,11 +1161,12 @@ void Board::generateRookMoves()
         // std::cout << "rook relevant bits\n";
 
         int occupancy_count = 1 << rook_relevant_bits[i];
-        if (i == 0) {
+        if (i == 0)
+        {
             std::cout << "mask rook attacks: " << rook_masks[i] << "\n";
             std::cout << "occupancy count: " << occupancy_count << "\n";
         }
-        for (int j = 0; j < occupancy_count; j++)
+        for (uint64_t j = 0; j < occupancy_count; j++)
         {
             uint64_t occupancy = set_occupancy(j, rook_relevant_bits[i], rook_masks[i]);
             // std::cout << "occupancy\n";
@@ -1168,116 +1187,182 @@ void Board::generateRookMoves()
 
 void Board::makeMove(Move m)
 {
-    // undo.enPassantSquare = enPassantSquare;
-    // undo.castlingRights = castlingRights;
-    // undo.fullMoveClock = fullMoveClock;
-    // undo.halfMoveClock = halfMoveClock;
-    // undo.capturedPiece = pieceOn(m.to());
+    std::cout << "Trying to find piece from for move: " << m << "\n";
+    int p = findPiece(m.from()); // bb index of piece that is getting moved
 
-
-    int p = findPiece(m.from());
-
-    // Move piece from source → target.
-    int pc=-1;
+    // Move piece from source to target.
+    int pc = -1; // Piece captured index bb
     clearBit(bbs[p], m.from());
-    if (m.isEnPassant()) {
-        int square=m.to();
-        int rank=square/8;
-        int file=square%8;
-        pc=findPiece(m.to()+ (sideToMove? +8:-8));
+    if (m.isEnPassant())
+    {
+        pc = (sideToMove ? 6 : 0);
         clearBit(
-            bbs[!sideToMove? 6 : 0], // if white
-            pc
-        );
-    } else if (m.isCapture()) {
-        pc=findPiece(m.to());
+            bbs[!sideToMove ? 6 : 0], // if white
+            (m.to() + (sideToMove ? +8 : -8)));
+    }
+    else if (m.isCapture())
+    {
+        std::cout << "Trying to find piece 'to' for move: " << m << "\n";
+        pc = findPiece(m.to());
         clearBit(bbs[pc], m.to());
     }
 
-    setBit(bbs[p], m.to());
-
     //  Promotion
-    if (m.isPromotion()) {
-        clearBit(bbs[p], m.to());
-        int promotedStatus=m.status();
-        promotedStatus&=0x3;
-        if (promotedStatus==3) {
-            promotedStatus=4;
-        } else if (promotedStatus==2) {
-            promotedStatus=3;
-        } else if (promotedStatus==1) {
-            promotedStatus=2;
-        } else {
-            promotedStatus=1;
+    if (!m.isPromotion()) // If it isn't promotion, same piece just gets moved to new square
+    {
+        setBit(bbs[p], m.to());
+    }
+    else // If it is promotion, new piece gets moved to new square
+    {
+        int promotedStatus = m.status();
+        promotedStatus &= 0x3;
+        if (promotedStatus == 3)
+        {
+            promotedStatus = 4;
         }
-        setBit(bbs[promotedStatus+ (sideToMove ? +6: +0)],m.to());
+        else if (promotedStatus == 2)
+        {
+            promotedStatus = 3;
+        }
+        else if (promotedStatus == 1)
+        {
+            promotedStatus = 2;
+        }
+        else
+        {
+            promotedStatus = 1;
+        }
+        setBit(bbs[promotedStatus + (sideToMove ? +6 : +0)], m.to());
     }
 
     //  Castling
-    if (m.status()==0b0010 || m.status()==0b0011) {
-        int bb_index=5+(sideToMove ? 6 : 0);
-        int king=get_lsb_index(bbs[5+(sideToMove ? 6 : 0)]);
-        if (m.status()==0b0010) {   // King castle
-            setBit(bbs[bb_index], king+2);
-            clearBit(bbs[3+ (sideToMove ? 6 : 0)], king+3);
+    if (m.status() == 0b0010 || m.status() == 0b0011)
+    {
+        int king = get_lsb_index(bbs[5 + (sideToMove ? 6 : 0)]);
+        if (m.status() == 0b0010)
+        {                                                      // King castle
+            clearBit(bbs[3 + (sideToMove ? 6 : 0)], king + 3); //   Remove rook from old position
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], king + 1);   //  Add rook to the new position
+        }
+        else
+        {                                                       // Queen castling
+            clearBit(bbs[3 + (sideToMove ? 6 : 0)], king + -4); //  Remove rook from old pos
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], king - 1);    // Add it to new
         }
     }
 
     // Save undo info for full restoration.
-    undoStack[index]=Undo(castlingRights, pc, enPassantSquare, halfMoveClock, fullMoveClock);
-
-    // Castling rights
-    if (p==5 || p==11) {
-        castlingRights&=(sideToMove? 0b1100 : 0b0011);
+    undoStack[index] = Undo(castlingRights, pc, enPassantSquare, halfMoveClock, fullMoveClock);
+    index++;
+    if (index < 0 || index >= 200)
+    {
+        throw std::runtime_error("OOB undo array (makeMove method)");
     }
 
-    if ((castlingRights & 0b1100) && p==5) {
-        if (m.from()==0) {
-            castlingRights&=0b1011;
-        } else if (m.from()==7) {
-            castlingRights&=0b0111;
+    // Castling rights
+    if (p == 5 || p == 11)
+    {
+        castlingRights &= (sideToMove ? 0b1100 : 0b0011);
+    }
+
+    if ((castlingRights & 0b1100) && p == 5)
+    {
+        if (m.from() == 0)
+        {
+            castlingRights &= 0b1011;
+        }
+        else if (m.from() == 7)
+        {
+            castlingRights &= 0b0111;
         }
     }
 
-    if ((castlingRights & 0b0011) && p==11) {
-        if (m.from()==56) {
-            castlingRights&=0b1110;
-        } else if (m.from()==63) {
-            castlingRights&=0b1101;
-        }   
+    if ((castlingRights & 0b0011) && p == 11)
+    {
+        if (m.from() == 56)
+        {
+            castlingRights &= 0b1110;
+        }
+        else if (m.from() == 63)
+        {
+            castlingRights &= 0b1101;
+        }
     }
 
     // Update game state
-    enPassantSquare=-1;
-    if (m.status()==0b0001) {
-        enPassantSquare=m.to()+(sideToMove ? +8 : -8);
+    enPassantSquare = -1;
+    if (m.status() == 0b0001)
+    {
+        enPassantSquare = m.to() + (sideToMove ? +8 : -8);
     }
 
     // Halfmove/fullmove clocks
     fullMoveClock++;
-    if (p==0 || p==6 || m.isCapture()) {
-        halfMoveClock=0;
-    } else {
+    if (p == 0 || p == 6 || m.isCapture())
+    {
+        halfMoveClock = 0;
+    }
+    else
+    {
         halfMoveClock++;
     }
-    
-    // Side to move
-    sideToMove=!sideToMove;
 
     // Side to move switch
-    
+    sideToMove = !sideToMove;
 }
 void Board::undoMove(Move m)
 {
-    // castlingRights = undo.castlingRights;
-    // enPassantSquare = undo.enPassantSquare;
-    // fullMoveClock = undo.fullMoveClock;
-    // halfMoveClock = undo.halfMoveClock;
-    // if (undo.capturedPiece != -1)
-    // {
-    //     setBit(bbs[undo.capturedPiece], m.to());
-    //     mailbox[m.to()] = undo.capturedPiece;
-    // }
+    index--; // Decrement index for undo stack
+    if (index < 0 || index >= 200)
+    {
+        throw std::runtime_error("OOB undo array");
+    }
+    enPassantSquare = undoStack[index].enPassantSquare;
+    castlingRights = undoStack[index].castlingRights;
+    halfMoveClock = undoStack[index].halfMoveClock;
+    fullMoveClock = undoStack[index].fullMoveClock;
+
+    sideToMove = !sideToMove;
+
+    undoStack[index] = Undo(); // I think it can be optional, so might delete later
+    std::cout << "Trying to find piece 'to' for undoing move: " << m << "\n";
+    int p = findPiece(m.to());
+
+    clearBit(bbs[p], m.to());
+
+    if (undoStack[index].capturedPiece != -1)
+    {
+        setBit(bbs[undoStack[index].capturedPiece], m.to());
+    }
+
+    // Castling
+    if (m.isCastling())
+    { // WORKS ONLY BEFORE ORIGINAL PIECE WAS MOVED
+        int king = get_lsb_index(bbs[5 + (sideToMove ? 6 : 0)]);
+        if (m.status() == 0b0010)
+        {                                                      // King castle
+            clearBit(bbs[3 + (sideToMove ? 6 : 0)], king - 1); //   Remove rook from old position
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], king + 1);   //  Add rook to the new position
+        }
+        else
+        {                                                      // Queen castling
+            clearBit(bbs[3 + (sideToMove ? 6 : 0)], king + 1); //  Remove rook from old pos
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], king - 2);   // Add it to new
+        }
+    }
+
+    // REMOVE PIECE FROM NEW POSITION
+    clearBit(bbs[p], m.to());
+
+    // Handle promotion
+    if (!m.isPromotion()) // PUTS ORIGINAL PIECE ON THE OLD POSITION
+    {
+        setBit(bbs[p], m.from());
+    }
+    else // if IS promotion, but the pawn back.
+    {
+        setBit(bbs[sideToMove ? 6 : 0], m.from());
+    }
 }
 
 // Is square attacked function
@@ -1325,20 +1410,59 @@ int Board::perft(int depth)
     std::cout << "Finished generating moves\n";
     for (int i = 0; i < moveList.size(); i++)
     {
+        std::cout << "Started looping over moves...\n";
         if (moveList[i].data == 0)
         {
             break;
         }
+        std::cout << "1\n";
         makeMove(moveList[i]);
+        std::cout << "2 made move\n";
         if (!isKingAttacked(!sideToMove))
         {
             nodes += perft(depth - 1);
         }
+        std::cout << "3\n";
         undoMove(moveList[i]);
+        std::cout << "4 unmade move\n";
     }
     return nodes;
 }
 
 int Board::perftDivide(int depth)
 {
+    uint64_t totalNodes = 0;
+    if (depth == 0)
+    {
+        return 1;
+    }
+
+    int nodes = 0;
+    std::cout << "Generating moves...\n";
+    generateMoves();
+    std::cout << "Finished generating moves\n";
+    for (int i = 0; i < moveList.size(); i++)
+    {
+        std::cout << "Started looping over moves...\n";
+        if (moveList[i].data == 0)
+        {
+            break;
+        }
+        std::cout << "1\n";
+        makeMove(moveList[i]);
+        std::cout << "2 made move\n";
+        if (!isKingAttacked(!sideToMove))
+        {
+            nodes += perft(depth - 1);
+        }
+        std::cout << "3\n";
+        uint64_t nodes = perft(depth - 1);
+
+        std::cout << moveToCode(moveList[i]) << ": " << nodes << std::endl;
+        totalNodes += nodes;
+
+        undoMove(moveList[i]);
+    }
+    std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;
+    return totalNodes;
 }

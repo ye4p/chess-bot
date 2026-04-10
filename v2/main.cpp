@@ -14,7 +14,7 @@ int main()
 
     board->generateMoves();
     board->displayMoves();
-    int res = board->perft(1);
+    int res = board->perft(2);
     std::cout << res;
 
     return 0;
