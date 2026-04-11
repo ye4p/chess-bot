@@ -72,7 +72,7 @@ bool Move::isCapture() const
 
 std::ostream &operator<<(std::ostream &os, const Move &m)
 {
-    os << "Move from " << m.from() << " to " << m.to() << " with status: " << m.status() << "\n";
+    os << "Move from " << m.from() << " to " << m.to() << " with status: " << m.status(); //<< "\n";
     return os;
 }
 
@@ -127,11 +127,13 @@ Board::Board()
 void Board::setBit(uint64_t &bb, int square)
 {
     bb |= (1ULL << square);
+    updateOccupancies();
 }
 
 void Board::clearBit(uint64_t &bb, int square)
 {
     bb &= ~(1ULL << square);
+    updateOccupancies();
 }
 
 bool Board::isBitSet(uint64_t bb, int square)
@@ -166,10 +168,12 @@ uint64_t Board::pop_lsb_bb(uint64_t &bb)
     }
     int square = __builtin_ctzll(bb);
     bb &= bb - 1;
+    updateOccupancies();
     return square;
 }
 int Board::get_lsb_index(uint64_t bb)
 {
+    updateOccupancies();
     return __builtin_ctzll(bb);
 }
 
@@ -729,8 +733,9 @@ uint64_t Board::rook_attacks_from_occupancy(int square, uint64_t blockers)
 
 void Board::generateMoves()
 {
-    moveList.fill(Move());
-    int count = 0;
+    int count = moveCount;
+
+    // moveList.fill(Move());
 
     uint64_t from_bb;
 
@@ -922,7 +927,7 @@ void Board::generateMoves()
         {
 
             int from = pop_lsb_bb(from_bb);
-            uint64_t pseudolegal = pawn_masks[1][from] & (~occupancies[1]);
+            uint64_t pseudolegal = pawn_masks[1][from] & (occupancies[0]);
             while (pseudolegal > 0)
             {
                 int to = pop_lsb_bb(pseudolegal);
@@ -1082,6 +1087,7 @@ void Board::generateMoves()
             }
         }
     }
+    moveCount = count;
 }
 void Board::generateKnightMoves()
 {
@@ -1187,6 +1193,7 @@ void Board::generateRookMoves()
 
 void Board::makeMove(Move m)
 {
+
     std::cout << "Trying to find piece from for move: " << m << "\n";
     int p = findPiece(m.from()); // bb index of piece that is getting moved
 
@@ -1326,6 +1333,7 @@ void Board::undoMove(Move m)
 
     undoStack[index] = Undo(); // I think it can be optional, so might delete later
     std::cout << "Trying to find piece 'to' for undoing move: " << m << "\n";
+    displayBoard();
     int p = findPiece(m.to());
 
     clearBit(bbs[p], m.to());
@@ -1403,20 +1411,33 @@ int Board::perft(int depth)
     {
         return 1;
     }
-
+    std::cout << "STARTING PERFT WITH DEPTH " << depth << "\n";
     int nodes = 0;
     std::cout << "Generating moves...\n";
+    // moveList.fill(Move());
     generateMoves();
-    std::cout << "Finished generating moves\n";
-    for (int i = 0; i < moveList.size(); i++)
+    std::cout << "Finished generating moves:";
+    displayMoves();
+    for (int i = moveCount; i < moveList.size(); i++)
     {
         std::cout << "Started looping over moves...\n";
         if (moveList[i].data == 0)
         {
+            std::cout << "BREAKING at i=" << i << "\n";
             break;
         }
         std::cout << "1\n";
+        if (moveList[i].from() == 48 && moveList[i].to() == 40)
+        {
+            std::cout << "BOARD BEFORE MAKING THAT MOVE\n";
+            displayBoard();
+        }
         makeMove(moveList[i]);
+        if (moveList[i].from() == 48 && moveList[i].to() == 40)
+        {
+            std::cout << "BOARD AFTER MAKING THAT MOVE\n";
+            displayBoard();
+        }
         std::cout << "2 made move\n";
         if (!isKingAttacked(!sideToMove))
         {
@@ -1429,40 +1450,40 @@ int Board::perft(int depth)
     return nodes;
 }
 
-int Board::perftDivide(int depth)
-{
-    uint64_t totalNodes = 0;
-    if (depth == 0)
-    {
-        return 1;
-    }
+// int Board::perftDivide(int depth)
+// {
+//     uint64_t totalNodes = 0;
+//     if (depth == 0)
+//     {
+//         return 1;
+//     }
 
-    int nodes = 0;
-    std::cout << "Generating moves...\n";
-    generateMoves();
-    std::cout << "Finished generating moves\n";
-    for (int i = 0; i < moveList.size(); i++)
-    {
-        std::cout << "Started looping over moves...\n";
-        if (moveList[i].data == 0)
-        {
-            break;
-        }
-        std::cout << "1\n";
-        makeMove(moveList[i]);
-        std::cout << "2 made move\n";
-        if (!isKingAttacked(!sideToMove))
-        {
-            nodes += perft(depth - 1);
-        }
-        std::cout << "3\n";
-        uint64_t nodes = perft(depth - 1);
+//     int nodes = 0;
+//     std::cout << "Generating moves...\n";
+//     generateMoves();
+//     std::cout << "Finished generating moves\n";
+//     for (int i = 0; i < moveList.size(); i++)
+//     {
+//         std::cout << "Started looping over moves...\n";
+//         if (moveList[i].data == 0)
+//         {
+//             break;
+//         }
+//         std::cout << "1\n";
+//         makeMove(moveList[i]);
+//         std::cout << "2 made move\n";
+//         if (!isKingAttacked(!sideToMove))
+//         {
+//             nodes += perft(depth - 1);
+//         }
+//         std::cout << "3\n";
+//         uint64_t nodes = perft(depth - 1);
 
-        std::cout << moveToCode(moveList[i]) << ": " << nodes << std::endl;
-        totalNodes += nodes;
+//         std::cout << moveToCode(moveList[i]) << ": " << nodes << std::endl;
+//         totalNodes += nodes;
 
-        undoMove(moveList[i]);
-    }
-    std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;
-    return totalNodes;
-}
+//         undoMove(moveList[i]);
+//     }
+//     std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;
+//     return totalNodes;
+// }

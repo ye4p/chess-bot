@@ -10,6 +10,9 @@
 #include <unordered_map>
 #include <cstdio>
 
+constexpr int MAX_DEPTH = 256;
+constexpr int MAX_MOVES = 256;
+
 static const std::unordered_map<char, int> pieceMap =
     {
         {'p', 0},
@@ -159,7 +162,7 @@ public:
 
     std::array<int, 64> mailbox;
 
-    std::array<Move, 256> moveList;
+    std::array<std::array<Move, MAX_DEPTH>, MAX_MOVES> moveList;
     std::array<Move, 256> legalList;
 
     uint8_t castlingRights = 0b0000; // 1st - white king, 2nd - white queen, 3rd - black king, 4th - black queen
