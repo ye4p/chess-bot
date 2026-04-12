@@ -318,8 +318,10 @@ std::string Board::moveToCode(Move m)
     // s += char('a' + f2) + char('1' + r2);
     auto l1 = fileMap.find(f1);
     auto l2 = fileMap.find(f2);
-    s += l1->second + char(r1);
-    s += l2->second + char(r2);
+    s += char(l1->second);
+    s += char('1' + r1);
+    s += char(l2->second);
+    s += char('1' + r2);
     return s;
 }
 
@@ -788,7 +790,7 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                 {
                     moveList[count] = Move(from, to, 0b0100);
                 }
-                std::cout << "Added move " << Move(from, to, 0b0000);
+                // std::cout << "Added move " << Move(from, to, 0b0000);
 
                 count++;
             }
@@ -800,15 +802,18 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                 moveList[count] = Move(from, to, 0b0000);
                 count++;
             }
-            pseudolegal = pawn_double_push[0][from] & (~occupancies[2]);
-            while (pseudolegal)
+            if ((1ULL << from) & 0xff00)
             {
-                int to = pop_lsb_bb(pseudolegal);
-                //  Double Push
-                if ((pawn_double_push[0][from] | pawn_push[0][from]) & ~occupancies[2])
+                pseudolegal = pawn_double_push[0][from] & (~occupancies[2]);
+                while (pseudolegal)
                 {
-                    moveList[count] = Move(from, to, 0b0001);
-                    count++;
+                    int to = pop_lsb_bb(pseudolegal);
+                    //  Double Push
+                    if ((pawn_double_push[0][from] | pawn_push[0][from]) & ~occupancies[2])
+                    {
+                        moveList[count] = Move(from, to, 0b0001);
+                        count++;
+                    }
                 }
             }
         }
@@ -973,15 +978,18 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                 moveList[count] = Move(from, to, 0b0000);
                 count++;
             }
-            pseudolegal = pawn_double_push[1][from] & (~occupancies[2]);
-            while (pseudolegal)
+            if ((1ULL << from) & 0xff000000000000)
             {
-                int to = pop_lsb_bb(pseudolegal);
-                //  Double Push
-                if ((pawn_double_push[1][from] | pawn_push[1][from]) & ~occupancies[2])
+                pseudolegal = pawn_double_push[1][from] & (~occupancies[2]);
+                while (pseudolegal)
                 {
-                    moveList[count] = Move(from, to, 0b0001);
-                    count++;
+                    int to = pop_lsb_bb(pseudolegal);
+                    //  Double Push
+                    if ((pawn_double_push[1][from] | pawn_push[1][from]) & ~occupancies[2])
+                    {
+                        moveList[count] = Move(from, to, 0b0001);
+                        count++;
+                    }
                 }
             }
         }
@@ -1197,7 +1205,7 @@ void Board::generateRookMoves()
 void Board::makeMove(Move m, Undo &u)
 {
 
-    std::cout << "Trying to find piece from for move: " << m << "\n";
+    // std::cout << "Trying to find piece from for move: " << m << "\n";
     int p = findPiece(m.from()); // bb index of piece that is getting moved
 
     // Move piece from source to target.
@@ -1331,15 +1339,15 @@ void Board::undoMove(Move m, Undo &u)
     sideToMove = !sideToMove;
 
     // u = Undo(); // I think it can be optional, so might delete later
-    // std::cout << "Trying to find piece 'to' for undoing move: " << m << ". Btw, captured piece is " << u.capturedPiece << ".\n";
-    // displayBoard();
+    std::cout << "Trying to find piece 'to' for undoing move: " << m << ". Btw, captured piece is " << u.capturedPiece << ".\n";
+    displayBoard();
     int p = findPiece(m.to());
 
     clearBit(bbs[p], m.to());
 
     if (u.capturedPiece != -1)
     {
-        // std::cout << "Piece was captured, trying to recover it from the " << undoStack[index].capturedPiece << "\n";
+        std::cout << "Piece was captured, trying to recover it from the " << u.capturedPiece << "\n";
         setBit(bbs[u.capturedPiece], m.to());
     }
 
@@ -1371,8 +1379,8 @@ void Board::undoMove(Move m, Undo &u)
     {
         setBit(bbs[sideToMove ? 6 : 0], m.from());
     }
-    // std::cout << "after undoing move: " << m << "\n";
-    // displayBoard();
+    std::cout << "after undoing move: " << m << "\n";
+    displayBoard();
 }
 
 // Is square attacked function
@@ -1390,7 +1398,7 @@ bool Board::isSquareAttacked(int square, int by)
 
 bool Board::isKingAttacked(int by)
 {
-    int kingIndex = get_lsb_bb(bbs[5 + !by]);
+    int kingIndex = get_lsb_index(bbs[5 + !by]);
     return isSquareAttacked(kingIndex, by);
 }
 
@@ -1454,40 +1462,50 @@ int Board::perft(int depth)
     return nodes;
 }
 
-// int Board::perftDivide(int depth)
-// {
-//     uint64_t totalNodes = 0;
-//     if (depth == 0)
-//     {
-//         return 1;
-//     }
+int Board::perftDivide(int depth)
+{
+    // std::cout << "Trying to run new perft...\n";
+    uint64_t totalNodes = 0;
+    if (depth == 0)
+    {
+        return 1;
+    }
 
-//     int nodes = 0;
-//     std::cout << "Generating moves...\n";
-//     generateMoves();
-//     std::cout << "Finished generating moves\n";
-//     for (int i = 0; i < moveList.size(); i++)
-//     {
-//         std::cout << "Started looping over moves...\n";
-//         if (moveList[i].data == 0)
-//         {
-//             break;
-//         }
-//         std::cout << "1\n";
-//         makeMove(moveList[i]);
-//         std::cout << "2 made move\n";
-//         if (!isKingAttacked(!sideToMove))
-//         {
-//             nodes += perft(depth - 1);
-//         }
-//         std::cout << "3\n";
-//         uint64_t nodes = perft(depth - 1);
+    int nodes = 0;
+    // std::cout << "Initializing new lists...\n";
+    std::array<Move, 256> moveList;
+    std::array<Undo, 256> undoList;
+    // std::cout << "Generating moves...\n";
+    generateMoves(moveList);
+    // std::cout << "Finished generating moves\n";
+    for (int i = 0; i < moveList.size(); i++)
+    {
+        std::cout << "Index i=" << i << "\n";
+        // std::cout << "Started looping over moves...\n";
+        if (moveList[i].data == 0)
+        {
+            break;
+        }
+        std::cout << "Trying to make move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        // std::cout << "1\n";
+        makeMove(moveList[i], undoList[i]);
+        // std::cout << "2 made move\n";
+        std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        if (!isKingAttacked(!sideToMove))
+        {
+            // std::cout << "current depth is " << depth << " and condition 'is king attacked' run successfully for a move " << moveList[i] << " and undo " << undoList[i] << "\n";
+            nodes += perft(depth - 1);
+        }
+        // std::cout << "Doing perft on a lower level with a move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        //  std::cout << "3\n";
+        uint64_t nodes = perft(depth - 1);
 
-//         std::cout << moveToCode(moveList[i]) << ": " << nodes << std::endl;
-//         totalNodes += nodes;
-
-//         undoMove(moveList[i]);
-//     }
-//     std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;
-//     return totalNodes;
-// }
+        std::cout << moveToCode(moveList[i]) << ": " << nodes << std::endl;
+        totalNodes += nodes;
+        std::cout << "Trying to undo move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        undoMove(moveList[i], undoList[i]);
+        std::cout << "Undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
+    }
+    std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;
+    return totalNodes;
+}
