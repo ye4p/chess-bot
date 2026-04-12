@@ -12,8 +12,7 @@ int main()
 
     board->displayBoard();
 
-    board->generateMoves();
-    int res = board->perft(2);
+    int res = board->perft(3);
     std::cout << res;
 
     return 0;

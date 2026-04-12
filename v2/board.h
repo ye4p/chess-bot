@@ -162,7 +162,7 @@ public:
 
     std::array<int, 64> mailbox;
 
-    std::array<std::array<Move, MAX_DEPTH>, MAX_MOVES> moveList;
+    // std::array<std::array<Move, MAX_DEPTH>, MAX_MOVES> moveList;
     std::array<Move, 256> legalList;
 
     uint8_t castlingRights = 0b0000; // 1st - white king, 2nd - white queen, 3rd - black king, 4th - black queen
@@ -210,7 +210,7 @@ public:
 
     void displayBoard();
     void displayBB(uint64_t bb);
-    void displayMoves();
+    void displayMoves(std::array<Move, 256> moveList);
 
     std::vector<std::string> splitString(std::string str, char delimiter);
     int codeToIndex(std::string code);
@@ -240,7 +240,7 @@ public:
     uint64_t get_bishop_attacks(int square, uint64_t board_occupancy);
     uint64_t get_rook_attacks(int square, uint64_t board_occupancy);
 
-    void generateMoves();
+    void generateMoves(std::array<Move, 256> &moveList);
     void generateKnightMoves();
     void generateKingMoves();
     void generatePawnMoves();

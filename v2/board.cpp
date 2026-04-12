@@ -260,7 +260,7 @@ void Board::displayBB(uint64_t bb)
     printf("bitboard: %lld\n\n", bb);
 }
 
-void Board::displayMoves()
+void Board::displayMoves(std::array<Move, 256> moveList)
 {
     for (int i = 0; i < moveList.size(); i++)
     {
@@ -731,12 +731,10 @@ uint64_t Board::rook_attacks_from_occupancy(int square, uint64_t blockers)
 // MAIN MOVE GENERATION
 //
 
-void Board::generateMoves()
+void Board::generateMoves(std::array<Move, 256> &moveList)
 {
-    int count = moveCount;
-
     // moveList.fill(Move());
-
+    int count = 0;
     uint64_t from_bb;
 
     if (!sideToMove)
@@ -1087,7 +1085,6 @@ void Board::generateMoves()
             }
         }
     }
-    moveCount = count;
 }
 void Board::generateKnightMoves()
 {
@@ -1167,11 +1164,11 @@ void Board::generateRookMoves()
         // std::cout << "rook relevant bits\n";
 
         int occupancy_count = 1 << rook_relevant_bits[i];
-        if (i == 0)
-        {
-            std::cout << "mask rook attacks: " << rook_masks[i] << "\n";
-            std::cout << "occupancy count: " << occupancy_count << "\n";
-        }
+        // if (i == 0)
+        // {
+        //     std::cout << "mask rook attacks: " << rook_masks[i] << "\n";
+        //     std::cout << "occupancy count: " << occupancy_count << "\n";
+        // }
         for (uint64_t j = 0; j < occupancy_count; j++)
         {
             uint64_t occupancy = set_occupancy(j, rook_relevant_bits[i], rook_masks[i]);
@@ -1340,6 +1337,7 @@ void Board::undoMove(Move m)
 
     if (undoStack[index].capturedPiece != -1)
     {
+        std::cout << "Piece was captured, trying to recover it from the " << undoStack[index].capturedPiece << "\n";
         setBit(bbs[undoStack[index].capturedPiece], m.to());
     }
 
@@ -1371,6 +1369,8 @@ void Board::undoMove(Move m)
     {
         setBit(bbs[sideToMove ? 6 : 0], m.from());
     }
+    std::cout << "after undoing move: " << m << "\n";
+    displayBoard();
 }
 
 // Is square attacked function
@@ -1411,41 +1411,42 @@ int Board::perft(int depth)
     {
         return 1;
     }
-    std::cout << "STARTING PERFT WITH DEPTH " << depth << "\n";
+    // std::cout << "STARTING PERFT WITH DEPTH " << depth << "\n";
     int nodes = 0;
-    std::cout << "Generating moves...\n";
+    // std::cout << "Generating moves...\n";
+    std::array<Move, 256> moveList;
     // moveList.fill(Move());
-    generateMoves();
-    std::cout << "Finished generating moves:";
-    displayMoves();
-    for (int i = moveCount; i < moveList.size(); i++)
+    generateMoves(moveList);
+    // std::cout << "Finished generating moves:";
+    // displayMoves(moveList);
+    for (int i = 0; i < moveList.size(); i++)
     {
-        std::cout << "Started looping over moves...\n";
+        // std::cout << "Started looping over moves...\n";
         if (moveList[i].data == 0)
         {
-            std::cout << "BREAKING at i=" << i << "\n";
+            // std::cout << "BREAKING at i=" << i << "\n";
             break;
         }
-        std::cout << "1\n";
-        if (moveList[i].from() == 48 && moveList[i].to() == 40)
-        {
-            std::cout << "BOARD BEFORE MAKING THAT MOVE\n";
-            displayBoard();
-        }
+        // std::cout << "1\n";
+        // if (moveList[i].from() == 48 && moveList[i].to() == 40)
+        // {
+        //     //std::cout << "BOARD BEFORE MAKING THAT MOVE\n";
+        //     displayBoard();
+        // }
         makeMove(moveList[i]);
-        if (moveList[i].from() == 48 && moveList[i].to() == 40)
-        {
-            std::cout << "BOARD AFTER MAKING THAT MOVE\n";
-            displayBoard();
-        }
-        std::cout << "2 made move\n";
+        // if (moveList[i].from() == 48 && moveList[i].to() == 40)
+        // {
+        //    // std::cout << "BOARD AFTER MAKING THAT MOVE\n";
+        //     //displayBoard();
+        // }
+        // std::cout << "2 made move\n";
         if (!isKingAttacked(!sideToMove))
         {
             nodes += perft(depth - 1);
         }
-        std::cout << "3\n";
+        // std::cout << "3\n";
         undoMove(moveList[i]);
-        std::cout << "4 unmade move\n";
+        // std::cout << "4 unmade move\n";
     }
     return nodes;
 }
