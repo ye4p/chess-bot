@@ -79,12 +79,12 @@ const static uint64_t ROOK_MAGICS[] = {9259401108821016592ULL, 18014467231055937
 struct Undo
 {
     uint8_t castlingRights;
-    int8_t capturedPiece;
+    int capturedPiece;
     int8_t enPassantSquare;
     uint8_t halfMoveClock;
     uint16_t fullMoveClock;
     Undo();
-    Undo(uint8_t castlingRights, uint8_t capturedPiece, int8_t enPassantSquare, uint8_t halfMoveClock, uint16_t fullMoveClock);
+    Undo(uint8_t castlingRights, int capturedPiece, int8_t enPassantSquare, uint8_t halfMoveClock, uint16_t fullMoveClock);
 };
 struct Move
 {

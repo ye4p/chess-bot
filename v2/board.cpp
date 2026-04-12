@@ -20,13 +20,19 @@ Undo::Undo()
     fullMoveClock = 1;
 }
 
-Undo::Undo(uint8_t castlingRights, uint8_t capturedPiece, int8_t enPassantSquare, uint8_t halfMoveClock, uint16_t fullMoveClock)
+Undo::Undo(uint8_t castlingRights, int capturedPiece, int8_t enPassantSquare, uint8_t halfMoveClock, uint16_t fullMoveClock)
 {
     this->castlingRights = castlingRights;
     this->capturedPiece = capturedPiece;
     this->enPassantSquare = enPassantSquare;
     this->halfMoveClock = halfMoveClock;
     this->fullMoveClock = fullMoveClock;
+}
+
+std::ostream &operator<<(std::ostream &os, const Undo &u)
+{
+    os << "Undo castling rights:" << u.castlingRights << "captured piece " << u.capturedPiece << " en passant square: " << u.enPassantSquare << "\n";
+    return os;
 }
 
 //
@@ -1199,6 +1205,7 @@ void Board::makeMove(Move m)
     clearBit(bbs[p], m.from());
     if (m.isEnPassant())
     {
+        std::cout << "en passant\n";
         pc = (sideToMove ? 6 : 0);
         clearBit(
             bbs[!sideToMove ? 6 : 0], // if white
@@ -1208,8 +1215,10 @@ void Board::makeMove(Move m)
     {
         std::cout << "Trying to find piece 'to' for move: " << m << "\n";
         pc = findPiece(m.to());
+        std::cout << "pc is " << pc << "\n";
         clearBit(bbs[pc], m.to());
     }
+    std::cout << "pc now is : " << pc << "\n";
 
     //  Promotion
     if (!m.isPromotion()) // If it isn't promotion, same piece just gets moved to new square
@@ -1256,7 +1265,9 @@ void Board::makeMove(Move m)
     }
 
     // Save undo info for full restoration.
+
     undoStack[index] = Undo(castlingRights, pc, enPassantSquare, halfMoveClock, fullMoveClock);
+    std::cout << undoStack[index];
     index++;
     if (index < 0 || index >= 200)
     {
@@ -1329,7 +1340,7 @@ void Board::undoMove(Move m)
     sideToMove = !sideToMove;
 
     undoStack[index] = Undo(); // I think it can be optional, so might delete later
-    std::cout << "Trying to find piece 'to' for undoing move: " << m << "\n";
+    std::cout << "Trying to find piece 'to' for undoing move: " << m << ". Btw, captured piece is " << undoStack[index].capturedPiece << ".\n";
     displayBoard();
     int p = findPiece(m.to());
 
@@ -1337,7 +1348,7 @@ void Board::undoMove(Move m)
 
     if (undoStack[index].capturedPiece != -1)
     {
-        std::cout << "Piece was captured, trying to recover it from the " << undoStack[index].capturedPiece << "\n";
+        // std::cout << "Piece was captured, trying to recover it from the " << undoStack[index].capturedPiece << "\n";
         setBit(bbs[undoStack[index].capturedPiece], m.to());
     }
 
