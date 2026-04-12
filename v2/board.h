@@ -175,10 +175,6 @@ public:
     int sideToMove = 0;
     // bool whiteToMove = true;
 
-    std::array<Undo, 200> undoStack;
-
-    int index = 0; // Used for the undo stack
-
     // Bitboard masks with attacks:
     static uint64_t pawn_masks[2][64];
     static uint64_t pawn_push[2][64];
@@ -247,8 +243,8 @@ public:
     void generateBishopMoves();
     void generateRookMoves();
 
-    void makeMove(Move m);
-    void undoMove(Move m);
+    void makeMove(Move m, Undo &u);
+    void undoMove(Move m, Undo &u);
 
     bool isSquareAttacked(int square, int by);
     bool isKingAttacked(int by);

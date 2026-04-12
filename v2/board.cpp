@@ -1194,7 +1194,7 @@ void Board::generateRookMoves()
 
 // Make/undo move logic
 
-void Board::makeMove(Move m)
+void Board::makeMove(Move m, Undo &u)
 {
 
     std::cout << "Trying to find piece from for move: " << m << "\n";
@@ -1213,12 +1213,12 @@ void Board::makeMove(Move m)
     }
     else if (m.isCapture())
     {
-        std::cout << "Trying to find piece 'to' for move: " << m << "\n";
+        // std::cout << "Trying to find piece 'to' for move: " << m << "\n";
         pc = findPiece(m.to());
-        std::cout << "pc is " << pc << "\n";
+        // std::cout << "pc is " << pc << "\n";
         clearBit(bbs[pc], m.to());
     }
-    std::cout << "pc now is : " << pc << "\n";
+    // std::cout << "pc now is : " << pc << "\n";
 
     //  Promotion
     if (!m.isPromotion()) // If it isn't promotion, same piece just gets moved to new square
@@ -1266,13 +1266,8 @@ void Board::makeMove(Move m)
 
     // Save undo info for full restoration.
 
-    undoStack[index] = Undo(castlingRights, pc, enPassantSquare, halfMoveClock, fullMoveClock);
-    std::cout << undoStack[index];
-    index++;
-    if (index < 0 || index >= 200)
-    {
-        throw std::runtime_error("OOB undo array (makeMove method)");
-    }
+    u = Undo(castlingRights, pc, enPassantSquare, halfMoveClock, fullMoveClock);
+    // std::cout << u;
 
     // Castling rights
     if (p == 5 || p == 11)
@@ -1325,31 +1320,27 @@ void Board::makeMove(Move m)
     // Side to move switch
     sideToMove = !sideToMove;
 }
-void Board::undoMove(Move m)
+void Board::undoMove(Move m, Undo &u)
 {
-    index--; // Decrement index for undo stack
-    if (index < 0 || index >= 200)
-    {
-        throw std::runtime_error("OOB undo array");
-    }
-    enPassantSquare = undoStack[index].enPassantSquare;
-    castlingRights = undoStack[index].castlingRights;
-    halfMoveClock = undoStack[index].halfMoveClock;
-    fullMoveClock = undoStack[index].fullMoveClock;
+
+    enPassantSquare = u.enPassantSquare;
+    castlingRights = u.castlingRights;
+    halfMoveClock = u.halfMoveClock;
+    fullMoveClock = u.fullMoveClock;
 
     sideToMove = !sideToMove;
 
-    undoStack[index] = Undo(); // I think it can be optional, so might delete later
-    std::cout << "Trying to find piece 'to' for undoing move: " << m << ". Btw, captured piece is " << undoStack[index].capturedPiece << ".\n";
-    displayBoard();
+    // u = Undo(); // I think it can be optional, so might delete later
+    // std::cout << "Trying to find piece 'to' for undoing move: " << m << ". Btw, captured piece is " << u.capturedPiece << ".\n";
+    // displayBoard();
     int p = findPiece(m.to());
 
     clearBit(bbs[p], m.to());
 
-    if (undoStack[index].capturedPiece != -1)
+    if (u.capturedPiece != -1)
     {
         // std::cout << "Piece was captured, trying to recover it from the " << undoStack[index].capturedPiece << "\n";
-        setBit(bbs[undoStack[index].capturedPiece], m.to());
+        setBit(bbs[u.capturedPiece], m.to());
     }
 
     // Castling
@@ -1380,8 +1371,8 @@ void Board::undoMove(Move m)
     {
         setBit(bbs[sideToMove ? 6 : 0], m.from());
     }
-    std::cout << "after undoing move: " << m << "\n";
-    displayBoard();
+    // std::cout << "after undoing move: " << m << "\n";
+    // displayBoard();
 }
 
 // Is square attacked function
@@ -1426,6 +1417,7 @@ int Board::perft(int depth)
     int nodes = 0;
     // std::cout << "Generating moves...\n";
     std::array<Move, 256> moveList;
+    std::array<Undo, 256> undoList;
     // moveList.fill(Move());
     generateMoves(moveList);
     // std::cout << "Finished generating moves:";
@@ -1444,7 +1436,7 @@ int Board::perft(int depth)
         //     //std::cout << "BOARD BEFORE MAKING THAT MOVE\n";
         //     displayBoard();
         // }
-        makeMove(moveList[i]);
+        makeMove(moveList[i], undoList[i]);
         // if (moveList[i].from() == 48 && moveList[i].to() == 40)
         // {
         //    // std::cout << "BOARD AFTER MAKING THAT MOVE\n";
@@ -1456,7 +1448,7 @@ int Board::perft(int depth)
             nodes += perft(depth - 1);
         }
         // std::cout << "3\n";
-        undoMove(moveList[i]);
+        undoMove(moveList[i], undoList[i]);
         // std::cout << "4 unmade move\n";
     }
     return nodes;
