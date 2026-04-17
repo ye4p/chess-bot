@@ -54,4 +54,6 @@ if __name__ == "__main__":
     start_fen = chess.STARTING_FEN
     fen1="rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1"
     fen2="rnbqkbnr/1ppppppp/p7/8/8/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 1"
-    perft_divide(fen1,3 )
+    fen3="rnbqkbnr/pppppppp/8/8/8/N7/PPPPPPPP/R1BQKBNR b KQkq - 0 1"
+    fen4="rnbqkbnr/1ppppppp/p7/8/8/N7/PPPPPPPP/R1BQKBNR w KQkq - 0 1"
+    perft_divide(start_fen,4 )

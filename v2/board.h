@@ -202,7 +202,7 @@ public:
     int get_lsb_index(uint64_t bb);
     inline int popcount(uint64_t bb);
     void updateOccupancies();
-    int findPiece(int square);
+    int findPiece(int square, Move m=Move());
 
     void displayBoard();
     void displayBB(uint64_t bb);

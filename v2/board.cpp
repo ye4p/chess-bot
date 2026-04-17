@@ -209,7 +209,7 @@ void Board::updateOccupancies()
     occupancies[2] = occupancies[0] | occupancies[1];
 }
 
-int Board::findPiece(int square)
+int Board::findPiece(int square, Move m)
 {
     for (int i = 0; i < 12; i++)
     {
@@ -218,7 +218,8 @@ int Board::findPiece(int square)
             return i;
         }
     }
-    std::cout << "ERROR with square " << square << "\n";
+    displayBoard();
+    std::cout << "ERROR with square " << square <<" with move: " << m<<"\n";
     throw std::runtime_error("Piece not found");
 }
 
@@ -539,6 +540,7 @@ uint64_t Board::mask_pawn_push(int side, int square, int push)
     // {
     //     displayBB(attack);
     // }
+
     return attack;
 }
 
@@ -809,7 +811,7 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                 {
                     int to = pop_lsb_bb(pseudolegal);
                     //  Double Push
-                    if ((pawn_double_push[0][from] | pawn_push[0][from]) & ~occupancies[2])
+                    if (((pawn_double_push[0][from] | pawn_push[0][from]) & occupancies[2])==0)
                     {
                         moveList[count] = Move(from, to, 0b0001);
                         count++;
@@ -985,7 +987,7 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                 {
                     int to = pop_lsb_bb(pseudolegal);
                     //  Double Push
-                    if ((pawn_double_push[1][from] | pawn_push[1][from]) & ~occupancies[2])
+                    if (((pawn_double_push[1][from] | pawn_push[1][from]) & occupancies[2])==0)
                     {
                         moveList[count] = Move(from, to, 0b0001);
                         count++;
@@ -1205,8 +1207,12 @@ void Board::generateRookMoves()
 void Board::makeMove(Move m, Undo &u)
 {
 
-    // std::cout << "Trying to find piece from for move: " << m << "\n";
-    int p = findPiece(m.from()); // bb index of piece that is getting moved
+    //std::cout << "Trying to find piece from for move: " << m << "\n";
+    // if (m.from()==11) {
+    //     std::cout << "Trying to find piece run makeMove() for move " << m << ".\n";
+    //     displayBoard();
+    // }
+    int p = findPiece(m.from(), m); // bb index of piece that is getting moved
 
     // Move piece from source to target.
     int pc = -1; // Piece captured index bb
@@ -1222,7 +1228,11 @@ void Board::makeMove(Move m, Undo &u)
     else if (m.isCapture())
     {
         // std::cout << "Trying to find piece 'to' for move: " << m << "\n";
-        pc = findPiece(m.to());
+        // if (m.to()==11) {
+        //     std:: cout<< "Trying to find piece that is supposed to be captured in makeMove() for move " << m << "\n";
+        //     displayBoard();
+        // }
+        pc = findPiece(m.to(), m);
         // std::cout << "pc is " << pc << "\n";
         clearBit(bbs[pc], m.to());
     }
@@ -1330,6 +1340,11 @@ void Board::makeMove(Move m, Undo &u)
 }
 void Board::undoMove(Move m, Undo &u)
 {
+    if (u.capturedPiece==11 || u.capturedPiece==5) {
+        std::cout << "King was captured\n";
+        std::string KING_CAPTURE_ERROR="King was captured, game is over!";
+        throw std::runtime_error(KING_CAPTURE_ERROR);
+    }
 
     enPassantSquare = u.enPassantSquare;
     castlingRights = u.castlingRights;
@@ -1338,16 +1353,17 @@ void Board::undoMove(Move m, Undo &u)
 
     sideToMove = !sideToMove;
 
-    // u = Undo(); // I think it can be optional, so might delete later
-    std::cout << "Trying to find piece 'to' for undoing move: " << m << ". Btw, captured piece is " << u.capturedPiece << ".\n";
-    displayBoard();
-    int p = findPiece(m.to());
+    // if( m.to()==41) {
+    //     std::cout << "Board before undoing the move" << m << ".\n";
+    //     displayBoard();
+    // }
+    int p = findPiece(m.to(), m);
 
     clearBit(bbs[p], m.to());
 
     if (u.capturedPiece != -1)
     {
-        std::cout << "Piece was captured, trying to recover it from the " << u.capturedPiece << "\n";
+       // std::cout << "Piece was captured, trying to recover it from the " << u.capturedPiece << "\n";
         setBit(bbs[u.capturedPiece], m.to());
     }
 
@@ -1379,8 +1395,8 @@ void Board::undoMove(Move m, Undo &u)
     {
         setBit(bbs[sideToMove ? 6 : 0], m.from());
     }
-    std::cout << "after undoing move: " << m << "\n";
-    displayBoard();
+    // std::cout << "after undoing move: " << m << "\n";
+    // displayBoard();
 }
 
 // Is square attacked function
@@ -1438,10 +1454,20 @@ int Board::perft(int depth)
             // std::cout << "BREAKING at i=" << i << "\n";
             break;
         }
+        if (undoList[i].capturedPiece==11 || undoList[i].capturedPiece==5) {
+            continue;   // Never runs because undo is initialized in the makeMove(), which didn't run yet.
+        }
+        if (findPiece(moveList[i].to())==5 || findPiece(moveList[i].to())==11) {
+            continue;
+        }
         // std::cout << "1\n";
         // if (moveList[i].from() == 48 && moveList[i].to() == 40)
         // {
         //     //std::cout << "BOARD BEFORE MAKING THAT MOVE\n";
+        //     displayBoard();
+        // }
+        // if (moveList[i].from()==41) {
+        //     std::cout << "Board before making that move: "<<moveList[i]<<"\n" ;
         //     displayBoard();
         // }
         makeMove(moveList[i], undoList[i]);
@@ -1471,7 +1497,6 @@ int Board::perftDivide(int depth)
         return 1;
     }
 
-    int nodes = 0;
     // std::cout << "Initializing new lists...\n";
     std::array<Move, 256> moveList;
     std::array<Undo, 256> undoList;
@@ -1480,31 +1505,37 @@ int Board::perftDivide(int depth)
     // std::cout << "Finished generating moves\n";
     for (int i = 0; i < moveList.size(); i++)
     {
-        std::cout << "Index i=" << i << "\n";
+        //std::cout << "Index i=" << i << "\n";
         // std::cout << "Started looping over moves...\n";
         if (moveList[i].data == 0)
         {
             break;
         }
-        std::cout << "Trying to make move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        if (undoList[i].capturedPiece==11 || undoList[i].capturedPiece==5) {
+            continue;
+        }
+        //std::cout << "Trying to make move " << moveList[i] << " and undo " << undoList[i] << "\n";
         // std::cout << "1\n";
+        // if (moveList[i].from()==41) {
+        //     std::cout << "Board before making that move: "<<moveList[i]<<"\n" ;
+        //     displayBoard();
+        // }
         makeMove(moveList[i], undoList[i]);
         // std::cout << "2 made move\n";
-        std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        //std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
         if (!isKingAttacked(!sideToMove))
         {
             // std::cout << "current depth is " << depth << " and condition 'is king attacked' run successfully for a move " << moveList[i] << " and undo " << undoList[i] << "\n";
-            nodes += perft(depth - 1);
+            uint64_t nodes = perft(depth - 1);
+            std::cout << moveToCode(moveList[i]) << ": " << nodes << std::endl;
+            totalNodes += nodes;
         }
         // std::cout << "Doing perft on a lower level with a move " << moveList[i] << " and undo " << undoList[i] << "\n";
         //  std::cout << "3\n";
-        uint64_t nodes = perft(depth - 1);
 
-        std::cout << moveToCode(moveList[i]) << ": " << nodes << std::endl;
-        totalNodes += nodes;
-        std::cout << "Trying to undo move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        //std::cout << "Trying to undo move " << moveList[i] << " and undo " << undoList[i] << "\n";
         undoMove(moveList[i], undoList[i]);
-        std::cout << "Undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        //std::cout << "Undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
     }
     std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;
     return totalNodes;
