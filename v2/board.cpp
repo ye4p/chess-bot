@@ -1032,7 +1032,7 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                 }
                 else
                 {
-                    moveList[count] = Move(from, to, 0b0000);
+                    moveList[count] = Move(from, to, 0b0100);
                 }
                 count++;
             }
@@ -1537,17 +1537,17 @@ int Board::perft(int depth)
 
         uint64_t currentbb = getBB();
 
-        int captured = 99;
-        if (moveList[i].to() == 8 && moveList[i].from() == 17)
-        {
-            captured = findPiece(8);
-            std::cout << "BLACK PAWNS BB before making move:\n";
-            displayBB(bbs[6]);
-            std::cout << "WHITE PAWNS BB before making move:\n";
-            displayBB(bbs[0]);
-            std::cout << " FULL  BOARD before making move:\n";
-            displayBoard();
-        }
+        // int captured = 99;
+        // if (moveList[i].to() == 8 && moveList[i].from() == 17)
+        // {
+        //     captured = findPiece(8);
+        //     std::cout << "BLACK PAWNS BB before making move:\n";
+        //     displayBB(bbs[6]);
+        //     std::cout << "WHITE PAWNS BB before making move:\n";
+        //     displayBB(bbs[0]);
+        //     std::cout << " FULL  BOARD before making move:\n";
+        //     displayBoard();
+        // }
         // std::cout << "1\n";
         // if (moveList[i].from() == 48 && moveList[i].to() == 40)
         // {
@@ -1593,8 +1593,6 @@ int Board::perft(int depth)
             std::cout << "BB at the end: \n";
             displayBB(getBB());
             std::cout << "Crash with the move " << moveList[i] << undoList[i] << "\n";
-            std::cout << findPiece(17) << "\n";
-            std::cout << "Piece type at square 8 is " << captured << "\n";
             throw std::runtime_error("Crash of bbs mismatch");
         }
         validateBoard(2);
@@ -1628,7 +1626,7 @@ int Board::perftDivide(int depth)
         }
         if (findPieceKing(moveList[i].to(), moveList[i]) == 5 || findPieceKing(moveList[i].to(), moveList[i]) == 11)
         {
-            std::cout << "\nSKIPPING KING CAPTURE!!!\n";
+            // std::cout << "\nSKIPPING KING CAPTURE!!!\n";
             continue;
         }
         uint64_t currentbb = getBB();
@@ -1654,8 +1652,8 @@ int Board::perftDivide(int depth)
 
         // std::cout << "Trying to undo move " << moveList[i] << " and undo " << undoList[i] << "\n";
         undoMove(moveList[i], undoList[i]);
-        std::cout << "Board after unmaking a move " << moveToCode(moveList[i]) << " :\n";
-        displayBoard();
+        // std::cout << "Board after unmaking a move " << moveToCode(moveList[i]) << " :\n";
+        // displayBoard();
         validateBoard(4);
         if (currentbb != getBB())
         {
