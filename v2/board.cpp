@@ -1472,18 +1472,18 @@ void Board::undoMove(Move m, Undo &u)
 
 bool Board::isSquareAttacked(int square, int by)
 {
-    int color = (by ? 0 : 6);
+    int color = (!by ? 0 : 6);
     uint64_t res1 = knight_masks[square] & bbs[1 + color];
     uint64_t res2 = king_masks[square] & bbs[5 + color];
     uint64_t res3 = pawn_masks[by][square] & bbs[color];
     uint64_t res4 = get_rook_attacks(square, occupancies[2]) & ~occupancies[!by];
     uint64_t res5 = get_bishop_attacks(square, occupancies[2]) & ~occupancies[!by];
-    return (1ULL << square) & res1 & res2 & res3 & res4 & res5;
+    return res1 || res2 || res3 || res4 || res5;
 }
 
 bool Board::isKingAttacked(int by)
 {
-    int kingIndex = get_lsb_index(bbs[5 + !by]);
+    int kingIndex = get_lsb_index(bbs[5 + (by ? 0 : 6)]);
     return isSquareAttacked(kingIndex, by);
 }
 
