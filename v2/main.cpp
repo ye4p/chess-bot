@@ -17,7 +17,7 @@ int main()
 
     board->displayBoard();
 
-    int res = board->perftDivide(3);
+    int res = board->perftDivide(4);
     std::cout << res;
 
     return 0;

@@ -218,9 +218,57 @@ int Board::findPiece(int square, Move m)
             return i;
         }
     }
+    std::cout << "Move sequence that led to this error position: ";
+    for (Move m : moveLog) {
+        std::cout<<moveToCode(m)<<", ";
+    }
+    std::cout << "\n";
+    for (int i=0; i<moveLog.size(); i++) {
+        std::cout<< moveToCode(moveLog[i])<<", and corresponding board:\n";
+        displayBB(boardLog[i]);
+    }
+    std::cout<<"\n";
     displayBoard();
     std::cout << "ERROR with square " << square <<" with move: " << m<<"\n";
     throw std::runtime_error("Piece not found");
+}
+
+int Board::findPieceKing(int square, Move m) {
+    for (int i = 0; i < 12; i++)
+    {
+        if (bbs[i] & (1ULL << square))
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void Board::validateBoard(int i) {
+    std::string s="";
+    if (i==1) {
+        s+="perft after making move, ";
+    } else if (i==2) {
+        s+="perft after undoing move, ";
+    } else if (i==3) {
+        s+="perft divide after making move, ";
+    } else if (i==4) {
+        s+="perft divide after undoing move, ";
+    }
+    if (!bbs[5]) {
+        throw std::runtime_error(s+"no white king found");
+    }
+    if (!bbs[11]) {
+        throw std::runtime_error(s+"no black king found");
+    }
+}
+
+uint64_t Board::getBB() {
+    uint64_t bb;
+    for (int i=0; i<12; i++) {
+        bb|=bbs[i];
+    }
+    return bb;
 }
 
 //
@@ -237,7 +285,7 @@ void Board::displayBoard()
             int square = rank * 8 + file;
             if (!file)
             {
-                printf(" %d ", 8 - rank);
+                printf(" %d ", rank+1);
             }
             printf(" %d", (isBitSet(occupancies[2], square) ? 1 : 0));
         }
@@ -257,7 +305,7 @@ void Board::displayBB(uint64_t bb)
             int square = rank * 8 + file;
             if (!file)
             {
-                printf(" %d ", 8 - rank);
+                printf(" %d ", rank+1);
             }
             printf(" %d", (isBitSet(bb, square) ? 1 : 0));
         }
@@ -1337,6 +1385,9 @@ void Board::makeMove(Move m, Undo &u)
 
     // Side to move switch
     sideToMove = !sideToMove;
+
+    moveLog.push_back(m);
+    boardLog.push_back(getBB());
 }
 void Board::undoMove(Move m, Undo &u)
 {
@@ -1397,6 +1448,7 @@ void Board::undoMove(Move m, Undo &u)
     }
     // std::cout << "after undoing move: " << m << "\n";
     // displayBoard();
+    moveLog.pop_back();
 }
 
 // Is square attacked function
@@ -1431,6 +1483,8 @@ void Board::startpos()
 //  TESTING
 //
 
+// usually, makeMove(int move) has a move parameter, but many times unmakeMove() has no parameter, because it pops the last move made from the move stack
+
 int Board::perft(int depth)
 {
     if (depth == 0)
@@ -1454,12 +1508,14 @@ int Board::perft(int depth)
             // std::cout << "BREAKING at i=" << i << "\n";
             break;
         }
-        if (undoList[i].capturedPiece==11 || undoList[i].capturedPiece==5) {
-            continue;   // Never runs because undo is initialized in the makeMove(), which didn't run yet.
-        }
-        if (findPiece(moveList[i].to())==5 || findPiece(moveList[i].to())==11) {
+
+        // if (undoList[i].capturedPiece==11 || undoList[i].capturedPiece==5) {
+        //     continue;   // Never runs because undo is initialized in the makeMove(), which didn't run yet.
+        // }
+        if (findPieceKing(moveList[i].to(), moveList[i])==5 || findPieceKing(moveList[i].to(), moveList[i])==11) {
             continue;
         }
+
         // std::cout << "1\n";
         // if (moveList[i].from() == 48 && moveList[i].to() == 40)
         // {
@@ -1470,7 +1526,17 @@ int Board::perft(int depth)
         //     std::cout << "Board before making that move: "<<moveList[i]<<"\n" ;
         //     displayBoard();
         // }
+
+        // std::string debug_msg = "";
+        // for (int iii=0; iii < 6-depth; iii++) {
+        //     debug_msg += "   ";
+        // }
+        // if (depth > 1)
+        //     std::cout << debug_msg << "making move: " << moveToCode(moveList[i]) << std::endl;
+
         makeMove(moveList[i], undoList[i]);
+        
+        validateBoard(1);
         // if (moveList[i].from() == 48 && moveList[i].to() == 40)
         // {
         //    // std::cout << "BOARD AFTER MAKING THAT MOVE\n";
@@ -1482,7 +1548,13 @@ int Board::perft(int depth)
             nodes += perft(depth - 1);
         }
         // std::cout << "3\n";
+        
+        // if (depth > 1)
+        //     std::cout << debug_msg << "UNmaking move: " << moveToCode(moveList[i]) << std::endl;
+
         undoMove(moveList[i], undoList[i]);
+        
+        validateBoard(2);
         // std::cout << "4 unmade move\n";
     }
     return nodes;
@@ -1511,7 +1583,7 @@ int Board::perftDivide(int depth)
         {
             break;
         }
-        if (undoList[i].capturedPiece==11 || undoList[i].capturedPiece==5) {
+        if (findPieceKing(moveList[i].to(), moveList[i])==5 || findPieceKing(moveList[i].to(), moveList[i])==11) {
             continue;
         }
         //std::cout << "Trying to make move " << moveList[i] << " and undo " << undoList[i] << "\n";
@@ -1521,6 +1593,7 @@ int Board::perftDivide(int depth)
         //     displayBoard();
         // }
         makeMove(moveList[i], undoList[i]);
+        validateBoard(3);
         // std::cout << "2 made move\n";
         //std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
         if (!isKingAttacked(!sideToMove))
@@ -1535,6 +1608,9 @@ int Board::perftDivide(int depth)
 
         //std::cout << "Trying to undo move " << moveList[i] << " and undo " << undoList[i] << "\n";
         undoMove(moveList[i], undoList[i]);
+        std::cout<< "Board after unmaking a move "<< moveToCode(moveList[i])<<" :\n";
+        displayBoard();
+        validateBoard(4);
         //std::cout << "Undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
     }
     std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;

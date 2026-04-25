@@ -173,7 +173,10 @@ public:
     int fullMoveClock = 1;
 
     int sideToMove = 0;
-    // bool whiteToMove = true;
+    
+
+    std::vector<Move> moveLog;
+    std::vector<uint64_t> boardLog;
 
     // Bitboard masks with attacks:
     static uint64_t pawn_masks[2][64];
@@ -203,6 +206,9 @@ public:
     inline int popcount(uint64_t bb);
     void updateOccupancies();
     int findPiece(int square, Move m=Move());
+    int findPieceKing(int square, Move m=Move());
+    void validateBoard(int i);
+    uint64_t getBB();
 
     void displayBoard();
     void displayBB(uint64_t bb);
