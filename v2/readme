@@ -1,0 +1,7 @@
+## CHANGE WHEN ACTUALLY RUNNING
+
+# -Delete boardLog and moveLog vectors
+
+# -Delete board validators like in perft
+
+# -Use mailbox instead of findPiece()

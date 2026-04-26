@@ -80,11 +80,11 @@ struct Undo
 {
     uint8_t castlingRights;
     int capturedPiece;
-    int8_t enPassantSquare;
+    int enPassantSquare;
     uint8_t halfMoveClock;
     uint16_t fullMoveClock;
     Undo();
-    Undo(uint8_t castlingRights, int capturedPiece, int8_t enPassantSquare, uint8_t halfMoveClock, uint16_t fullMoveClock);
+    Undo(uint8_t castlingRights, int capturedPiece, int enPassantSquare, uint8_t halfMoveClock, uint16_t fullMoveClock);
 };
 struct Move
 {
@@ -173,7 +173,6 @@ public:
     int fullMoveClock = 1;
 
     int sideToMove = 0;
-    
 
     std::vector<Move> moveLog;
     std::vector<uint64_t> boardLog;
@@ -205,8 +204,8 @@ public:
     int get_lsb_index(uint64_t bb);
     inline int popcount(uint64_t bb);
     void updateOccupancies();
-    int findPiece(int square, Move m=Move());
-    int findPieceKing(int square, Move m=Move());
+    int findPiece(int square, Move m = Move());
+    int findPieceKing(int square, Move m = Move());
     void validateBoard(int i);
     uint64_t getBB();
 

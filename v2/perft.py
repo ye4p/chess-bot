@@ -52,7 +52,5 @@ def perft_divide(fen, depth):
 if __name__ == "__main__":
     # Start Position FEN
     start_fen = chess.STARTING_FEN
-    fen1="rnbqkbnr/pppppppp/8/8/8/1P6/P1PPPPPP/RNBQKBNR b KQkq - 0 1"
-    fen2="rnbqkbnr/pppp1ppp/8/4p3/8/1P6/P1PPPPPP/RNBQKBNR w KQkq e6 0 1"
-    fen3="rnbqkbnr/pppp1ppp/8/4p3/8/BP6/P1PPPPPP/RN1QKBNR b KQkq - 0 1"
-    perft_divide(fen3,1 )
+    fen1="r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - "
+    perft_divide(fen1, 1)

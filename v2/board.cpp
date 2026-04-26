@@ -20,7 +20,7 @@ Undo::Undo()
     fullMoveClock = 1;
 }
 
-Undo::Undo(uint8_t castlingRights, int capturedPiece, int8_t enPassantSquare, uint8_t halfMoveClock, uint16_t fullMoveClock)
+Undo::Undo(uint8_t castlingRights, int capturedPiece, int enPassantSquare, uint8_t halfMoveClock, uint16_t fullMoveClock)
 {
     this->castlingRights = castlingRights;
     this->capturedPiece = capturedPiece;
@@ -31,7 +31,7 @@ Undo::Undo(uint8_t castlingRights, int capturedPiece, int8_t enPassantSquare, ui
 
 std::ostream &operator<<(std::ostream &os, const Undo &u)
 {
-    os << "Undo castling rights:" << u.castlingRights << "captured piece " << u.capturedPiece << " en passant square: " << u.enPassantSquare << "\n";
+    os << "Undo castling rights:" << u.castlingRights << "captured piece " << u.capturedPiece << " en passant square: " << u.enPassantSquare << ".\n";
     return os;
 }
 
@@ -61,7 +61,7 @@ int Move::status() const
 
 bool Move::isCastling() const
 {
-    return (status() == 0x2);
+    return (status() == 0x2 || status() == 0x3);
 }
 bool Move::isEnPassant() const
 {
@@ -133,13 +133,11 @@ Board::Board()
 void Board::setBit(uint64_t &bb, int square)
 {
     bb |= (1ULL << square);
-    updateOccupancies();
 }
 
 void Board::clearBit(uint64_t &bb, int square)
 {
     bb &= ~(1ULL << square);
-    updateOccupancies();
 }
 
 bool Board::isBitSet(uint64_t bb, int square)
@@ -174,12 +172,10 @@ uint64_t Board::pop_lsb_bb(uint64_t &bb)
     }
     int square = __builtin_ctzll(bb);
     bb &= bb - 1;
-    updateOccupancies();
     return square;
 }
 int Board::get_lsb_index(uint64_t bb)
 {
-    updateOccupancies();
     return __builtin_ctzll(bb);
 }
 
@@ -822,14 +818,16 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
         while (from_bb > 0)
         {
             int from = pop_lsb_bb(from_bb);
-            uint64_t pseudolegal = pawn_masks[0][from] & (occupancies[1]);
+            uint64_t pseudolegal = pawn_masks[0][from] & (occupancies[1] | ((enPassantSquare != -1) ? (1ULL << enPassantSquare) : 0ULL));
             while (pseudolegal > 0)
             {
                 int to = pop_lsb_bb(pseudolegal);
 
                 //  En passant
+                // std::cout << "to: " << to << " enPassantSquare: " << enPassantSquare << "\n";
                 if (to == enPassantSquare)
                 {
+                    // std::cout << "ADDING EN PASSANT\n";
                     moveList[count] = Move(from, to, 0b0101); // en passant status bitwise
                 }
                 else if ((0xff00000000000000 & (1ULL << to)) && ((1ULL << to) & occupancies[1]))
@@ -877,6 +875,7 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                     //  Double Push
                     if (((pawn_double_push[0][from] | pawn_push[0][from]) & occupancies[2]) == 0)
                     {
+
                         moveList[count] = Move(from, to, 0b0001);
                         count++;
                     }
@@ -987,6 +986,27 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                 }
                 count++;
             }
+            // Queen side castling
+            if (!isSquareAttacked(from - 1, 1) && (castlingRights & 0b0100))
+            {
+                if (((7ULL << 1) & (occupancies[0])) == 0)
+                {
+                    moveList[count] = Move(from, from - 2, 0b0011);
+                    count++;
+                }
+            }
+            // King side castling
+            if (!isSquareAttacked(from + 1, 1) && (castlingRights & 0b1000))
+            {
+                if (((3ULL << 5) & (occupancies[0])) == 0)
+                {
+                    moveList[count] = Move(from, from - 2, 0b0011);
+                    count++;
+
+                    moveList[count] = Move(from, from + 2, 0b0010);
+                    count++;
+                }
+            }
         }
     }
     else
@@ -997,17 +1017,20 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
         //
 
         // Black pawns
+
         from_bb = bbs[6];
         while (from_bb > 0)
         {
 
             int from = pop_lsb_bb(from_bb);
-            uint64_t pseudolegal = pawn_masks[1][from] & (occupancies[0]);
+            uint64_t pseudolegal = pawn_masks[1][from] & (occupancies[0] | ((enPassantSquare != -1) ? (1ULL << enPassantSquare) : 0ULL));
             while (pseudolegal > 0)
             {
                 int to = pop_lsb_bb(pseudolegal);
+                // std::cout << "to: " << to << " enPassantSquare: " << enPassantSquare << "\n";
                 if (to == enPassantSquare)
                 {
+                    // std::cout << "ADDING EN PASSANT\n";
                     moveList[count] = Move(from, to, 0b0101); // en passant status bitwise
                 }
                 else if ((0x00000000000000ff & (1ULL << to)) && ((1ULL << to) & occupancies[0]))
@@ -1163,6 +1186,24 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                 }
                 count++;
             }
+            // Queen side castling
+            if (!isSquareAttacked(from - 1, 0) && (castlingRights & 0b0001))
+            {
+                if (((7ULL << 57) & (occupancies[1])) == 0)
+                {
+                    moveList[count] = Move(from, from - 2, 0b0011);
+                    count++;
+                }
+            }
+            // King side castling
+            if (!isSquareAttacked(from + 1, 0) && (castlingRights & 0b0010))
+            {
+                if (((3ULL << 61) & (occupancies[1])) == 0)
+                {
+                    moveList[count] = Move(from, from + 2, 0b0010);
+                    count++;
+                }
+            }
         }
     }
 }
@@ -1283,10 +1324,10 @@ void Board::makeMove(Move m, Undo &u)
     clearBit(bbs[p], m.from());
     if (m.isEnPassant())
     {
-        std::cout << "en passant\n";
-        pc = (sideToMove ? 6 : 0);
+        // std::cout << "en passant\n";
+        pc = (sideToMove ? 0 : 6); // White to move -> piece captured is black pawn
         clearBit(
-            bbs[!sideToMove ? 6 : 0], // if white
+            bbs[sideToMove ? 0 : 6], // if white
             (m.to() + (sideToMove ? +8 : -8)));
     }
     else if (m.isCapture())
@@ -1333,23 +1374,31 @@ void Board::makeMove(Move m, Undo &u)
     //  Castling
     if (m.status() == 0b0010 || m.status() == 0b0011)
     {
-        int king = get_lsb_index(bbs[5 + (sideToMove ? 6 : 0)]);
+        int kingNew = get_lsb_index(bbs[5 + (sideToMove ? 6 : 0)]);
         if (m.status() == 0b0010)
-        {                                                      // King castle
-            clearBit(bbs[3 + (sideToMove ? 6 : 0)], king + 3); //   Remove rook from old position
-            setBit(bbs[3 + (sideToMove ? 6 : 0)], king + 1);   //  Add rook to the new position
+        {                                                         // King castle
+            clearBit(bbs[3 + (sideToMove ? 6 : 0)], kingNew + 1); //   Remove rook from old position
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], kingNew - 1);   //  Add rook to the new position
         }
         else
-        {                                                       // Queen castling
-            clearBit(bbs[3 + (sideToMove ? 6 : 0)], king + -4); //  Remove rook from old pos
-            setBit(bbs[3 + (sideToMove ? 6 : 0)], king - 1);    // Add it to new
+        {                                                         // Queen castling
+            clearBit(bbs[3 + (sideToMove ? 6 : 0)], kingNew - 2); //  Remove rook from old pos
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], kingNew + 1);   // Add it to new
         }
     }
 
     // Save undo info for full restoration.
 
     u = Undo(castlingRights, pc, enPassantSquare, halfMoveClock, fullMoveClock);
-    // std::cout << u;
+    // std::cout << "Saved in undo en passant square as " << enPassantSquare << "\n";
+
+    // Update game state
+    enPassantSquare = -1;
+    if (m.status() == 0b0001)
+    {
+        enPassantSquare = m.to() + (sideToMove ? +8 : -8);
+        // std::cout << "en passant square for move " << moveToCode(m) << " is " << enPassantSquare << "\n";
+    }
 
     // Castling rights
     if (p == 5 || p == 11)
@@ -1381,13 +1430,6 @@ void Board::makeMove(Move m, Undo &u)
         }
     }
 
-    // Update game state
-    enPassantSquare = -1;
-    if (m.status() == 0b0001)
-    {
-        enPassantSquare = m.to() + (sideToMove ? +8 : -8);
-    }
-
     // Halfmove/fullmove clocks
     fullMoveClock++;
     if (p == 0 || p == 6 || m.isCapture())
@@ -1404,6 +1446,7 @@ void Board::makeMove(Move m, Undo &u)
 
     moveLog.push_back(m);
     boardLog.push_back(getBB());
+    updateOccupancies();
 }
 void Board::undoMove(Move m, Undo &u)
 {
@@ -1429,7 +1472,11 @@ void Board::undoMove(Move m, Undo &u)
 
     clearBit(bbs[p], m.to());
 
-    if (u.capturedPiece != -1)
+    if (m.status() == 0b0101)
+    {
+        setBit(bbs[u.capturedPiece], m.to() + (sideToMove ? +8 : -8));
+    }
+    else if (u.capturedPiece != -1)
     {
         // std::cout << "Piece was captured, trying to recover it from the " << u.capturedPiece << "\n";
         setBit(bbs[u.capturedPiece], m.to());
@@ -1438,16 +1485,17 @@ void Board::undoMove(Move m, Undo &u)
     // Castling
     if (m.isCastling())
     { // WORKS ONLY BEFORE ORIGINAL PIECE WAS MOVED
-        int king = get_lsb_index(bbs[5 + (sideToMove ? 6 : 0)]);
+        // int king = get_lsb_index(bbs[5 + (sideToMove ? 6 : 0)]);
+        // std::cout << "is in fact castling\n";
         if (m.status() == 0b0010)
-        {                                                      // King castle
-            clearBit(bbs[3 + (sideToMove ? 6 : 0)], king - 1); //   Remove rook from old position
-            setBit(bbs[3 + (sideToMove ? 6 : 0)], king + 1);   //  Add rook to the new position
+        {                                                        // King castle
+            clearBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() - 1); //   Remove rook from old position
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() + 1);   //  Add rook to the new position
         }
         else
-        {                                                      // Queen castling
-            clearBit(bbs[3 + (sideToMove ? 6 : 0)], king + 1); //  Remove rook from old pos
-            setBit(bbs[3 + (sideToMove ? 6 : 0)], king - 2);   // Add it to new
+        {                                                        // Queen castling
+            clearBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() + 1); //  Remove rook from old pos
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() - 2);   // Add it to new
         }
     }
 
@@ -1466,18 +1514,23 @@ void Board::undoMove(Move m, Undo &u)
     // std::cout << "after undoing move: " << m << "\n";
     // displayBoard();
     moveLog.pop_back();
+    boardLog.pop_back();
+    updateOccupancies();
 }
 
 // Is square attacked function
 
 bool Board::isSquareAttacked(int square, int by)
 {
-    int color = (!by ? 0 : 6);
+    int color = (by ? 6 : 0);
     uint64_t res1 = knight_masks[square] & bbs[1 + color];
     uint64_t res2 = king_masks[square] & bbs[5 + color];
-    uint64_t res3 = pawn_masks[by][square] & bbs[color];
-    uint64_t res4 = get_rook_attacks(square, occupancies[2]) & ~occupancies[!by];
-    uint64_t res5 = get_bishop_attacks(square, occupancies[2]) & ~occupancies[!by];
+    uint64_t res3 = pawn_masks[!by][square] & bbs[color];
+    // std::cout << "by: " << by << "\n";
+    // displayBB(pawn_masks[!by][square]);
+    // displayBB(bbs[color]);
+    uint64_t res4 = get_rook_attacks(square, occupancies[2]) & (bbs[3 + color] | bbs[4 + color]);   // rooks + queens
+    uint64_t res5 = get_bishop_attacks(square, occupancies[2]) & (bbs[2 + color] | bbs[4 + color]); // bishops + queens
     return res1 || res2 || res3 || res4 || res5;
 }
 
@@ -1575,7 +1628,7 @@ int Board::perft(int depth)
         //     //displayBoard();
         // }
         // std::cout << "2 made move\n";
-        if (!isKingAttacked(!sideToMove))
+        if (!isKingAttacked(sideToMove))
         {
             nodes += perft(depth - 1);
         }
@@ -1593,6 +1646,23 @@ int Board::perft(int depth)
             std::cout << "BB at the end: \n";
             displayBB(getBB());
             std::cout << "Crash with the move " << moveList[i] << undoList[i] << "\n";
+            std::cout << "bb with white bishops:\n";
+            displayBB(bbs[2]);
+            std::cout << "bb with white kings:\n";
+            displayBB(bbs[5]);
+            std::cout << "\n\n\n\n";
+            std::cout << "Move sequence that led to this error position: ";
+            for (Move m : moveLog)
+            {
+                std::cout << moveToCode(m) << ", ";
+            }
+            std::cout << "\n";
+            for (auto i = 0; i < moveLog.size(); i++)
+            {
+                std::cout << moveToCode(moveLog[i]) << ", and corresponding board:\n";
+                displayBB(boardLog[i]);
+            }
+            std::cout << "\n";
             throw std::runtime_error("Crash of bbs mismatch");
         }
         validateBoard(2);
@@ -1637,10 +1707,11 @@ int Board::perftDivide(int depth)
         //      displayBoard();
         //  }
         makeMove(moveList[i], undoList[i]);
+
         validateBoard(3);
         // std::cout << "2 made move\n";
         // std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
-        if (!isKingAttacked(!sideToMove))
+        if (!isKingAttacked(sideToMove))
         {
             // std::cout << "current depth is " << depth << " and condition 'is king attacked' run successfully for a move " << moveList[i] << " and undo " << undoList[i] << "\n";
             uint64_t nodes = perft(depth - 1);
@@ -1661,6 +1732,7 @@ int Board::perftDivide(int depth)
             displayBB(currentbb);
             std::cout << "BB at the end: \n";
             displayBB(getBB());
+            std::cout << "Piece captured: " << undoList[i].capturedPiece << ". The move itself: " << moveList[i] << " undo itself: " << undoList[i] << "\n";
             throw std::runtime_error("Crash of bbs mismatch");
         }
         // std::cout << "Undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
