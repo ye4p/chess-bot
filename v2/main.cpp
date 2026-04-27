@@ -33,7 +33,25 @@ int main()
     //  board->setFEN("rnbqkbnr/p1pppppp/8/8/1p1P4/8/PPPKPPPP/RNBQ1BNR w kq - 0 1");
     //  board->setFEN("rnbqkbnr/p1pppppp/8/8/1p1P4/2K5/PPP1PPPP/RNBQ1BNR b kq - 0 1");
 
+    //  Kiwipete, max up to 5
     board->setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+
+    //  board->setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPB1PPP/R2BK2R b KQkq - 0 1");
+    //  board->setFEN("r3k2r/p1ppqpb1/1n2pnp1/3PN3/1p2P3/2N2Q1p/PPPB1PPP/R2BKb1R w KQkq - 0 1");
+
+    // board->setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2NB1Q1p/PPPB1PPP/R3K2R b KQkq - 0 1");
+    // board->setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2NB1Q2/PPPB1PpP/R3K2R w KQkq - 0 1");
+    // board->setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1NB1Q2/1PPB1PpP/R3K2R b KQkq - 0 1");
+
+    // board->setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/R3K2R b KQkq - 0 1");
+    // board->setFEN("r3k2r/p1p1qpb1/bn1ppnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/R3K2R w KQkq - 0 1");
+    // board->setFEN("r3k2r/p1p1qpb1/bn1ppnp1/1B1PN3/1p2P3/P1N2Q1p/1PPB1PPP/R3K2R b KQkq - 0 1");
+
+    // board->setFEN("r3k2r/p1ppqpb1/bn2pnN1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq - 0 1");
+    // board->setFEN("r3k2r/p1pp1pb1/bn1qpnN1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+    // board->setFEN("r3k2N/p1pp1pb1/bn1qpn2/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQq - 0 1");
+
+    board->setFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 ");
 
     board->displayBoard();
 

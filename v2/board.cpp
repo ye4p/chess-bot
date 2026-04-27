@@ -228,7 +228,6 @@ int Board::findPiece(int square, Move m)
     std::cout << "\n";
     displayBoard();
     std::cout << "ERROR with square " << square << " with move: " << m << "\n";
-    std::cout << "Is white king found: " << bbs[5] << "\n";
     throw std::runtime_error("Piece not found");
 }
 
@@ -383,6 +382,26 @@ std::string Board::moveToCode(Move m)
     s += char('1' + r1);
     s += char(l2->second);
     s += char('1' + r2);
+    if (m.isPromotion())
+    {
+        int stat = m.status();
+        if (stat == 0b1100 || stat == 0b1000)
+        {
+            s += 'n';
+        }
+        else if (stat == 0b1001 || stat == 0b1101)
+        {
+            s += 'b';
+        }
+        else if (stat == 0b1010 || stat == 0b1110)
+        {
+            s += 'r';
+        }
+        else
+        {
+            s += 'q';
+        }
+    }
     return s;
 }
 
@@ -840,16 +859,6 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                     count++;
                     moveList[count] = Move(from, to, 0b1111);
                 }
-                else if (0xff00000000000000 & (1ULL << to))
-                {
-                    moveList[count] = Move(from, to, 0b1000);
-                    count++;
-                    moveList[count] = Move(from, to, 0b1001);
-                    count++;
-                    moveList[count] = Move(from, to, 0b1010);
-                    count++;
-                    moveList[count] = Move(from, to, 0b1011);
-                }
                 else
                 {
                     moveList[count] = Move(from, to, 0b0100);
@@ -863,7 +872,20 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
             {
                 int to = pop_lsb_bb(pseudolegal);
                 //  Regular Push
-                moveList[count] = Move(from, to, 0b0000);
+                if (0xff00000000000000 & (1ULL << to))
+                {
+                    moveList[count] = Move(from, to, 0b1000);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1001);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1010);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1011);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
                 count++;
             }
             if ((1ULL << from) & 0xff00)
@@ -987,22 +1009,19 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                 count++;
             }
             // Queen side castling
-            if (!isSquareAttacked(from - 1, 1) && (castlingRights & 0b0100))
+            if (!isSquareAttacked(from - 1, 1) && (castlingRights & 0b0100) && !isSquareAttacked(from, 1))
             {
-                if (((7ULL << 1) & (occupancies[0])) == 0)
+                if (((7ULL << 1) & (occupancies[2])) == 0)
                 {
                     moveList[count] = Move(from, from - 2, 0b0011);
                     count++;
                 }
             }
             // King side castling
-            if (!isSquareAttacked(from + 1, 1) && (castlingRights & 0b1000))
+            if (!isSquareAttacked(from + 1, 1) && (castlingRights & 0b1000) && !isSquareAttacked(from, 1))
             {
-                if (((3ULL << 5) & (occupancies[0])) == 0)
+                if (((3ULL << 5) & (occupancies[2])) == 0)
                 {
-                    moveList[count] = Move(from, from - 2, 0b0011);
-                    count++;
-
                     moveList[count] = Move(from, from + 2, 0b0010);
                     count++;
                 }
@@ -1043,16 +1062,6 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                     count++;
                     moveList[count] = Move(from, to, 0b1111);
                 }
-                else if (0x00000000000000ff & (1ULL << to))
-                {
-                    moveList[count] = Move(from, to, 0b0100);
-                    count++;
-                    moveList[count] = Move(from, to, 0b0101);
-                    count++;
-                    moveList[count] = Move(from, to, 0b0110);
-                    count++;
-                    moveList[count] = Move(from, to, 0b0111);
-                }
                 else
                 {
                     moveList[count] = Move(from, to, 0b0100);
@@ -1064,7 +1073,20 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
             {
                 int to = pop_lsb_bb(pseudolegal);
                 //  Regular Push
-                moveList[count] = Move(from, to, 0b0000);
+                if (0x00000000000000ff & (1ULL << to))
+                {
+                    moveList[count] = Move(from, to, 0b1000);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1001);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1010);
+                    count++;
+                    moveList[count] = Move(from, to, 0b1011);
+                }
+                else
+                {
+                    moveList[count] = Move(from, to, 0b0000);
+                }
                 count++;
             }
             if ((1ULL << from) & 0xff000000000000)
@@ -1187,18 +1209,18 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
                 count++;
             }
             // Queen side castling
-            if (!isSquareAttacked(from - 1, 0) && (castlingRights & 0b0001))
+            if (!isSquareAttacked(from - 1, 0) && (castlingRights & 0b0001) && !isSquareAttacked(from, 0))
             {
-                if (((7ULL << 57) & (occupancies[1])) == 0)
+                if (((7ULL << 57) & (occupancies[2])) == 0)
                 {
                     moveList[count] = Move(from, from - 2, 0b0011);
                     count++;
                 }
             }
             // King side castling
-            if (!isSquareAttacked(from + 1, 0) && (castlingRights & 0b0010))
+            if (!isSquareAttacked(from + 1, 0) && (castlingRights & 0b0010) && !isSquareAttacked(from, 0))
             {
-                if (((3ULL << 61) & (occupancies[1])) == 0)
+                if (((3ULL << 61) & (occupancies[2])) == 0)
                 {
                     moveList[count] = Move(from, from + 2, 0b0010);
                     count++;
@@ -1319,6 +1341,7 @@ void Board::makeMove(Move m, Undo &u)
     //  }
     int p = findPiece(m.from(), m); // bb index of piece that is getting moved
 
+    int oldCastlingRights = castlingRights;
     // Move piece from source to target.
     int pc = -1; // Piece captured index bb
     clearBit(bbs[p], m.from());
@@ -1340,6 +1363,22 @@ void Board::makeMove(Move m, Undo &u)
         pc = findPiece(m.to(), m);
         // std::cout << "pc is " << pc << "\n";
         clearBit(bbs[pc], m.to());
+        if (pc == 3 && m.to() == 0)
+        {
+            castlingRights &= 0b1011;
+        }
+        else if (pc == 3 && m.to() == 7)
+        {
+            castlingRights &= 0b0111;
+        }
+        else if (pc == 9 && m.to() == 56)
+        {
+            castlingRights &= 0b1110;
+        }
+        else if (pc == 9 && m.to() == 63)
+        {
+            castlingRights &= 0b1101;
+        }
     }
     // std::cout << "pc now is : " << pc << "\n";
 
@@ -1369,6 +1408,7 @@ void Board::makeMove(Move m, Undo &u)
             promotedStatus = 1;
         }
         setBit(bbs[promotedStatus + (sideToMove ? +6 : +0)], m.to());
+        // std::cout << "placed promotion piece\n";
     }
 
     //  Castling
@@ -1389,7 +1429,7 @@ void Board::makeMove(Move m, Undo &u)
 
     // Save undo info for full restoration.
 
-    u = Undo(castlingRights, pc, enPassantSquare, halfMoveClock, fullMoveClock);
+    u = Undo(oldCastlingRights, pc, enPassantSquare, halfMoveClock, fullMoveClock);
     // std::cout << "Saved in undo en passant square as " << enPassantSquare << "\n";
 
     // Update game state
@@ -1406,7 +1446,7 @@ void Board::makeMove(Move m, Undo &u)
         castlingRights &= (sideToMove ? 0b1100 : 0b0011);
     }
 
-    if ((castlingRights & 0b1100) && p == 5)
+    if ((castlingRights & 0b1100) && (p == 3))
     {
         if (m.from() == 0)
         {
@@ -1418,7 +1458,7 @@ void Board::makeMove(Move m, Undo &u)
         }
     }
 
-    if ((castlingRights & 0b0011) && p == 11)
+    if ((castlingRights & 0b0011) && (p == 9))
     {
         if (m.from() == 56)
         {
@@ -1646,10 +1686,6 @@ int Board::perft(int depth)
             std::cout << "BB at the end: \n";
             displayBB(getBB());
             std::cout << "Crash with the move " << moveList[i] << undoList[i] << "\n";
-            std::cout << "bb with white bishops:\n";
-            displayBB(bbs[2]);
-            std::cout << "bb with white kings:\n";
-            displayBB(bbs[5]);
             std::cout << "\n\n\n\n";
             std::cout << "Move sequence that led to this error position: ";
             for (Move m : moveLog)
@@ -1685,6 +1721,7 @@ int Board::perftDivide(int depth)
     std::array<Undo, 256> undoList;
     // std::cout << "Generating moves...\n";
     generateMoves(moveList);
+
     // std::cout << "Finished generating moves\n";
     for (int i = 0; i < moveList.size(); i++)
     {

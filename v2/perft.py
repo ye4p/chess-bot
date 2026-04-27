@@ -53,4 +53,10 @@ if __name__ == "__main__":
     # Start Position FEN
     start_fen = chess.STARTING_FEN
     fen1="r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - "
-    perft_divide(fen1, 1)
+    fen2="r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/R3K2R b KQkq - 0 1"
+    fen3="r3k2r/p1p1qpb1/bn1ppnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/R3K2R w KQkq - 0 1"
+    fen4="r3k2r/p1p1qpb1/bn1ppnp1/1B1PN3/1p2P3/P1N2Q1p/1PPB1PPP/R3K2R b KQkq - 0 1"
+    fen5="r3k2r/p1ppqpb1/bn2pnN1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq - 0 1"
+    fen6="r3k2r/p1pp1pb1/bn1qpnN1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
+    fen7="r3k2N/p1pp1pb1/bn1qpn2/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQq - 0 1"
+    perft_divide(fen1, 5)
