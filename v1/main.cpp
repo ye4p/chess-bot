@@ -103,7 +103,7 @@ int main()
     // For the actual move generation: minimax algorithm
     //  Alpha beta prunning
 
-    // board.startingPosition();
+    board.startingPosition();
 
     // board.setFEN("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
     // board.setFEN("rnbqkbnr/p1pppppp/8/1p6/4P3/8/PPPP1PPP/RNBQKBNR w KQkq b6 0 1");
@@ -199,7 +199,7 @@ int main()
     // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P2P/2N2Q2/PPPBBPp1/1R2K2R b Kkq - ");
     // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1"); // 74416
     // board.setFEN("r3k3/p1ppqpb1/bn2pnp1/3PN3/1p2P2r/2N2Q1p/PPPBBPPP/R2K3R w q - 2 2"); // 1815
-    board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/1R2K2R b Kkq - 1 1");
+    // board.setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/1R2K2R b Kkq - 1 1");
     board.displayBoard();
     // board.displayCastlingRights();
 
@@ -209,7 +209,7 @@ int main()
     //     m.displayMove();
     // }
     auto start = std::chrono::steady_clock::now();
-    int nodes = board.perftDivide(3);
+    int nodes = board.perftDivide(5);
     auto end = std::chrono::steady_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
