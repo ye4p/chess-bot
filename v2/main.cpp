@@ -51,14 +51,14 @@ int main()
     // board->setFEN("r3k2r/p1pp1pb1/bn1qpnN1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     // board->setFEN("r3k2N/p1pp1pb1/bn1qpn2/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQq - 0 1");
 
-    board->setFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 ");
+    //board->setFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 ");
 
     board->displayBoard();
 
     // std::cout << board->isKingAttacked(1);
 
     auto start = std::chrono::steady_clock::now();
-    int nodes = board->perftDivide(1);
+    int nodes = board->perftDivide(6);
     auto end = std::chrono::steady_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
