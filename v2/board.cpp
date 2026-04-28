@@ -436,6 +436,7 @@ void Board::setFEN(std::string s)
                 char letConverted = std::tolower(let);
                 int piece = pieceMap.at(letConverted);
                 setBit(bbs[piece + color], rank * 8 + file);
+                mailbox[rank*8+file]=piece+color;
                 file++;
             }
             if (std::isdigit(let))
@@ -1333,13 +1334,9 @@ void Board::generateRookMoves()
 
 void Board::makeMove(Move m, Undo &u)
 {
+    //int p = findPiece(m.from(), m); // bb index of piece that is getting moved
+    int p=mailbox[m.from()];
 
-    // std::cout << "Trying to find piece from for move: " << m << "\n";
-    //  if (m.from()==11) {
-    //      std::cout << "Trying to find piece run makeMove() for move " << m << ".\n";
-    //      displayBoard();
-    //  }
-    int p = findPiece(m.from(), m); // bb index of piece that is getting moved
 
     int oldCastlingRights = castlingRights;
     // Move piece from source to target.
@@ -1355,13 +1352,9 @@ void Board::makeMove(Move m, Undo &u)
     }
     else if (m.isCapture())
     {
-        // std::cout << "Trying to find piece 'to' for move: " << m << "\n";
-        // if (m.to()==11) {
-        //     std:: cout<< "Trying to find piece that is supposed to be captured in makeMove() for move " << m << "\n";
-        //     displayBoard();
-        // }
-        pc = findPiece(m.to(), m);
-        // std::cout << "pc is " << pc << "\n";
+        // pc = findPiece(m.to(), m);
+        pc = mailbox[m.to()];
+  
         clearBit(bbs[pc], m.to());
         if (pc == 3 && m.to() == 0)
         {
@@ -1504,11 +1497,8 @@ void Board::undoMove(Move m, Undo &u)
 
     sideToMove = !sideToMove;
 
-    // if( m.to()==41) {
-    //     std::cout << "Board before undoing the move" << m << ".\n";
-    //     displayBoard();
-    // }
-    int p = findPiece(m.to(), m);
+    // int p = findPiece(m.to(), m);
+    int p = mailbox[m.to()];
 
     clearBit(bbs[p], m.to());
 
@@ -1777,3 +1767,19 @@ int Board::perftDivide(int depth)
     std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;
     return totalNodes;
 }
+
+    //
+    //  EVALUATION FUNCTION
+    //
+
+    int Board::evaluate() {
+        int val=0;
+        for (int m : mailbox) {
+            val+=pieceValueMap.find(m)->second;
+            if (!pieceValueMap.count(m)) {
+                throw std::runtime_error("Didn't find piece in the mailbox(eval function)");
+            }
+        }
+
+        return val;
+    }
