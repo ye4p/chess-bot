@@ -34,7 +34,7 @@ int main()
     //  board->setFEN("rnbqkbnr/p1pppppp/8/8/1p1P4/2K5/PPP1PPPP/RNBQ1BNR b kq - 0 1");
 
     //  Kiwipete, max up to 5
-    // board->setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+    board->setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
 
     //  board->setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPB1PPP/R2BK2R b KQkq - 0 1");
     //  board->setFEN("r3k2r/p1ppqpb1/1n2pnp1/3PN3/1p2P3/2N2Q1p/PPPB1PPP/R2BKb1R w KQkq - 0 1");
@@ -65,10 +65,12 @@ int main()
 
     board->displayBoard();
 
+    board->displayMailbox();
+
     // std::cout << board->isKingAttacked(1);
 
     auto start = std::chrono::steady_clock::now();
-    int nodes = board->perftDivide(4);
+    int nodes = board->perftDivide(5);
     auto end = std::chrono::steady_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);

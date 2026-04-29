@@ -326,6 +326,26 @@ void Board::displayBB(uint64_t bb)
     printf("bitboard: %lld\n\n", bb);
 }
 
+void Board::displayMailbox()
+{
+    std::cout << "\n";
+    for (int rank = 7; rank > -1; rank--)
+    {
+        for (int file = 0; file < 8; file++)
+        {
+            int square = rank * 8 + file;
+            if (!file)
+            {
+                printf(" %d ", rank + 1);
+            }
+            printf(" %d", mailbox[square]);
+        }
+        std::cout << "\n";
+    }
+    printf("\n    a b c d e f g h\n\n");
+    printf("bitboard: %lld\n\n", occupancies[2]);
+}
+
 void Board::displayMoves(std::array<Move, 256> moveList)
 {
     for (int i = 0; i < moveList.size(); i++)
@@ -436,7 +456,7 @@ void Board::setFEN(std::string s)
                 char letConverted = std::tolower(let);
                 int piece = pieceMap.at(letConverted);
                 setBit(bbs[piece + color], rank * 8 + file);
-                mailbox[rank*8+file]=piece+color;
+                mailbox[rank * 8 + file] = piece + color;
                 file++;
             }
             if (std::isdigit(let))
@@ -1334,14 +1354,15 @@ void Board::generateRookMoves()
 
 void Board::makeMove(Move m, Undo &u)
 {
-    //int p = findPiece(m.from(), m); // bb index of piece that is getting moved
-    int p=mailbox[m.from()];
-
+    // int p = findPiece(m.from(), m); // bb index of piece that is getting moved
+    int p = mailbox[m.from()];
 
     int oldCastlingRights = castlingRights;
     // Move piece from source to target.
     int pc = -1; // Piece captured index bb
     clearBit(bbs[p], m.from());
+    mailbox[m.from()] = -1;
+
     if (m.isEnPassant())
     {
         // std::cout << "en passant\n";
@@ -1349,13 +1370,15 @@ void Board::makeMove(Move m, Undo &u)
         clearBit(
             bbs[sideToMove ? 0 : 6], // if white
             (m.to() + (sideToMove ? +8 : -8)));
+        mailbox[m.to() + (sideToMove ? +8 : -8)] = -1;
     }
     else if (m.isCapture())
     {
         // pc = findPiece(m.to(), m);
         pc = mailbox[m.to()];
-  
+
         clearBit(bbs[pc], m.to());
+        mailbox[m.to()] = -1;
         if (pc == 3 && m.to() == 0)
         {
             castlingRights &= 0b1011;
@@ -1373,12 +1396,12 @@ void Board::makeMove(Move m, Undo &u)
             castlingRights &= 0b1101;
         }
     }
-    // std::cout << "pc now is : " << pc << "\n";
 
     //  Promotion
     if (!m.isPromotion()) // If it isn't promotion, same piece just gets moved to new square
     {
         setBit(bbs[p], m.to());
+        mailbox[m.to()] = p;
     }
     else // If it is promotion, new piece gets moved to new square
     {
@@ -1400,8 +1423,9 @@ void Board::makeMove(Move m, Undo &u)
         {
             promotedStatus = 1;
         }
+
         setBit(bbs[promotedStatus + (sideToMove ? +6 : +0)], m.to());
-        // std::cout << "placed promotion piece\n";
+        mailbox[m.to()] = promotedStatus + (sideToMove ? +6 : +0);
     }
 
     //  Castling
@@ -1411,12 +1435,18 @@ void Board::makeMove(Move m, Undo &u)
         if (m.status() == 0b0010)
         {                                                         // King castle
             clearBit(bbs[3 + (sideToMove ? 6 : 0)], kingNew + 1); //   Remove rook from old position
-            setBit(bbs[3 + (sideToMove ? 6 : 0)], kingNew - 1);   //  Add rook to the new position
+            mailbox[kingNew + 1] = -1;
+
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], kingNew - 1); //  Add rook to the new position
+            mailbox[kingNew - 1] = 3 + (sideToMove ? 6 : 0);
         }
         else
         {                                                         // Queen castling
             clearBit(bbs[3 + (sideToMove ? 6 : 0)], kingNew - 2); //  Remove rook from old pos
-            setBit(bbs[3 + (sideToMove ? 6 : 0)], kingNew + 1);   // Add it to new
+            mailbox[kingNew - 2] = -1;
+
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], kingNew + 1); // Add it to new
+            mailbox[kingNew + 1] = 3 + (sideToMove ? 6 : 0);
         }
     }
 
@@ -1501,15 +1531,18 @@ void Board::undoMove(Move m, Undo &u)
     int p = mailbox[m.to()];
 
     clearBit(bbs[p], m.to());
+    mailbox[m.to()] = -1;
 
     if (m.status() == 0b0101)
     {
         setBit(bbs[u.capturedPiece], m.to() + (sideToMove ? +8 : -8));
+        mailbox[m.to() + (sideToMove ? +8 : -8)] = u.capturedPiece;
     }
     else if (u.capturedPiece != -1)
     {
         // std::cout << "Piece was captured, trying to recover it from the " << u.capturedPiece << "\n";
         setBit(bbs[u.capturedPiece], m.to());
+        mailbox[m.to()] = u.capturedPiece;
     }
 
     // Castling
@@ -1520,26 +1553,35 @@ void Board::undoMove(Move m, Undo &u)
         if (m.status() == 0b0010)
         {                                                        // King castle
             clearBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() - 1); //   Remove rook from old position
-            setBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() + 1);   //  Add rook to the new position
+            mailbox[m.to() - 1] = -1;
+
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() + 1); //  Add rook to the new position
+            mailbox[m.to() + 1] = 3 + (sideToMove ? 6 : 0);
         }
         else
         {                                                        // Queen castling
             clearBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() + 1); //  Remove rook from old pos
-            setBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() - 2);   // Add it to new
+            mailbox[m.to() - 1] = -1;
+
+            setBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() - 2); // Add it to new
+            mailbox[m.to() - 2] = 3 + (sideToMove ? 6 : 0);
         }
     }
 
     // REMOVE PIECE FROM NEW POSITION
     clearBit(bbs[p], m.to());
+    mailbox[m.to()] = -1;
 
     // Handle promotion
     if (!m.isPromotion()) // PUTS ORIGINAL PIECE ON THE OLD POSITION
     {
         setBit(bbs[p], m.from());
+        mailbox[m.from()] = p;
     }
     else // if IS promotion, but the pawn back.
     {
         setBit(bbs[sideToMove ? 6 : 0], m.from());
+        mailbox[m.from()] = (sideToMove ? 6 : 0);
     }
     // std::cout << "after undoing move: " << m << "\n";
     // displayBoard();
@@ -1612,7 +1654,8 @@ int Board::perft(int depth)
         // if (undoList[i].capturedPiece==11 || undoList[i].capturedPiece==5) {
         //     continue;   // Never runs because undo is initialized in the makeMove(), which didn't run yet.
         // }
-        if (findPieceKing(moveList[i].to(), moveList[i]) == 5 || findPieceKing(moveList[i].to(), moveList[i]) == 11)
+        // if (findPieceKing(moveList[i].to(), moveList[i]) == 5 || findPieceKing(moveList[i].to(), moveList[i]) == 11)
+        if ((mailbox[moveList[i].to()] == 5) || (mailbox[moveList[i].to()] == 11))
         {
             // std::cout << "\nSKIPPING KING CAPTURE!!!\n";
             continue;
@@ -1699,7 +1742,7 @@ int Board::perft(int depth)
 
 int Board::perftDivide(int depth)
 {
-    // std::cout << "Trying to run new perft...\n";
+    std::cout << "Trying to run new perft...\n";
     uint64_t totalNodes = 0;
     if (depth == 0)
     {
@@ -1721,7 +1764,8 @@ int Board::perftDivide(int depth)
         {
             break;
         }
-        if (findPieceKing(moveList[i].to(), moveList[i]) == 5 || findPieceKing(moveList[i].to(), moveList[i]) == 11)
+        // if (findPieceKing(moveList[i].to(), moveList[i]) == 5 || findPieceKing(moveList[i].to(), moveList[i]) == 11)
+        if ((mailbox[moveList[i].to()] == 5) || (mailbox[moveList[i].to()] == 11))
         {
             // std::cout << "\nSKIPPING KING CAPTURE!!!\n";
             continue;
@@ -1768,18 +1812,21 @@ int Board::perftDivide(int depth)
     return totalNodes;
 }
 
-    //
-    //  EVALUATION FUNCTION
-    //
+//
+//  EVALUATION FUNCTION
+//
 
-    int Board::evaluate() {
-        int val=0;
-        for (int m : mailbox) {
-            val+=pieceValueMap.find(m)->second;
-            if (!pieceValueMap.count(m)) {
-                throw std::runtime_error("Didn't find piece in the mailbox(eval function)");
-            }
+int Board::evaluate()
+{
+    int val = 0;
+    for (int m : mailbox)
+    {
+        val += pieceValueMap.find(m)->second;
+        if (!pieceValueMap.count(m))
+        {
+            throw std::runtime_error("Didn't find piece in the mailbox(eval function)");
         }
-
-        return val;
     }
+
+    return val;
+}
