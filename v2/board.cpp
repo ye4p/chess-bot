@@ -106,7 +106,7 @@ Board::Board()
 {
     bbs.fill(0ULL);
     occupancies.fill(0ULL);
-    mailbox.fill(0);
+    mailbox.fill(-1);
     castlingRights = 0b0000;
     enPassantSquare = -1;
     halfMoveClock = 0;
@@ -1352,7 +1352,7 @@ void Board::generateRookMoves()
 
 // Make/undo move logic
 
-void Board::makeMove(Move m, Undo &u)
+void Board::makeMove(const Move m, Undo &u)
 {
     // int p = findPiece(m.from(), m); // bb index of piece that is getting moved
     int p = mailbox[m.from()];
@@ -1426,6 +1426,11 @@ void Board::makeMove(Move m, Undo &u)
 
         setBit(bbs[promotedStatus + (sideToMove ? +6 : +0)], m.to());
         mailbox[m.to()] = promotedStatus + (sideToMove ? +6 : +0);
+        if ((m.from()==14) && (m.to()==7) && (m.status()==12))
+            {
+                std::cout <<"promoted to: "<<(promotedStatus + (sideToMove ? +6 : +0))<<"\n";
+                displayMailbox();
+            }
     }
 
     //  Castling
@@ -1511,7 +1516,7 @@ void Board::makeMove(Move m, Undo &u)
     boardLog.push_back(getBB());
     updateOccupancies();
 }
-void Board::undoMove(Move m, Undo &u)
+void Board::undoMove(const Move m, Undo &u)
 {
     if (u.capturedPiece == 11 || u.capturedPiece == 5)
     {
@@ -1529,9 +1534,12 @@ void Board::undoMove(Move m, Undo &u)
 
     // int p = findPiece(m.to(), m);
     int p = mailbox[m.to()];
-
-    clearBit(bbs[p], m.to());
-    mailbox[m.to()] = -1;
+    if ((m.from()==14) && (m.to()==7) && (m.status()==12))
+            {
+                std::cout <<"p: "<<p<<"\n";
+            }
+    // clearBit(bbs[p], m.to());
+    // mailbox[m.to()] = -1;
 
     if (m.status() == 0b0101)
     {
@@ -1691,8 +1699,9 @@ int Board::perft(int depth)
         // }
         // if (depth > 1)
         //     std::cout << debug_msg << "making move: " << moveToCode(moveList[i]) << std::endl;
-
+        std::cout << "Started making move " << moveList[i] << " and undo " << undoList[i] << "\n";
         makeMove(moveList[i], undoList[i]);
+        std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
 
         validateBoard(1);
         // if (moveList[i].from() == 48 && moveList[i].to() == 40)
@@ -1710,7 +1719,13 @@ int Board::perft(int depth)
         // if (depth > 1)
         //     std::cout << debug_msg << "UNmaking move: " << moveToCode(moveList[i]) << std::endl;
 
+        std::cout << "Started undoing move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        if ((moveList[i].from()==14) && (moveList[i].to()==7) && (moveList[i].status()==12)) {
+            displayMailbox();
+            std::cout << "!sideToMove: "<< !sideToMove<<"\n";
+        }
         undoMove(moveList[i], undoList[i]);
+        std::cout << "undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
 
         if (currentbb != getBB())
         {
@@ -1777,11 +1792,12 @@ int Board::perftDivide(int depth)
         //      std::cout << "Board before making that move: "<<moveList[i]<<"\n" ;
         //      displayBoard();
         //  }
+        std::cout << "Started making move " << moveList[i] << " and undo " << undoList[i] << "\n";
         makeMove(moveList[i], undoList[i]);
 
         validateBoard(3);
         // std::cout << "2 made move\n";
-        // std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
         if (!isKingAttacked(sideToMove))
         {
             // std::cout << "current depth is " << depth << " and condition 'is king attacked' run successfully for a move " << moveList[i] << " and undo " << undoList[i] << "\n";
@@ -1793,7 +1809,11 @@ int Board::perftDivide(int depth)
         //  std::cout << "3\n";
 
         // std::cout << "Trying to undo move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        std::cout << "Started undoing move (divide)" << moveList[i] << " and undo " << undoList[i] << "\n";
+        if ((moveList[i].from()==14) && (moveList[i].to()==7) && (moveList[i].status()==12))
+            displayMailbox();
         undoMove(moveList[i], undoList[i]);
+        std::cout << "undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
         // std::cout << "Board after unmaking a move " << moveToCode(moveList[i]) << " :\n";
         // displayBoard();
         validateBoard(4);

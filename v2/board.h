@@ -133,7 +133,7 @@ public:
     std::array<uint64_t, 3> occupancies;
     // 0 - all white pieces, 1 - all black pieces, 2 - all pieces
 
-    std::array<int, 64> mailbox{-1};
+    std::array<int, 64> mailbox;
 
     // std::array<std::array<Move, MAX_DEPTH>, MAX_MOVES> moveList;
     std::array<Move, 256> legalList;
@@ -222,8 +222,8 @@ public:
     void generateBishopMoves();
     void generateRookMoves();
 
-    void makeMove(Move m, Undo &u);
-    void undoMove(Move m, Undo &u);
+    void makeMove(const Move m, Undo &u);
+    void undoMove(const Move m, Undo &u);
 
     bool isSquareAttacked(int square, int by);
     bool isKingAttacked(int by);
