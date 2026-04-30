@@ -1426,11 +1426,11 @@ void Board::makeMove(const Move m, Undo &u)
 
         setBit(bbs[promotedStatus + (sideToMove ? +6 : +0)], m.to());
         mailbox[m.to()] = promotedStatus + (sideToMove ? +6 : +0);
-        if ((m.from()==14) && (m.to()==7) && (m.status()==12))
-            {
-                std::cout <<"promoted to: "<<(promotedStatus + (sideToMove ? +6 : +0))<<"\n";
-                displayMailbox();
-            }
+        if ((m.from() == 14) && (m.to() == 7) && (m.status() == 12))
+        {
+            std::cout << "promoted to: " << (promotedStatus + (sideToMove ? +6 : +0)) << "\n";
+            displayMailbox();
+        }
     }
 
     //  Castling
@@ -1534,10 +1534,10 @@ void Board::undoMove(const Move m, Undo &u)
 
     // int p = findPiece(m.to(), m);
     int p = mailbox[m.to()];
-    if ((m.from()==14) && (m.to()==7) && (m.status()==12))
-            {
-                std::cout <<"p: "<<p<<"\n";
-            }
+    if ((m.from() == 14) && (m.to() == 7) && (m.status() == 12))
+    {
+        std::cout << "p: " << p << "\n";
+    }
     // clearBit(bbs[p], m.to());
     // mailbox[m.to()] = -1;
 
@@ -1720,12 +1720,23 @@ int Board::perft(int depth)
         //     std::cout << debug_msg << "UNmaking move: " << moveToCode(moveList[i]) << std::endl;
 
         std::cout << "Started undoing move " << moveList[i] << " and undo " << undoList[i] << "\n";
-        if ((moveList[i].from()==14) && (moveList[i].to()==7) && (moveList[i].status()==12)) {
+        if ((moveList[i].from() == 14) && (moveList[i].to() == 7) && (moveList[i].status() == 12))
+        {
             displayMailbox();
-            std::cout << "!sideToMove: "<< !sideToMove<<"\n";
+            std::cout << "!sideToMove: " << !sideToMove << "\n";
         }
         undoMove(moveList[i], undoList[i]);
         std::cout << "undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
+
+        if (moveList[i].to() == 7 && undoList[i].capturedPiece == 7)
+        {
+            std::cout << "CAUSED BY: " << moveList[i] << undoList[i] << "\n";
+            std::cout << "BB at the beginnging: \n";
+            displayBB(currentbb);
+            std::cout << "BB at the end: \n";
+            displayBB(getBB());
+            std::cout << "\n\n\n";
+        }
 
         if (currentbb != getBB())
         {
@@ -1810,9 +1821,18 @@ int Board::perftDivide(int depth)
 
         // std::cout << "Trying to undo move " << moveList[i] << " and undo " << undoList[i] << "\n";
         std::cout << "Started undoing move (divide)" << moveList[i] << " and undo " << undoList[i] << "\n";
-        if ((moveList[i].from()==14) && (moveList[i].to()==7) && (moveList[i].status()==12))
+        if ((moveList[i].from() == 14) && (moveList[i].to() == 7) && (moveList[i].status() == 12))
             displayMailbox();
         undoMove(moveList[i], undoList[i]);
+        if (moveList[i].to() == 7 && undoList[i].capturedPiece == 7)
+        {
+            std::cout << "CAUSED BY: " << moveList[i] << undoList[i] << "\n";
+            std::cout << "BB at the beginnging: \n";
+            displayBB(currentbb);
+            std::cout << "BB at the end: \n";
+            displayBB(getBB());
+            std::cout << "\n\n\n";
+        }
         std::cout << "undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
         // std::cout << "Board after unmaking a move " << moveToCode(moveList[i]) << " :\n";
         // displayBoard();
