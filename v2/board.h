@@ -107,14 +107,6 @@ enum squares : int{
     a6, b6, c6, d6, e6, f6 ,g6, h6,
     a7, b7, c7, d7, e7, f7 ,g7, h7,
     a8, b8, c8, d8, e8, f8 ,g8, h8
-    // a8, b8, c8, d8, e8, f8, g8, h8, 
-    // a7, b7, c7, d7, e7, f7, g7, h7, 
-    // a6, b6, c6, d6, e6, f6, g6, h6,
-    // a5, b5, c5, d5, e5, f5, g5, h5,
-    // a4, b4, c4, d4, e4, f4, g4, h4,
-    // a3, b3, c3, d3, e3, f3, g3, h3, 
-    // a2, b2, c2, d2, e2, f2, g2, h2, 
-    // a1, b1, c1, d1, e1, f1, g1, h1,
 };
 // clang-format on
 
@@ -135,9 +127,6 @@ public:
 
     std::array<int, 64> mailbox;
 
-    // std::array<std::array<Move, MAX_DEPTH>, MAX_MOVES> moveList;
-    std::array<Move, 256> legalList;
-
     uint8_t castlingRights = 0b0000; // 1st - white king, 2nd - white queen, 3rd - black king, 4th - black queen
 
     int enPassantSquare = -1;
@@ -147,8 +136,15 @@ public:
 
     int sideToMove = 0;
 
+    std::array<Move, MAX_MOVES * MAX_DEPTH> moveList;
+    std::array<Undo, MAX_MOVES * MAX_DEPTH> undoList;
+
+    int ply = 0;
+
+#ifndef DEBUG
     std::vector<Move> moveLog;
     std::vector<uint64_t> boardLog;
+#endif
 
     // Bitboard masks with attacks:
     static uint64_t pawn_masks[2][64];
@@ -186,6 +182,7 @@ public:
     void displayBB(uint64_t bb);
     void displayMoves(std::array<Move, 256> moveList);
     void displayMailbox();
+    void displayMailbox(std::array<int, 64> &mb);
 
     std::vector<std::string> splitString(std::string str, char delimiter);
     int codeToIndex(std::string code);
@@ -215,7 +212,7 @@ public:
     uint64_t get_bishop_attacks(int square, uint64_t board_occupancy);
     uint64_t get_rook_attacks(int square, uint64_t board_occupancy);
 
-    void generateMoves(std::array<Move, 256> &moveList);
+    void generateMoves(int offset);
     void generateKnightMoves();
     void generateKingMoves();
     void generatePawnMoves();

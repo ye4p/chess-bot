@@ -70,7 +70,7 @@ int main()
     // std::cout << board->isKingAttacked(1);
 
     auto start = std::chrono::steady_clock::now();
-    int nodes = board->perftDivide(5);
+    uint64_t nodes = board->perftDivide(6);
     auto end = std::chrono::steady_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);

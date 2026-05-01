@@ -346,6 +346,26 @@ void Board::displayMailbox()
     printf("bitboard: %lld\n\n", occupancies[2]);
 }
 
+void Board::displayMailbox(std::array<int, 64> &mb)
+{
+    std::cout << "\n";
+    for (int rank = 7; rank > -1; rank--)
+    {
+        for (int file = 0; file < 8; file++)
+        {
+            int square = rank * 8 + file;
+            if (!file)
+            {
+                printf(" %d ", rank + 1);
+            }
+            printf(" %d", mb[square]);
+        }
+        std::cout << "\n";
+    }
+    printf("\n    a b c d e f g h\n\n");
+    printf("bitboard: %lld\n\n", occupancies[2]);
+}
+
 void Board::displayMoves(std::array<Move, 256> moveList)
 {
     for (int i = 0; i < moveList.size(); i++)
@@ -462,6 +482,10 @@ void Board::setFEN(std::string s)
             if (std::isdigit(let))
             {
                 int letConverted = let - '0';
+                for (int i = 0; i < letConverted; i++)
+                {
+                    mailbox[rank * 8 + file + i] = -1;
+                }
                 file += letConverted;
             }
         }
@@ -841,10 +865,9 @@ uint64_t Board::rook_attacks_from_occupancy(int square, uint64_t blockers)
 // MAIN MOVE GENERATION
 //
 
-void Board::generateMoves(std::array<Move, 256> &moveList)
+void Board::generateMoves(int offset)
 {
-    // moveList.fill(Move());
-    int count = 0;
+    int count = offset;
     uint64_t from_bb;
 
     if (!sideToMove)
@@ -1249,6 +1272,8 @@ void Board::generateMoves(std::array<Move, 256> &moveList)
             }
         }
     }
+    moveList[count].data = 0;
+    undoList[count] = Undo();
 }
 void Board::generateKnightMoves()
 {
@@ -1321,18 +1346,12 @@ void Board::generateRookMoves()
 {
     for (int i = 0; i < 64; i++)
     {
-        //  std::cout << "starting with i=" << i << "\n";
         // gen all attack masks and relevant bits
         rook_masks[i] = mask_rook_attacks(i);
         rook_relevant_bits[i] = popcount(rook_masks[i]);
-        // std::cout << "rook relevant bits\n";
 
         int occupancy_count = 1 << rook_relevant_bits[i];
-        // if (i == 0)
-        // {
-        //     std::cout << "mask rook attacks: " << rook_masks[i] << "\n";
-        //     std::cout << "occupancy count: " << occupancy_count << "\n";
-        // }
+
         for (uint64_t j = 0; j < occupancy_count; j++)
         {
             uint64_t occupancy = set_occupancy(j, rook_relevant_bits[i], rook_masks[i]);
@@ -1426,11 +1445,6 @@ void Board::makeMove(const Move m, Undo &u)
 
         setBit(bbs[promotedStatus + (sideToMove ? +6 : +0)], m.to());
         mailbox[m.to()] = promotedStatus + (sideToMove ? +6 : +0);
-        if ((m.from() == 14) && (m.to() == 7) && (m.status() == 12))
-        {
-            std::cout << "promoted to: " << (promotedStatus + (sideToMove ? +6 : +0)) << "\n";
-            displayMailbox();
-        }
     }
 
     //  Castling
@@ -1534,12 +1548,13 @@ void Board::undoMove(const Move m, Undo &u)
 
     // int p = findPiece(m.to(), m);
     int p = mailbox[m.to()];
-    if ((m.from() == 14) && (m.to() == 7) && (m.status() == 12))
-    {
-        std::cout << "p: " << p << "\n";
-    }
+
     // clearBit(bbs[p], m.to());
     // mailbox[m.to()] = -1;
+
+    // REMOVE PIECE FROM NEW POSITION
+    clearBit(bbs[p], m.to());
+    mailbox[m.to()] = -1;
 
     if (m.status() == 0b0101)
     {
@@ -1551,6 +1566,8 @@ void Board::undoMove(const Move m, Undo &u)
         // std::cout << "Piece was captured, trying to recover it from the " << u.capturedPiece << "\n";
         setBit(bbs[u.capturedPiece], m.to());
         mailbox[m.to()] = u.capturedPiece;
+        // std::cout << "SEt the mailbox to " << mailbox[m.to()] << "\n";
+        // displayMailbox();
     }
 
     // Castling
@@ -1569,16 +1586,12 @@ void Board::undoMove(const Move m, Undo &u)
         else
         {                                                        // Queen castling
             clearBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() + 1); //  Remove rook from old pos
-            mailbox[m.to() - 1] = -1;
+            mailbox[m.to() + 1] = -1;
 
             setBit(bbs[3 + (sideToMove ? 6 : 0)], m.to() - 2); // Add it to new
             mailbox[m.to() - 2] = 3 + (sideToMove ? 6 : 0);
         }
     }
-
-    // REMOVE PIECE FROM NEW POSITION
-    clearBit(bbs[p], m.to());
-    mailbox[m.to()] = -1;
 
     // Handle promotion
     if (!m.isPromotion()) // PUTS ORIGINAL PIECE ON THE OLD POSITION
@@ -1591,8 +1604,7 @@ void Board::undoMove(const Move m, Undo &u)
         setBit(bbs[sideToMove ? 6 : 0], m.from());
         mailbox[m.from()] = (sideToMove ? 6 : 0);
     }
-    // std::cout << "after undoing move: " << m << "\n";
-    // displayBoard();
+
     moveLog.pop_back();
     boardLog.pop_back();
     updateOccupancies();
@@ -1606,9 +1618,6 @@ bool Board::isSquareAttacked(int square, int by)
     uint64_t res1 = knight_masks[square] & bbs[1 + color];
     uint64_t res2 = king_masks[square] & bbs[5 + color];
     uint64_t res3 = pawn_masks[!by][square] & bbs[color];
-    // std::cout << "by: " << by << "\n";
-    // displayBB(pawn_masks[!by][square]);
-    // displayBB(bbs[color]);
     uint64_t res4 = get_rook_attacks(square, occupancies[2]) & (bbs[3 + color] | bbs[4 + color]);   // rooks + queens
     uint64_t res5 = get_bishop_attacks(square, occupancies[2]) & (bbs[2 + color] | bbs[4 + color]); // bishops + queens
     return res1 || res2 || res3 || res4 || res5;
@@ -1643,101 +1652,99 @@ int Board::perft(int depth)
     }
     // std::cout << "STARTING PERFT WITH DEPTH " << depth << "\n";
     int nodes = 0;
-    // std::cout << "Generating moves...\n";
-    std::array<Move, 256> moveList;
-    std::array<Undo, 256> undoList;
-    // moveList.fill(Move());
-    generateMoves(moveList);
+
+    int offset = ply * MAX_MOVES;
+
+    generateMoves(offset);
     // std::cout << "Finished generating moves:";
     // displayMoves(moveList);
-    for (int i = 0; i < moveList.size(); i++)
+    for (int i = offset; i < (offset + MAX_MOVES); i++)
     {
         // std::cout << "Started looping over moves...\n";
         if (moveList[i].data == 0)
         {
-            // std::cout << "BREAKING at i=" << i << "\n";
             break;
         }
 
-        // if (undoList[i].capturedPiece==11 || undoList[i].capturedPiece==5) {
-        //     continue;   // Never runs because undo is initialized in the makeMove(), which didn't run yet.
-        // }
-        // if (findPieceKing(moveList[i].to(), moveList[i]) == 5 || findPieceKing(moveList[i].to(), moveList[i]) == 11)
         if ((mailbox[moveList[i].to()] == 5) || (mailbox[moveList[i].to()] == 11))
         {
-            // std::cout << "\nSKIPPING KING CAPTURE!!!\n";
             continue;
         }
 
+#ifndef DEBUG
         uint64_t currentbb = getBB();
+        uint64_t currentbb7 = bbs[7];
+        std::array<int, 64> copyMailbox = mailbox;
+#endif
 
-        // int captured = 99;
-        // if (moveList[i].to() == 8 && moveList[i].from() == 17)
-        // {
-        //     captured = findPiece(8);
-        //     std::cout << "BLACK PAWNS BB before making move:\n";
-        //     displayBB(bbs[6]);
-        //     std::cout << "WHITE PAWNS BB before making move:\n";
-        //     displayBB(bbs[0]);
-        //     std::cout << " FULL  BOARD before making move:\n";
-        //     displayBoard();
-        // }
-        // std::cout << "1\n";
-        // if (moveList[i].from() == 48 && moveList[i].to() == 40)
-        // {
-        //     //std::cout << "BOARD BEFORE MAKING THAT MOVE\n";
-        //     displayBoard();
-        // }
-        // if (moveList[i].from()==41) {
-        //     std::cout << "Board before making that move: "<<moveList[i]<<"\n" ;
-        //     displayBoard();
-        // }
-
-        // std::string debug_msg = "";
-        // for (int iii=0; iii < 6-depth; iii++) {
-        //     debug_msg += "   ";
-        // }
-        // if (depth > 1)
-        //     std::cout << debug_msg << "making move: " << moveToCode(moveList[i]) << std::endl;
-        std::cout << "Started making move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        ply++;
+        // std::cout << "Started making move " << moveList[i] << " and undo " << undoList[i] << "\n";
         makeMove(moveList[i], undoList[i]);
-        std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        // std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
 
+        std::array<int, 64> copyMailbox2 = mailbox;
+
+#ifndef DEBUG
         validateBoard(1);
-        // if (moveList[i].from() == 48 && moveList[i].to() == 40)
-        // {
-        //    // std::cout << "BOARD AFTER MAKING THAT MOVE\n";
-        //     //displayBoard();
-        // }
-        // std::cout << "2 made move\n";
+#endif
+
         if (!isKingAttacked(sideToMove))
         {
             nodes += perft(depth - 1);
         }
-        // std::cout << "3\n";
-
-        // if (depth > 1)
-        //     std::cout << debug_msg << "UNmaking move: " << moveToCode(moveList[i]) << std::endl;
-
-        std::cout << "Started undoing move " << moveList[i] << " and undo " << undoList[i] << "\n";
-        if ((moveList[i].from() == 14) && (moveList[i].to() == 7) && (moveList[i].status() == 12))
-        {
-            displayMailbox();
-            std::cout << "!sideToMove: " << !sideToMove << "\n";
-        }
         undoMove(moveList[i], undoList[i]);
-        std::cout << "undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        ply--;
 
-        if (moveList[i].to() == 7 && undoList[i].capturedPiece == 7)
+#ifndef DEBUG
+
+        if (mailbox != copyMailbox)
         {
-            std::cout << "CAUSED BY: " << moveList[i] << undoList[i] << "\n";
-            std::cout << "BB at the beginnging: \n";
-            displayBB(currentbb);
-            std::cout << "BB at the end: \n";
-            displayBB(getBB());
-            std::cout << "\n\n\n";
+            std::cout << "Mailbox mismatch for move " << moveList[i] << " and undo " << undoList[i] << "\n";
+            std::cout << "mailbox before making move:\n";
+            displayMailbox(copyMailbox);
+            std::cout << "mailbox after making move:\n";
+            displayMailbox(copyMailbox2);
+            std::cout << "mailbox after unmaking move:\n";
+            displayMailbox();
+            std::cout << "\n\n\n\n";
+            std::cout << "Move sequence that led to this error position: ";
+            for (Move m : moveLog)
+            {
+                std::cout << moveToCode(m) << ", ";
+            }
+            std::cout << "\n";
+            for (auto i = 0; i < moveLog.size(); i++)
+            {
+                std::cout << moveToCode(moveLog[i]) << ", and corresponding board:\n";
+                displayBB(boardLog[i]);
+            }
+            std::cout << "\n";
+            throw std::runtime_error("Mailbox mismatch\n");
         }
+        // std::cout << "undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
 
+        if (currentbb7 != bbs[7])
+        {
+            std::cout << "\nERROR, black knights. BB at the beginnging: \n";
+            displayBB(currentbb7);
+            std::cout << "BB at the end: \n";
+            displayBB(bbs[7]);
+            std::cout << "Crash with the move " << moveList[i] << undoList[i] << "\n";
+            std::cout << "\n\n\n\n";
+            std::cout << "Move sequence that led to this error position: ";
+            for (Move m : moveLog)
+            {
+                std::cout << moveToCode(m) << ", ";
+            }
+            std::cout << "\n";
+            for (auto i = 0; i < moveLog.size(); i++)
+            {
+                std::cout << moveToCode(moveLog[i]) << ", and corresponding board:\n";
+                displayBB(boardLog[i]);
+            }
+            std::cout << "\n";
+            throw std::runtime_error("Crash of bbs(7) mismatch");
+        }
         if (currentbb != getBB())
         {
             std::cout << "\n\n ERROR, BITBOARD MISMATCH. BB at the beginnging: \n";
@@ -1761,7 +1768,8 @@ int Board::perft(int depth)
             throw std::runtime_error("Crash of bbs mismatch");
         }
         validateBoard(2);
-        // std::cout << "4 unmade move\n";
+// std::cout << "4 unmade move\n";
+#endif
     }
     return nodes;
 }
@@ -1775,17 +1783,13 @@ int Board::perftDivide(int depth)
         return 1;
     }
 
-    // std::cout << "Initializing new lists...\n";
-    std::array<Move, 256> moveList;
-    std::array<Undo, 256> undoList;
-    // std::cout << "Generating moves...\n";
-    generateMoves(moveList);
+    int offset = ply * MAX_MOVES;
+    generateMoves(offset);
 
     // std::cout << "Finished generating moves\n";
-    for (int i = 0; i < moveList.size(); i++)
+    for (int i = offset; i < (offset + MAX_MOVES); i++)
     {
-        // std::cout << "Index i=" << i << "\n";
-        //  std::cout << "Started looping over moves...\n";
+
         if (moveList[i].data == 0)
         {
             break;
@@ -1796,19 +1800,21 @@ int Board::perftDivide(int depth)
             // std::cout << "\nSKIPPING KING CAPTURE!!!\n";
             continue;
         }
+
+#ifndef DEBUG
         uint64_t currentbb = getBB();
-        // std::cout << "Trying to make move " << moveList[i] << " and undo " << undoList[i] << "\n";
-        //  std::cout << "1\n";
-        //  if (moveList[i].from()==41) {
-        //      std::cout << "Board before making that move: "<<moveList[i]<<"\n" ;
-        //      displayBoard();
-        //  }
-        std::cout << "Started making move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        uint64_t currentbb7 = bbs[7];
+#endif
+        // std::cout << "Started making move " << moveList[i] << " and undo " << undoList[i] << "\n";
+
+        ply++;
         makeMove(moveList[i], undoList[i]);
 
+#ifndef DEBUG
         validateBoard(3);
+#endif
         // std::cout << "2 made move\n";
-        std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
+        // std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
         if (!isKingAttacked(sideToMove))
         {
             // std::cout << "current depth is " << depth << " and condition 'is king attacked' run successfully for a move " << moveList[i] << " and undo " << undoList[i] << "\n";
@@ -1820,23 +1826,37 @@ int Board::perftDivide(int depth)
         //  std::cout << "3\n";
 
         // std::cout << "Trying to undo move " << moveList[i] << " and undo " << undoList[i] << "\n";
-        std::cout << "Started undoing move (divide)" << moveList[i] << " and undo " << undoList[i] << "\n";
-        if ((moveList[i].from() == 14) && (moveList[i].to() == 7) && (moveList[i].status() == 12))
-            displayMailbox();
+        // std::cout << "Started undoing move (divide)" << moveList[i] << " and undo " << undoList[i] << "\n";
+
         undoMove(moveList[i], undoList[i]);
-        if (moveList[i].to() == 7 && undoList[i].capturedPiece == 7)
-        {
-            std::cout << "CAUSED BY: " << moveList[i] << undoList[i] << "\n";
-            std::cout << "BB at the beginnging: \n";
-            displayBB(currentbb);
-            std::cout << "BB at the end: \n";
-            displayBB(getBB());
-            std::cout << "\n\n\n";
-        }
-        std::cout << "undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
-        // std::cout << "Board after unmaking a move " << moveToCode(moveList[i]) << " :\n";
-        // displayBoard();
+        ply--;
+        // std::cout << "undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
+
+#ifndef DEBUG
         validateBoard(4);
+
+        if (currentbb7 != bbs[7])
+        {
+            std::cout << "\nERROR, black knights. BB at the beginnging: \n";
+            displayBB(currentbb7);
+            std::cout << "BB at the end: \n";
+            displayBB(bbs[7]);
+            std::cout << "Crash with the move " << moveList[i] << undoList[i] << "\n";
+            std::cout << "\n\n\n\n";
+            std::cout << "Move sequence that led to this error position: ";
+            for (Move m : moveLog)
+            {
+                std::cout << moveToCode(m) << ", ";
+            }
+            std::cout << "\n";
+            for (auto i = 0; i < moveLog.size(); i++)
+            {
+                std::cout << moveToCode(moveLog[i]) << ", and corresponding board:\n";
+                displayBB(boardLog[i]);
+            }
+            std::cout << "\n";
+            throw std::runtime_error("Crash of bbs(7) mismatch");
+        }
         if (currentbb != getBB())
         {
             std::cout << "\n\n ERROR, BITBOARD MISMATCH. BB at the beginnging: \n";
@@ -1846,7 +1866,7 @@ int Board::perftDivide(int depth)
             std::cout << "Piece captured: " << undoList[i].capturedPiece << ". The move itself: " << moveList[i] << " undo itself: " << undoList[i] << "\n";
             throw std::runtime_error("Crash of bbs mismatch");
         }
-        // std::cout << "Undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
+#endif
     }
     std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;
     return totalNodes;
