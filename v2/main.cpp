@@ -74,8 +74,8 @@ int main()
     auto end = std::chrono::steady_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    std::cout << "It took " << (double)duration.count() / 1000 << std::endl;
-    std::cout << "NPS: " << (double)nodes / ((double)duration.count() / 1000) << std::endl;
+    std::cout << "It took " << duration.count() / 1000 << std::endl;
+    std::cout << "NPS: " << (nodes) / (duration.count() / 1000) << std::endl;
 
     return 0;
 }

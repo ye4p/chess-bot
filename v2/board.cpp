@@ -205,6 +205,7 @@ void Board::updateOccupancies()
     occupancies[2] = occupancies[0] | occupancies[1];
 }
 
+#ifdef DEBUG
 int Board::findPiece(int square, Move m)
 {
     for (int i = 0; i < 12; i++)
@@ -230,6 +231,7 @@ int Board::findPiece(int square, Move m)
     std::cout << "ERROR with square " << square << " with move: " << m << "\n";
     throw std::runtime_error("Piece not found");
 }
+#endif
 
 int Board::findPieceKing(int square, Move m)
 {
@@ -1526,8 +1528,12 @@ void Board::makeMove(const Move m, Undo &u)
     // Side to move switch
     sideToMove = !sideToMove;
 
+#ifdef DEBUG
+    std::cout << "Running debug version\n";
     moveLog.push_back(m);
     boardLog.push_back(getBB());
+#endif
+
     updateOccupancies();
 }
 void Board::undoMove(const Move m, Undo &u)
@@ -1605,8 +1611,10 @@ void Board::undoMove(const Move m, Undo &u)
         mailbox[m.from()] = (sideToMove ? 6 : 0);
     }
 
+    #ifdef DEBUG
     moveLog.pop_back();
     boardLog.pop_back();
+    #endif
     updateOccupancies();
 }
 
@@ -1671,7 +1679,7 @@ int Board::perft(int depth)
             continue;
         }
 
-#ifndef DEBUG
+#ifdef DEBUG
         uint64_t currentbb = getBB();
         uint64_t currentbb7 = bbs[7];
         std::array<int, 64> copyMailbox = mailbox;
@@ -1684,7 +1692,7 @@ int Board::perft(int depth)
 
         std::array<int, 64> copyMailbox2 = mailbox;
 
-#ifndef DEBUG
+#ifdef DEBUG
         validateBoard(1);
 #endif
 
@@ -1695,7 +1703,7 @@ int Board::perft(int depth)
         undoMove(moveList[i], undoList[i]);
         ply--;
 
-#ifndef DEBUG
+#ifdef DEBUG
 
         if (mailbox != copyMailbox)
         {
@@ -1801,7 +1809,7 @@ int Board::perftDivide(int depth)
             continue;
         }
 
-#ifndef DEBUG
+#ifdef DEBUG
         uint64_t currentbb = getBB();
         uint64_t currentbb7 = bbs[7];
 #endif
@@ -1810,7 +1818,7 @@ int Board::perftDivide(int depth)
         ply++;
         makeMove(moveList[i], undoList[i]);
 
-#ifndef DEBUG
+#ifdef DEBUG
         validateBoard(3);
 #endif
         // std::cout << "2 made move\n";
@@ -1832,7 +1840,7 @@ int Board::perftDivide(int depth)
         ply--;
         // std::cout << "undid move " << moveList[i] << " and undo " << undoList[i] << "\n";
 
-#ifndef DEBUG
+#ifdef DEBUG
         validateBoard(4);
 
         if (currentbb7 != bbs[7])
@@ -1885,6 +1893,19 @@ int Board::evaluate()
         if (!pieceValueMap.count(m))
         {
             throw std::runtime_error("Didn't find piece in the mailbox(eval function)");
+        }
+        for (int i=0; i<64; i++) {
+            if (i==-1) {
+                continue;
+            }
+
+            int k=mailbox[i];
+
+            if (k>5) {
+                k-=6;
+            }
+
+            val+=PST[k][i];
         }
     }
 
