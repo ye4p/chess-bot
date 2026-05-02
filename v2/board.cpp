@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <cstdio>
 #include <random>
+#include <chrono>
 
 Undo::Undo()
 {
@@ -97,9 +98,6 @@ uint64_t Board::rook_relevant_bits[64];
 
 uint64_t Board::bishop_attacks[64][512];
 uint64_t Board::rook_attacks[64][4096];
-
-// uint64_t Board::BISHOP_MAGICS[64];
-// uint64_t Board::ROOK_MAGICS[64];
 
 //  Constructor
 Board::Board()
@@ -1611,10 +1609,10 @@ void Board::undoMove(const Move m, Undo &u)
         mailbox[m.from()] = (sideToMove ? 6 : 0);
     }
 
-    #ifdef DEBUG
+#ifdef DEBUG
     moveLog.pop_back();
     boardLog.pop_back();
-    #endif
+#endif
     updateOccupancies();
 }
 
@@ -1644,6 +1642,31 @@ bool Board::isKingAttacked(int by)
 void Board::startpos()
 {
     setFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+}
+
+void Board::pos(int position)
+{
+    switch (position)
+    {
+    case (1):
+        startpos();
+        break;
+    case (2):
+        setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+        break;
+    case (3):
+        setFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 ");
+        break;
+    case (4):
+        setFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8  ");
+        break;
+    case (5):
+        setFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8  ");
+        break;
+    case (6):
+        setFEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ");
+        break;
+    }
 }
 
 //
@@ -1690,9 +1713,8 @@ int Board::perft(int depth)
         makeMove(moveList[i], undoList[i]);
         // std::cout << "Made move " << moveList[i] << " and undo " << undoList[i] << "\n";
 
-        std::array<int, 64> copyMailbox2 = mailbox;
-
 #ifdef DEBUG
+        std::array<int, 64> copyMailbox2 = mailbox;
         validateBoard(1);
 #endif
 
@@ -1880,6 +1902,53 @@ int Board::perftDivide(int depth)
     return totalNodes;
 }
 
+void Board::run_perft(int position, int depth)
+{
+    // int position{1};
+    // int depth{1};
+
+    // std::cout << "Default position you want to test(1-6):\n";
+    // std::cin >> position;
+    // std::cout << "Perft depth:\n";
+    // std::cin >> depth;
+
+    switch (position)
+    {
+    case (1):
+        startpos();
+        break;
+    case (2):
+        setFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+        break;
+    case (3):
+        setFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 ");
+        break;
+    case (4):
+        setFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8  ");
+        break;
+    case (5):
+        setFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8  ");
+        break;
+    case (6):
+        setFEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ");
+        break;
+    }
+
+    displayBoard();
+
+    displayMailbox();
+
+    auto start = std::chrono::steady_clock::now();
+    uint64_t nodes = perftDivide(depth);
+    auto end = std::chrono::steady_clock::now();
+
+    std::chrono::duration<double> elapsed = end - start;
+    double seconds = elapsed.count();
+
+    std::cout << "Time: " << seconds << "s\n";
+    std::cout << "NPS: " << (nodes / seconds) << "\n";
+}
+
 //
 //  EVALUATION FUNCTION
 //
@@ -1887,27 +1956,28 @@ int Board::perftDivide(int depth)
 int Board::evaluate()
 {
     int val = 0;
-    for (int m : mailbox)
+    // for (int m : mailbox)
+    for (int i = 0; i < 64; i++)
     {
-        val += pieceValueMap.find(m)->second;
-        if (!pieceValueMap.count(m))
+        if (mailbox[i] == -1)
+        {
+            continue;
+        }
+        val += pieceValueMap.find(mailbox[i])->second;
+
+        int k = mailbox[i];
+
+        val += ((k > 5) ? -PST[k - 6][64 - i] : PST[k][i]);
+
+        if (!pieceValueMap.count(mailbox[i]))
         {
             throw std::runtime_error("Didn't find piece in the mailbox(eval function)");
-        }
-        for (int i=0; i<64; i++) {
-            if (i==-1) {
-                continue;
-            }
-
-            int k=mailbox[i];
-
-            if (k>5) {
-                k-=6;
-            }
-
-            val+=PST[k][i];
         }
     }
 
     return val;
 }
+
+//
+//  SEARCH
+//
