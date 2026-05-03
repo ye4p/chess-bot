@@ -9,11 +9,7 @@ int main()
     // std::cout << "Running\n";
     auto board = std::make_unique<Board>();
 
-    // board->run_perft(3, 7);
-
-    board->pos(2);
-
-    std::cout << "Position evaluation is: " << board->evaluate() << "\n";
+    board->uci_loop();
 
     return 0;
 }

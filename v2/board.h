@@ -314,14 +314,20 @@ public:
     void startpos();
     void pos(int position);
 
+    // UCI protocol
+    void uci_loop();
+    void parse_position(std::istream &iss);
+    void parse_go(std::istream &iss);
+
     //  Testing move generation
     int perft(int depth);
-    int perftDivide(int depth);
+    uint64_t perftDivide(int depth);
     void run_perft(int position = 1, int depth = 1);
 
     //  Evaluation function
     int evaluate();
 
     // Search
-    int minimax(int depth, bool maximizing);
+    int search(int depth, int alpha, int beta);
+    int root_search(int depth);
 };

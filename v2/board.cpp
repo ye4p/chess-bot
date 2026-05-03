@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <random>
 #include <chrono>
+#include <thread>
 
 Undo::Undo()
 {
@@ -1670,6 +1671,95 @@ void Board::pos(int position)
 }
 
 //
+//   UCI Protocol
+//
+
+void Board::uci_loop()
+{
+    std::string line, token;
+
+    while (std::getline(std::cin, line))
+    {
+        std::istringstream iss(line);
+        iss >> token;
+
+        if (token == "uci")
+        {
+            std::cout << "id name chess_engine\n";
+            std::cout << "id author Danila\n";
+            std::cout << "uciok\n";
+        }
+        else if (token == "isready")
+        {
+            std::cout << "readyok\n";
+        }
+        else if (token == "position")
+        {
+            parse_position(iss);
+        }
+        else if (token == "go")
+        {
+            parse_go(iss);
+        }
+        else if (token == "quit")
+        {
+            break;
+        }
+    }
+}
+
+void Board::parse_position(std::istream &iss)
+{
+    std::string token;
+    iss >> token;
+    if (token == "startpos")
+    {
+        pos(1);
+    }
+    else if (token == "0" || token == "1" || token == "2" || token == "3" || token == "4" || token == "5" || token == "6")
+    {
+        int n = std::stoi(token);
+        pos(n);
+    }
+    else if (token == "fen")
+    {
+        std::string fen;
+        std::getline(iss, fen);
+        setFEN(fen);
+    }
+}
+
+void Board::parse_go(std::istream &iss)
+{
+    std::string token;
+    int depth = 6;
+
+    while (iss >> token)
+    {
+        iss >> depth;
+        if (token == "depth")
+        {
+            int bestIndex = root_search(depth);
+            Move best = moveList[bestIndex];
+            std::cout << "The best move is " << moveToCode(best) << "\n";
+        }
+        else if (token == "perft")
+        {
+            auto start = std::chrono::steady_clock::now();
+            uint64_t nodes = perftDivide(depth);
+            auto end = std::chrono::steady_clock::now();
+
+            std::chrono::duration<double> time = end - start;
+            double seconds = time.count();
+
+            std::cout << "Total nodes: " << nodes << "\n";
+            std::cout << "It took " << seconds << "\n";
+            std::cout << "NPS: " << (nodes / seconds) << "\n";
+        }
+    }
+}
+
+//
 //  TESTING
 //
 
@@ -1695,11 +1785,6 @@ int Board::perft(int depth)
         if (moveList[i].data == 0)
         {
             break;
-        }
-
-        if ((mailbox[moveList[i].to()] == 5) || (mailbox[moveList[i].to()] == 11))
-        {
-            continue;
         }
 
 #ifdef DEBUG
@@ -1804,7 +1889,7 @@ int Board::perft(int depth)
     return nodes;
 }
 
-int Board::perftDivide(int depth)
+uint64_t Board::perftDivide(int depth)
 {
     std::cout << "Trying to run new perft...\n";
     uint64_t totalNodes = 0;
@@ -1823,12 +1908,6 @@ int Board::perftDivide(int depth)
         if (moveList[i].data == 0)
         {
             break;
-        }
-        // if (findPieceKing(moveList[i].to(), moveList[i]) == 5 || findPieceKing(moveList[i].to(), moveList[i]) == 11)
-        if ((mailbox[moveList[i].to()] == 5) || (mailbox[moveList[i].to()] == 11))
-        {
-            // std::cout << "\nSKIPPING KING CAPTURE!!!\n";
-            continue;
         }
 
 #ifdef DEBUG
@@ -1981,3 +2060,95 @@ int Board::evaluate()
 //
 //  SEARCH
 //
+
+int Board::search(int depth, int alpha, int beta)
+// Alpha - best score that is already guaranteed to you. beta - the best socre opponent will allow to get
+{
+    if (depth == 0 || isGameOver)
+    {
+        return evaluate();
+    }
+
+    int offset = MAX_MOVES * ply;
+
+    generateMoves(offset);
+
+    int best = -INFINITY;
+
+    for (int i = offset; i < offset + MAX_MOVES; i++)
+    {
+
+        if (moveList[i].data == 0)
+        {
+            break;
+        }
+
+        ply++;
+        makeMove(moveList[i], undoList[i]);
+
+        if (isKingAttacked(sideToMove))
+        {
+            undoMove(moveList[i], undoList[i]);
+            continue;
+        }
+        int score = -search(depth - 1, -beta, -alpha);
+
+        undoMove(moveList[i], undoList[i]);
+        ply--;
+        if (score >= beta)
+        {
+            return beta;
+        }
+
+        if (score > best)
+        {
+            best = score;
+        }
+
+        if (score > alpha)
+        {
+            alpha = score;
+        }
+    }
+
+    return best;
+}
+
+int Board::root_search(int depth)
+{
+    int offset = ply * MAX_MOVES;
+
+    generateMoves(offset);
+
+    int best = -INFINITY;
+    int bestIndex{};
+
+    for (int i = offset; i < (offset + MAX_MOVES); i++)
+    {
+        if (moveList[i].data == 0)
+        {
+            break;
+        }
+
+        ply++;
+        makeMove(moveList[i], undoList[i]);
+
+        if (isKingAttacked(sideToMove))
+        {
+            undoMove(moveList[i], undoList[i]);
+            continue;
+        }
+
+        int score = -search(depth - 1, -INFINITY, INFINITY);
+
+        if (score > best)
+        {
+            best = score;
+            bestIndex = i;
+        }
+
+        undoMove(moveList[i], undoList[i]);
+        ply--;
+    }
+    return bestIndex;
+}
