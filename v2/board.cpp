@@ -2091,10 +2091,12 @@ int Board::search(int depth, int alpha, int beta)
             undoMove(moveList[i], undoList[i]);
             continue;
         }
+
         int score = -search(depth - 1, -beta, -alpha);
 
         undoMove(moveList[i], undoList[i]);
         ply--;
+
         if (score >= beta)
         {
             return beta;
@@ -2123,6 +2125,8 @@ int Board::root_search(int depth)
     int best = -INFINITY;
     int bestIndex{};
 
+    std::cout << "Legal root moves:\n";
+
     for (int i = offset; i < (offset + MAX_MOVES); i++)
     {
         if (moveList[i].data == 0)
@@ -2138,6 +2142,8 @@ int Board::root_search(int depth)
             undoMove(moveList[i], undoList[i]);
             continue;
         }
+
+        std::cout << moveList[i] << " " << undoList[i] << "\n";
 
         int score = -search(depth - 1, -INFINITY, INFINITY);
 
