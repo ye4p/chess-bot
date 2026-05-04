@@ -5,3 +5,5 @@
 # -Delete board validators like in perft
 
 # -Use mailbox instead of findPiece()
+
+# -Add  Root Parallelism(multithreading) at the root search method. Need to use shared transposition table.

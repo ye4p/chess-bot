@@ -2066,6 +2066,8 @@ int Board::search(int depth, int alpha, int beta)
 {
     if (depth == 0 || isGameOver)
     {
+        std::cout<<"Evaluate is "<<evaluate()<<"\n";
+        
         return evaluate();
     }
 
@@ -2143,7 +2145,7 @@ int Board::root_search(int depth)
             continue;
         }
 
-        std::cout << moveList[i] << " " << undoList[i] << "\n";
+        std::cout <<moveToCode(moveList[i])<<": "<< moveList[i] << " " << undoList[i] << "\n";
 
         int score = -search(depth - 1, -INFINITY, INFINITY);
 
