@@ -329,5 +329,5 @@ public:
 
     // Search
     int search(int depth, int alpha, int beta);
-    int root_search(int depth);
+    Move root_search(int depth);
 };

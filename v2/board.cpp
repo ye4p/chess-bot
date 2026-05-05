@@ -1739,9 +1739,8 @@ void Board::parse_go(std::istream &iss)
         iss >> depth;
         if (token == "depth")
         {
-            int bestIndex = root_search(depth);
-            Move best = moveList[bestIndex];
-            std::cout << "The best move is " << moveToCode(best) << "\n";
+            Move bestMove = root_search(depth);
+            std::cout << "The best move is " << moveToCode(bestMove) << "\n";
         }
         else if (token == "perft")
         {
@@ -2066,8 +2065,8 @@ int Board::search(int depth, int alpha, int beta)
 {
     if (depth == 0 || isGameOver)
     {
-        std::cout<<"Evaluate is "<<evaluate()<<"\n";
-        
+        std::cout << "Evaluate is " << evaluate() << "\n";
+
         return evaluate();
     }
 
@@ -2118,14 +2117,14 @@ int Board::search(int depth, int alpha, int beta)
     return best;
 }
 
-int Board::root_search(int depth)
+Move Board::root_search(int depth)
 {
     int offset = ply * MAX_MOVES;
 
     generateMoves(offset);
 
     int best = -INFINITY;
-    int bestIndex{};
+    Move bestMove = Move();
 
     std::cout << "Legal root moves:\n";
 
@@ -2145,18 +2144,18 @@ int Board::root_search(int depth)
             continue;
         }
 
-        std::cout <<moveToCode(moveList[i])<<": "<< moveList[i] << " " << undoList[i] << "\n";
+        std::cout << moveToCode(moveList[i]) << ": " << moveList[i] << " " << undoList[i] << "\n";
 
         int score = -search(depth - 1, -INFINITY, INFINITY);
 
         if (score > best)
         {
             best = score;
-            bestIndex = i;
+            bestMove = moveList[i];
         }
 
         undoMove(moveList[i], undoList[i]);
         ply--;
     }
-    return bestIndex;
+    return bestMove;
 }
