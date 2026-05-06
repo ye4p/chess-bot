@@ -2053,6 +2053,7 @@ int Board::evaluate()
         }
     }
 
+    // Make specific for the side that is moving
     return val;
 }
 
