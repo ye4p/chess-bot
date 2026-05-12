@@ -2080,6 +2080,10 @@ int Board::search(int depth, int alpha, int beta)
     if (depth == 0 || isGameOver)
     {
         // std::cout << "Evaluate is " << evaluate() << "\n";
+        if (evaluate() == 10000000)
+        {
+            std::cout << "overflow";
+        }
         return evaluate();
     }
 
