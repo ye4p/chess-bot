@@ -539,8 +539,16 @@ void Board::setFEN(std::string s)
     }
     if (vec.size() > 4)
     {
-        halfMoveClock = std::stoi(vec[4]);
-        fullMoveClock = std::stoi(vec[5]);
+        if (vec[4] == "-" || vec[5] == "-")
+        {
+            halfMoveClock = 0;
+            fullMoveClock = 0;
+        }
+        else
+        {
+            halfMoveClock = std::stoi(vec[4]);
+            fullMoveClock = std::stoi(vec[5]);
+        }
     }
     updateOccupancies();
 }
@@ -1716,16 +1724,17 @@ void Board::parse_position(std::istream &iss)
     {
         pos(1);
     }
-    else if (token == "0" || token == "1" || token == "2" || token == "3" || token == "4" || token == "5" || token == "6")
-    {
-        int n = std::stoi(token);
-        pos(n);
-    }
     else if (token == "fen")
     {
         std::string fen;
         std::getline(iss, fen);
+        fen.erase(0, fen.find_first_not_of(" \t"));
         setFEN(fen);
+    }
+    else if (token == "0" || token == "1" || token == "2" || token == "3" || token == "4" || token == "5" || token == "6")
+    {
+        int n = std::stoi(token);
+        pos(n);
     }
 }
 
@@ -2052,9 +2061,13 @@ int Board::evaluate()
             throw std::runtime_error("Didn't find piece in the mailbox(eval function)");
         }
     }
+    if (std::abs(val) == INF)
+    {
+        std::cout << "CRAZY MOVE\n";
+        displayMailbox();
+    }
 
-    // Make specific for the side that is moving
-    return val;
+    return (sideToMove ? -val : val);
 }
 
 //
@@ -2066,8 +2079,7 @@ int Board::search(int depth, int alpha, int beta)
 {
     if (depth == 0 || isGameOver)
     {
-        std::cout << "Evaluate is " << evaluate() << "\n";
-
+        // std::cout << "Evaluate is " << evaluate() << "\n";
         return evaluate();
     }
 
@@ -2075,7 +2087,7 @@ int Board::search(int depth, int alpha, int beta)
 
     generateMoves(offset);
 
-    int best = -INFINITY;
+    int best = -INF;
 
     for (int i = offset; i < offset + MAX_MOVES; i++)
     {
@@ -2091,6 +2103,7 @@ int Board::search(int depth, int alpha, int beta)
         if (isKingAttacked(sideToMove))
         {
             undoMove(moveList[i], undoList[i]);
+            ply--;
             continue;
         }
 
@@ -2124,7 +2137,7 @@ Move Board::root_search(int depth)
 
     generateMoves(offset);
 
-    int best = -INFINITY;
+    int best = -INF;
     Move bestMove = Move();
 
     std::cout << "Legal root moves:\n";
@@ -2142,15 +2155,17 @@ Move Board::root_search(int depth)
         if (isKingAttacked(sideToMove))
         {
             undoMove(moveList[i], undoList[i]);
+            ply--;
             continue;
         }
 
         std::cout << moveToCode(moveList[i]) << ": " << moveList[i] << " " << undoList[i] << "\n";
 
-        int score = -search(depth - 1, -INFINITY, INFINITY);
+        int score = -search(depth - 1, -INF, INF);
 
         if (score > best)
         {
+            std::cout << "found new best move " << moveList[i] << " with score: " << score << "\n";
             best = score;
             bestMove = moveList[i];
         }

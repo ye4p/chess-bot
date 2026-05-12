@@ -12,6 +12,7 @@
 
 constexpr int MAX_DEPTH = 256;
 constexpr int MAX_MOVES = 256;
+constexpr int INF = 10'000'000;
 
 static const std::unordered_map<char, int> pieceMap =
     {
@@ -38,13 +39,13 @@ static const std::unordered_map<int, int> pieceValueMap = {
     {2, 320},
     {3, 500},
     {4, 900},
-    {5, 0},
+    {5, 20000},
     {6, -100},
     {7, -300},
     {8, -320},
     {9, -500},
     {10, -900},
-    {11, 0}};
+    {11, 20000}};
 
 // Clan
 static const int PST[5][64] = {
