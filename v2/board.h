@@ -212,6 +212,8 @@ public:
     std::array<int, 64> mailbox;
 
     bool isGameOver = false;
+    bool draw = false;
+    bool checkmate = true;
 
     uint8_t castlingRights = 0b0000; // 1st - white king, 2nd - white queen, 3rd - black king, 4th - black queen
 
@@ -298,7 +300,7 @@ public:
     uint64_t get_bishop_attacks(int square, uint64_t board_occupancy);
     uint64_t get_rook_attacks(int square, uint64_t board_occupancy);
 
-    void generateMoves(int offset);
+    int generateMoves(int offset);
     void generateKnightMoves();
     void generateKingMoves();
     void generatePawnMoves();

@@ -874,7 +874,7 @@ uint64_t Board::rook_attacks_from_occupancy(int square, uint64_t blockers)
 // MAIN MOVE GENERATION
 //
 
-void Board::generateMoves(int offset)
+int Board::generateMoves(const int offset)
 {
     int count = offset;
     uint64_t from_bb;
@@ -1283,6 +1283,7 @@ void Board::generateMoves(int offset)
     }
     moveList[count].data = 0;
     undoList[count] = Undo();
+    return count - offset;
 }
 void Board::generateKnightMoves()
 {
@@ -2089,7 +2090,18 @@ int Board::search(int depth, int alpha, int beta)
 
     int offset = MAX_MOVES * ply;
 
-    generateMoves(offset);
+    int moves = generateMoves(offset);
+    // if (!moves)
+    // {
+    //     if (isKingAttacked(sideToMove))
+    //     {
+    //         checkmate = true;
+    //     }
+    //     else
+    //     {
+    //         draw = true;
+    //     }
+    // }
 
     int best = -INF;
 
@@ -2142,7 +2154,9 @@ Move Board::root_search(int depth)
     generateMoves(offset);
 
     int best = -INF;
-    Move bestMove = Move();
+    int alpha = -INF;
+    int beta = INF;
+    Move bestMove = moveList[offset];
 
     std::cout << "Legal root moves:\n";
 
@@ -2165,13 +2179,17 @@ Move Board::root_search(int depth)
 
         std::cout << moveToCode(moveList[i]) << ": " << moveList[i] << " " << undoList[i] << "\n";
 
-        int score = -search(depth - 1, -INF, INF);
+        int score = -search(depth - 1, -beta, -alpha);
 
         if (score > best)
         {
             std::cout << "found new best move " << moveList[i] << " with score: " << score << "\n";
             best = score;
             bestMove = moveList[i];
+        }
+        if (score > alpha)
+        {
+            alpha = score;
         }
 
         undoMove(moveList[i], undoList[i]);
