@@ -33,7 +33,7 @@ Undo::Undo(uint8_t castlingRights, int capturedPiece, int enPassantSquare, uint8
 
 std::ostream &operator<<(std::ostream &os, const Undo &u)
 {
-    os << "Undo castling rights:" << u.castlingRights << "captured piece " << u.capturedPiece << " en passant square: " << u.enPassantSquare << ".\n";
+    os << "Undo castling rights:" << u.castlingRights << "captured piece " << u.capturedPiece << " en passant square: " << u.enPassantSquare << ".";
     return os;
 }
 
@@ -2177,9 +2177,9 @@ Move Board::root_search(int depth)
             continue;
         }
 
-        std::cout << moveToCode(moveList[i]) << ": " << moveList[i] << " " << undoList[i] << "\n";
-
         int score = -search(depth - 1, -beta, -alpha);
+
+        std::cout << moveToCode(moveList[i]) << ": " << moveList[i] << " " << undoList[i] << " With score: " << score << "\n";
 
         if (score > best)
         {
