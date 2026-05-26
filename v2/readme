@@ -1,9 +1,3 @@
-## CHANGE WHEN ACTUALLY RUNNING
+## TODO
 
-# -Delete boardLog and moveLog vectors
-
-# -Delete board validators like in perft
-
-# -Use mailbox instead of findPiece()
-
-# -Add  Root Parallelism(multithreading) at the root search method. Need to use shared transposition table.
+#fix generateCaptures() to mask only enemy pieces for bishops, rooks and queens

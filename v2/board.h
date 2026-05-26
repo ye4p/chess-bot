@@ -13,6 +13,7 @@
 constexpr int MAX_DEPTH = 256;
 constexpr int MAX_MOVES = 256;
 constexpr int INF = 10'000'000;
+constexpr int MATE_SCORE = 100'000;
 
 static const std::unordered_map<char, int> pieceMap =
     {
@@ -211,10 +212,6 @@ public:
 
     std::array<int, 64> mailbox;
 
-    bool isGameOver = false;
-    bool draw = false;
-    bool checkmate = true;
-
     uint8_t castlingRights = 0b0000; // 1st - white king, 2nd - white queen, 3rd - black king, 4th - black queen
 
     int enPassantSquare = -1;
@@ -301,6 +298,7 @@ public:
     uint64_t get_rook_attacks(int square, uint64_t board_occupancy);
 
     int generateMoves(int offset);
+    int generateCaptures(const int offset);
     void generateKnightMoves();
     void generateKingMoves();
     void generatePawnMoves();
@@ -333,4 +331,5 @@ public:
     // Search
     int search(int depth, int alpha, int beta);
     Move root_search(int depth);
+    int quiescence(int alpha, int beta, int qDepth = 0);
 };
