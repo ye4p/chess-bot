@@ -2015,11 +2015,29 @@ void Board::parse_go(std::istream &iss)
         iss >> depth;
         if (token == "depth")
         {
+            iss >> depth;
             Move bestMove = root_search(depth);
-            std::cout << "The best move is " << moveToCode(bestMove) << "\n";
+            std::cout << "bestmove " << moveToCode(bestMove) << "\n";
+        }
+        else if (token == "movetime")
+        {
+            int maxdur;
+            iss >> maxdur;
+            Move bestMove;
+            startClock = std::chrono::steady_clock::now();
+            std::chrono::steady_clock::time_point endClock;
+            for (int d = 1; d < 999; d++)
+            {
+                bestMove = root_search(d);
+                if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startClock).count() > maxdur)
+                {
+                    break;
+                }
+            }
         }
         else if (token == "perft")
         {
+            iss >> depth;
             auto start = std::chrono::steady_clock::now();
             uint64_t nodes = perftDivide(depth);
             auto end = std::chrono::steady_clock::now();
@@ -2037,8 +2055,6 @@ void Board::parse_go(std::istream &iss)
 //
 //  TESTING
 //
-
-// usually, makeMove(int move) has a move parameter, but many times unmakeMove() has no parameter, because it pops the last move made from the move stack
 
 int Board::perft(int depth)
 {
@@ -2357,6 +2373,9 @@ int Board::search(int depth, int alpha, int beta)
         return isKingAttacked(!sideToMove) ? -MATE_SCORE + ply : 0;
     }
 
+    scoreMoves(offset, pseudoMoves);
+    sortMoves(offset, pseudoMoves);
+
     int best = -INF;
     bool hasLegalMove = false;
 
@@ -2470,7 +2489,7 @@ Move Board::root_search(int depth)
 
 int Board::quiescence(int alpha, int beta, int qDepth)
 {
-    if (qDepth >= 2)
+    if (qDepth >= 8)
     {
         return evaluate();
     }
@@ -2484,7 +2503,9 @@ int Board::quiescence(int alpha, int beta, int qDepth)
         alpha = stand_pat;
 
     int offset = MAX_MOVES * ply;
-    generateCaptures(offset);
+    int count = generateCaptures(offset);
+    scoreMoves(offset, count);
+    sortMoves(offset, count);
 
     for (int i = offset; i < offset + MAX_MOVES; i++)
     {
@@ -2517,4 +2538,39 @@ int Board::quiescence(int alpha, int beta, int qDepth)
             alpha = score;
     }
     return best;
+}
+
+inline int Board::scoreMoveCapture(Move m)
+{
+    return mvv_lva[mailbox[m.from()] % 6][mailbox[m.to()] % 6];
+}
+
+void Board::scoreMoves(int offset, int count)
+{
+    for (int i = offset; i < offset + count; i++)
+    {
+        if (moveList[i].isCapture())
+        {
+            moveScores[i] = scoreMoveCapture(moveList[i]);
+        }
+        else
+        {
+            moveScores[i] = 0;
+        }
+    }
+}
+
+void Board::sortMoves(int offset, int count)
+{
+    for (int i = offset; i < offset + count; i++)
+    {
+        int best = i;
+        for (int j = i + 1; j < offset + count; j++)
+        {
+            if (moveScores[j] > moveScores[best])
+                best = j;
+        }
+        std::swap(moveList[i], moveList[best]);
+        std::swap(moveScores[i], moveScores[best]);
+    }
 }

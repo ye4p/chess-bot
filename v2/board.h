@@ -9,11 +9,25 @@
 #include <algorithm>
 #include <unordered_map>
 #include <cstdio>
+#include <chrono>
 
 constexpr int MAX_DEPTH = 256;
 constexpr int MAX_MOVES = 256;
 constexpr int INF = 10'000'000;
 constexpr int MATE_SCORE = 100'000;
+
+// most valuable victim - least valuable attacker
+// clang-format off
+static const  int mvv_lva[6][6]= {
+//  victim: P    N    B    R    Q    K
+          { 15,  25,  35,  45,  55,  65 }, // attacker: P
+          { 14,  24,  34,  44,  54,  64 }, // attacker: N
+          { 13,  23,  33,  43,  53,  63 }, // attacker: B
+          { 12,  22,  32,  42,  52,  62 }, // attacker: R
+          { 11,  21,  31,  41,  51,  61 }, // attacker: Q
+          { 10,  20,  30,  40,  50,  60 }, // attacker: K 
+};
+// clang-format on
 
 static const std::unordered_map<char, int> pieceMap =
     {
@@ -223,8 +237,11 @@ public:
 
     std::array<Move, MAX_MOVES * MAX_DEPTH> moveList;
     std::array<Undo, MAX_MOVES * MAX_DEPTH> undoList;
+    std::array<int, MAX_MOVES * MAX_DEPTH> moveScores;
 
     int ply = 0;
+
+    std::chrono::steady_clock::time_point startClock = std::chrono::steady_clock::now();
 
 #ifdef DEBUG
     std::vector<Move> moveLog;
@@ -332,4 +349,8 @@ public:
     int search(int depth, int alpha, int beta);
     Move root_search(int depth);
     int quiescence(int alpha, int beta, int qDepth = 0);
+
+    int scoreMoveCapture(Move m);
+    void scoreMoves(int offset, int count);
+    void sortMoves(int offset, int count);
 };
