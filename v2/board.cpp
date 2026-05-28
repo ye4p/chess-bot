@@ -126,6 +126,25 @@ Board::Board()
     std::cout << " Fin\n";
 }
 
+void Board::clean()
+{
+    bbs.fill(0ULL);
+    occupancies.fill(0ULL);
+    mailbox.fill(-1);
+    castlingRights = 0;
+    enPassantSquare = -1;
+    halfMoveClock = 0;
+    fullMoveClock = 1;
+    sideToMove = 0;
+    moveList.fill(Move());
+    undoList.fill(Undo());
+    moveScores.fill(0);
+    ply = 0;
+    timeUp = false;
+    nodes = 0;
+    timeLimitMs = 0;
+}
+
 //
 //      HELPER METHODS FOR BITWISE INTERACTION:
 //
@@ -444,6 +463,62 @@ std::string Board::moveToCode(Move m)
         }
     }
     return s;
+}
+
+Move Board::codeToMove(std::string s)
+{
+    int s1 = s[0] - 'a';
+    int s2 = s[1] - '0';
+    int e1 = s[2] - 'a';
+    int e2 = s[3] - '0';
+    int squareStart = (s2 - 1) * 8 + s1;
+    int squareEnd = (e2 - 1) * 8 + e1;
+    int status = 0b0000;
+    if ((mailbox[squareEnd] > 5) && !sideToMove)
+    {
+        status |= 0b0100;
+    }
+    else if ((mailbox[squareEnd] > -1) && (mailbox[squareEnd] < 6) && sideToMove)
+    {
+        status |= 0b0100;
+    }
+    if ((mailbox[squareStart] % 6) == 5 && std::abs(squareEnd - squareStart) == 2)
+    {
+        status = (squareEnd > squareStart) ? 0b0010 : 0b0011;
+    }
+    if (squareEnd == enPassantSquare && ((mailbox[squareStart] % 6) == 0))
+    {
+        status = 0b0101;
+    }
+    else if (((mailbox[squareStart] % 6) == 0) && (std::abs(squareEnd - squareStart) == 16))
+    {
+        status = 0b0001;
+    }
+    else if (s.length() > 4)
+    {
+        char promotion = s[4];
+        if (mailbox[squareEnd] != -1)
+        {
+            status |= 0b0100;
+        }
+        if (promotion == 'q')
+        {
+            status |= 0b1011;
+        }
+        else if (promotion == 'r')
+        {
+            status |= 0b1010;
+        }
+        else if (promotion == 'b')
+        {
+            status |= 0b1001;
+        }
+        else
+        {
+            status |= 0b1000;
+        }
+    }
+    return Move(squareStart, squareEnd, status);
 }
 
 std::string Board::getFEN()
@@ -1962,11 +2037,17 @@ void Board::uci_loop()
         {
             std::cout << "id name chess_engine\n";
             std::cout << "id author Danila\n";
-            std::cout << "uciok\n";
+
+            std::cout << "option name Hash type spin default 16 min 1 max 4096\n";
+            std::cout << "option name Threads type spin default 1 min 1 max 64\n";
+            std::cout << "option name Move Overhead type spin default 100 min 0 max 5000\n";
+            std::cout << "option name SyzygyPath type string default \n";
+
+            std::cout << "uciok" << std::endl;
         }
         else if (token == "isready")
         {
-            std::cout << "readyok\n";
+            std::cout << "readyok" << "\n";
         }
         else if (token == "position")
         {
@@ -1975,6 +2056,40 @@ void Board::uci_loop()
         else if (token == "go")
         {
             parse_go(iss);
+        }
+        else if (token == "ucinewgame")
+        {
+            clean();
+        }
+        else if (token == "stop")
+        {
+            timeUp = true;
+        }
+        else if (token.starts_with("setoption"))
+        {
+            // if (token.find("Hash") != std::string::npos)
+            // {
+            //     size_t pos = input.find("value");
+
+            //     if (pos != std::string::npos)
+            //         hashSize = std::stoi(input.substr(pos + 6));
+            // }
+
+            // else if (input.find("Threads") != string::npos)
+            // {
+            //     size_t pos = input.find("value");
+
+            //     if (pos != std::string::npos)
+            //         threads = std::stoi(input.substr(pos + 6));
+            // }
+
+            // else if (input.find("Move Overhead") != std::string::npos)
+            // {
+            //     size_t pos = input.find("value");
+
+            //     if (pos != std::string::npos)
+            //         moveOverhead = std::stoi(input.substr(pos + 6));
+            // }
         }
         else if (token == "quit")
         {
@@ -1993,50 +2108,65 @@ void Board::parse_position(std::istream &iss)
     }
     else if (token == "fen")
     {
-        std::string fen;
-        std::getline(iss, fen);
-        fen.erase(0, fen.find_first_not_of(" \t"));
+        std::string fen, part;
+        // std::getline(iss, fen);
+        // fen.erase(0, fen.find_first_not_of(" \t"));
+        for (int i = 0; i < 6 && iss >> part; i++)
+        {
+            fen += part + " ";
+        }
+        // std::cout << fen << "\n";
+        // std::cout << "trying to parse fen\n";
         setFEN(fen);
+        // std::cout << "parsed fen\n";
     }
     else if (token == "0" || token == "1" || token == "2" || token == "3" || token == "4" || token == "5" || token == "6")
     {
         int n = std::stoi(token);
         pos(n);
     }
+    std::string m;
+    iss >> m;
+    if (m == "moves")
+    {
+        // std::cout << "trying to parse moves\n";
+        parse_moves(iss);
+    }
+}
+
+void Board::parse_moves(std::istream &iss)
+{
+    std::string move;
+    while (iss >> move)
+    {
+        Move m = codeToMove(move);
+        Undo u; // dummy undo
+        makeMove(m, u);
+    }
 }
 
 void Board::parse_go(std::istream &iss)
 {
     std::string token;
-    int depth = 6;
 
     while (iss >> token)
     {
-        iss >> depth;
         if (token == "depth")
         {
+            int depth;
             iss >> depth;
+            timeLimitMs = 999'999;
             Move bestMove = root_search(depth);
             std::cout << "bestmove " << moveToCode(bestMove) << "\n";
         }
         else if (token == "movetime")
         {
-            int maxdur;
-            iss >> maxdur;
-            Move bestMove;
-            startClock = std::chrono::steady_clock::now();
-            std::chrono::steady_clock::time_point endClock;
-            for (int d = 1; d < 999; d++)
-            {
-                bestMove = root_search(d);
-                if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startClock).count() > maxdur)
-                {
-                    break;
-                }
-            }
+            iss >> timeLimitMs;
+            start_game();
         }
         else if (token == "perft")
         {
+            int depth;
             iss >> depth;
             auto start = std::chrono::steady_clock::now();
             uint64_t nodes = perftDivide(depth);
@@ -2049,7 +2179,51 @@ void Board::parse_go(std::istream &iss)
             std::cout << "It took " << seconds << "\n";
             std::cout << "NPS: " << (nodes / seconds) << "\n";
         }
+        else if (token == "wtime")
+        {
+            parse_time(iss);
+        }
     }
+}
+
+void Board::parse_time(std::istream &iss)
+{
+    // std::vector<std::string> vec;
+    // std::string temp;
+    // while (iss >> temp)
+    // {
+    //     vec.push_back(temp);
+    // }
+    // int fullTimeWhite = std::stoi(vec[0]);
+    // int fullTimeBlack = std::stoi(vec[2]);
+    // int incTimeWhite = std::stoi(vec[4]);
+    // int incTimeBlack = std::stoi(vec[6]);
+    // int myTime = sideToMove ? fullTimeBlack : fullTimeWhite;
+    // int myInc = sideToMove ? incTimeBlack : incTimeWhite;
+    // timeLimitMs = (myTime / 20) + (myInc / 2);
+    timeLimitMs = 5000;
+    start_game();
+}
+
+void Board::start_game()
+{
+    timeUp = false;
+    nodes = 0;
+    startClock = std::chrono::steady_clock::now();
+    Move bestMove = moveList[0];
+    for (int d = 1; d < 999; d++)
+    {
+        Move cand = root_search(d);
+        if (!timeUp)
+        {
+            bestMove = cand;
+        }
+        else
+        {
+            break;
+        }
+    }
+    std::cout << "bestmove " << moveToCode(bestMove) << "\n";
 }
 
 //
@@ -2219,7 +2393,7 @@ uint64_t Board::perftDivide(int depth)
         {
             // std::cout << "current depth is " << depth << " and condition 'is king attacked' run successfully for a move " << moveList[i] << " and undo " << undoList[i] << "\n";
             uint64_t nodes = perft(depth - 1);
-            std::cout << moveToCode(moveList[i]) << ": " << nodes << std::endl;
+            std::cout << moveToCode(moveList[i]) << ": " << nodes << "\n";
             totalNodes += nodes;
         }
         // std::cout << "Doing perft on a lower level with a move " << moveList[i] << " and undo " << undoList[i] << "\n";
@@ -2268,7 +2442,7 @@ uint64_t Board::perftDivide(int depth)
         }
 #endif
     }
-    std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << std::endl;
+    std::cout << "\n Total nodes at depth " << depth << ": " << totalNodes << "\n";
     return totalNodes;
 }
 
@@ -2360,6 +2534,18 @@ int Board::evaluate()
 int Board::search(int depth, int alpha, int beta)
 // Alpha - best score that is already guaranteed to you. beta - the best socre opponent will allow to get
 {
+    nodes++;
+    if ((nodes & 2047) == 0)
+    {
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startClock).count();
+        if (elapsed > timeLimitMs)
+        {
+            timeUp = true;
+        }
+    }
+    if (timeUp)
+        return 0;
+
     if (depth == 0)
     {
         return quiescence(alpha, beta);
@@ -2429,6 +2615,7 @@ int Board::search(int depth, int alpha, int beta)
 
 Move Board::root_search(int depth)
 {
+
     int offset = ply * MAX_MOVES;
 
     generateMoves(offset);
@@ -2439,8 +2626,9 @@ Move Board::root_search(int depth)
     Move bestMove = moveList[offset];
 
     bool foundLegal = false;
-
+#ifdef DEBUG
     std::cout << "Legal root moves:\n";
+#endif
 
     for (int i = offset; i < (offset + MAX_MOVES); i++)
     {
@@ -2462,11 +2650,22 @@ Move Board::root_search(int depth)
         foundLegal = true;
         int score = -search(depth - 1, -beta, -alpha);
 
+#ifdef DEBUG
         std::cout << moveToCode(moveList[i]) << ": " << moveList[i] << " " << undoList[i] << " With score: " << score << "\n";
+#endif
+        undoMove(moveList[i], undoList[i]);
+        ply--;
+
+        if (timeUp)
+        {
+            return bestMove;
+        }
 
         if (score > best)
         {
+#ifdef DEBUG
             std::cout << "found new best move " << moveList[i] << " with score: " << score << "\n";
+#endif
             best = score;
             bestMove = moveList[i];
         }
@@ -2474,9 +2673,6 @@ Move Board::root_search(int depth)
         {
             alpha = score;
         }
-
-        undoMove(moveList[i], undoList[i]);
-        ply--;
     }
 
     if (!foundLegal)
@@ -2489,10 +2685,14 @@ Move Board::root_search(int depth)
 
 int Board::quiescence(int alpha, int beta, int qDepth)
 {
-    if (qDepth >= 8)
-    {
-        return evaluate();
-    }
+
+    if (timeUp)
+        return 0;
+
+    // if (qDepth >= 8)
+    // {
+    //     return evaluate();
+    // }
 
     int stand_pat = evaluate();
     int best = stand_pat;

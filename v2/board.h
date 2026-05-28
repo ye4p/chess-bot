@@ -241,7 +241,12 @@ public:
 
     int ply = 0;
 
-    std::chrono::steady_clock::time_point startClock = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point startClock;
+    bool timeUp = false;
+    uint64_t nodes = 0;
+    int timeLimitMs = 0;
+
+    void clean();
 
 #ifdef DEBUG
     std::vector<Move> moveLog;
@@ -290,6 +295,7 @@ public:
     int codeToIndex(std::string code);
     std::string indexToCode(int index);
     std::string moveToCode(Move m);
+    Move codeToMove(std::string s);
     std::string getFEN();
     void setFEN(std::string s);
 
@@ -335,7 +341,10 @@ public:
     // UCI protocol
     void uci_loop();
     void parse_position(std::istream &iss);
+    void parse_moves(std::istream &iss);
     void parse_go(std::istream &iss);
+    void parse_time(std::istream &iss);
+    void start_game();
 
     //  Testing move generation
     int perft(int depth);
