@@ -1,2 +1,1 @@
-V1 version was based on objects and mailbox only rather than using bitboards.
-V2 has move generation and perft fully working, utilizes bitboards.
+V2 is the fully working version with UCI support, negamax, alpha beta prunning, move ordering, quiescence search and bitboards/magic bitboards
