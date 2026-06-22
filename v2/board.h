@@ -269,6 +269,14 @@ public:
     static uint64_t bishop_attacks[64][512];
     static uint64_t rook_attacks[64][4096];
 
+    // TT
+    static uint64_t zobrist_pieces[12][64];
+    static uint64_t zobrist_castling[16]; // all combinations of castling
+    static uint64_t zobrist_ep[8];        // en passant file
+    static uint64_t zobrist_side;         // black to move
+
+    uint64_t hashKey;
+
     Board();
     void inline setBit(uint64_t &bb, int square);
     void clearBit(uint64_t &bb, int square);
@@ -362,4 +370,8 @@ public:
     int scoreMoveCapture(Move m);
     void scoreMoves(int offset, int count);
     void sortMoves(int offset, int count);
+
+    // Transposition tables
+    void init_zobrist();
+    uint64_t compute_hash();
 };

@@ -111,19 +111,20 @@ Board::Board()
     halfMoveClock = 0;
     fullMoveClock = 1;
     sideToMove = 0;
-    std::cout << " Generating King moves\n";
+    // std::cout << " Generating King moves\n";
     generateKingMoves();
-    std::cout << " Generating pawn moves\n";
+    // std::cout << " Generating pawn moves\n";
     generatePawnMoves();
-    std::cout << " Generating knight moves\n";
+    // std::cout << " Generating knight moves\n";
     generateKnightMoves();
     // std::cout << "Searching for magic numbers\n";
     // searchAllMagics();
-    std::cout << " Generating bishop moves\n";
+    // std::cout << " Generating bishop moves\n";
     generateBishopMoves();
-    std::cout << " Generating rook moves\n";
+    // std::cout << " Generating rook moves\n";
     generateRookMoves();
-    std::cout << " Fin\n";
+    init_zobrist();
+    // std::cout<< " Fin\n";
 }
 
 void Board::clean()
@@ -2773,4 +2774,53 @@ void Board::sortMoves(int offset, int count)
         std::swap(moveList[i], moveList[best]);
         std::swap(moveScores[i], moveScores[best]);
     }
+}
+
+//
+//  TRANSPOSITION TABLES
+//
+
+void Board::init_zobrist()
+{
+    for (int p = 0; p < 12; p++)
+    {
+        for (int sq = 0; sq < 64; sq++)
+        {
+            zobrist_pieces[p][sq] = rand64();
+        }
+    }
+
+    for (int i = 0; i < 16; i++)
+    {
+        zobrist_castling[i] = rand64();
+    }
+
+    for (int f = 0; f < 8; f++)
+    {
+        zobrist_side = rand64();
+    }
+}
+
+uint64_t Board::compute_hash()
+{
+    uint64_t h = 0;
+
+    for (int sq = 0; sq < 64; sq++)
+    {
+        if (mailbox[sq] != -1)
+            h ^= zobrist_pieces[mailbox[sq]][sq];
+    }
+
+    h ^= zobrist_castling[castlingRights];
+    if (enPassantSquare != -1)
+    {
+        h ^= zobrist_ep[enPassantSquare % 8];
+    }
+
+    if (sideToMove)
+    {
+        h ^= zobrist_side;
+    }
+
+    return h;
 }
