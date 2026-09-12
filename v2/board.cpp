@@ -100,6 +100,11 @@ uint64_t Board::rook_relevant_bits[64];
 uint64_t Board::bishop_attacks[64][512];
 uint64_t Board::rook_attacks[64][4096];
 
+uint64_t Board::zobrist_pieces[12][64];
+uint64_t Board::zobrist_castling[16];
+uint64_t Board::zobrist_ep[8];
+uint64_t Board::zobrist_side;
+
 //  Constructor
 Board::Board()
 {
@@ -124,6 +129,8 @@ Board::Board()
     // std::cout << " Generating rook moves\n";
     generateRookMoves();
     init_zobrist();
+    initTT();
+    historyCount = 0;
     // std::cout<< " Fin\n";
 }
 
@@ -144,6 +151,8 @@ void Board::clean()
     timeUp = false;
     nodes = 0;
     timeLimitMs = 0;
+    clearTT();
+    historyCount = 0;
 }
 
 //
@@ -627,6 +636,9 @@ void Board::setFEN(std::string s)
         }
     }
     updateOccupancies();
+
+    historyCount = 0;
+    positionHistory[historyCount++] = compute_hash();
 }
 
 //
@@ -1885,9 +1897,16 @@ void Board::makeMove(const Move m, Undo &u)
 #endif
 
     updateOccupancies();
+
+    if (historyCount < MAX_HISTORY)               // <-- added (guards against overflow)
+    {
+        positionHistory[historyCount++] = compute_hash();
+    }
 }
 void Board::undoMove(const Move m, Undo &u)
 {
+    if (historyCount > 0) historyCount--;
+    
     if (u.capturedPiece == 11 || u.capturedPiece == 5)
     {
         std::cout << "King was captured\n";
@@ -2547,9 +2566,22 @@ int Board::search(int depth, int alpha, int beta)
     if (timeUp)
         return 0;
 
+    if (isRepetition()) //treat a repeated position as a draw
+    {
+        return 0;
+    }
+
     if (depth == 0)
     {
         return quiescence(alpha, beta);
+    }
+
+    uint64_t hash = positionHistory[historyCount - 1]; //reuse hash pushed by makeMove
+    int alphaOrig = alpha;
+    int ttScore;
+    if (probeTT(hash, depth, alpha, beta, ttScore))
+    {
+        return ttScore;
     }
 
     int offset = MAX_MOVES * ply;
@@ -2561,10 +2593,25 @@ int Board::search(int depth, int alpha, int beta)
     }
 
     scoreMoves(offset, pseudoMoves);
+
+    Move ttMove; // prio TT move for ordering
+    if (getTTMove(hash, ttMove))
+    {
+        for (int i = offset; i < offset + pseudoMoves; i++)
+        {
+            if (moveList[i].data == ttMove.data)
+            {
+                moveScores[i] += 1000000;
+                break;
+            }
+        }
+    }
+
     sortMoves(offset, pseudoMoves);
 
     int best = -INF;
     bool hasLegalMove = false;
+    Move bestMoveHere;
 
     for (int i = offset; i < offset + MAX_MOVES; i++)
     {
@@ -2593,10 +2640,15 @@ int Board::search(int depth, int alpha, int beta)
         if (score > best)
         {
             best = score;
+            bestMoveHere = moveList[i]; 
         }
 
         if (score >= beta)
         {
+            if (!timeUp)
+            {
+                storeTT(hash, depth, best, TT_BETA, bestMoveHere);
+            }
             return best;
         }
 
@@ -2609,6 +2661,12 @@ int Board::search(int depth, int alpha, int beta)
     if (!hasLegalMove)
     {
         return isKingAttacked(!sideToMove) ? -MATE_SCORE + ply : 0;
+    }
+
+    if (!timeUp)
+    {
+        TTFlag flag = (best <= alphaOrig) ? TT_ALPHA : TT_EXACT;
+        storeTT(hash, depth, best, flag, bestMoveHere);
     }
 
     return best;
@@ -2823,4 +2881,83 @@ uint64_t Board::compute_hash()
     }
 
     return h;
+}
+
+void Board::initTT()
+{
+    tt.assign(TT_SIZE, TTEntry());
+}
+
+void Board::clearTT()
+{
+    std::fill(tt.begin(), tt.end(), TTEntry());
+}
+
+bool Board::probeTT(uint64_t key, int depth, int alpha, int beta, int &scoreOut)
+{
+    TTEntry &entry = tt[key % TT_SIZE];
+    if (entry.key != key || entry.depth < depth)
+    {
+        return false;
+    }
+    if (entry.flag == TT_EXACT)
+    {
+        scoreOut = entry.score;
+        return true;
+    }
+    if (entry.flag == TT_ALPHA && entry.score <= alpha)
+    {
+        scoreOut = alpha;
+        return true;
+    }
+    if (entry.flag == TT_BETA && entry.score >= beta)
+    {
+        scoreOut = beta;
+        return true;
+    }
+    return false;
+}
+
+bool Board::getTTMove(uint64_t key, Move &moveOut)
+{
+    TTEntry &entry = tt[key % TT_SIZE];
+    if (entry.key == key && entry.bestMove.data != 0)
+    {
+        moveOut = entry.bestMove;
+        return true;
+    }
+    return false;
+}
+
+void Board::storeTT(uint64_t key, int depth, int score, TTFlag flag, Move bestMove)
+{
+    TTEntry &entry = tt[key % TT_SIZE];
+    if (entry.key != key || depth >= entry.depth)
+    {
+        entry.key = key;
+        entry.depth = depth;
+        entry.score = score;
+        entry.flag = flag;
+        entry.bestMove = bestMove;
+    }
+}
+
+bool Board::isRepetition()
+{
+    if (historyCount < 5)
+    {
+        return false;
+    }
+
+    uint64_t currentHash = positionHistory[historyCount - 1];
+    int limit = std::min((int)halfMoveClock, historyCount - 1);
+
+    for (int i = 4; i <= limit; i += 2)
+    {
+        if (positionHistory[historyCount - 1 - i] == currentHash)
+        {
+            return true;
+        }
+    }
+    return false;
 }
