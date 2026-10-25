@@ -1737,7 +1737,6 @@ void Board::generateRookMoves()
 
 void Board::makeMove(const Move m, Undo &u)
 {
-    // int p = findPiece(m.from(), m); // bb index of piece that is getting moved
     int p = mailbox[m.from()];
 
     int oldCastlingRights = castlingRights;
@@ -2531,12 +2530,12 @@ int Board::evaluate()
 
         int k = mailbox[i];
 
-        val += ((k > 5) ? -PST[k - 6][64 - i] : PST[k][i]);
+        val += ((k > 5) ? -PST[k - 6][63 - i] : PST[k][i]);
 
-        if (!pieceValueMap.count(mailbox[i]))
-        {
-            throw std::runtime_error("Didn't find piece in the mailbox(eval function)");
-        }
+        // if (!pieceValueMap.count(mailbox[i]))
+        // {
+        //     throw std::runtime_error("Didn't find piece in the mailbox(eval function)");
+        // }
     }
     if (std::abs(val) == INF)
     {

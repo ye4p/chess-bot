@@ -59,4 +59,4 @@ if __name__ == "__main__":
     fen5="r3k2r/p1ppqpb1/bn2pnN1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq - 0 1"
     fen6="r3k2r/p1pp1pb1/bn1qpnN1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
     fen7="r3k2N/p1pp1pb1/bn1qpn2/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQq - 0 1"
-    perft_divide(fen1, 5)
+    perft_divide(start_fen, 5)
